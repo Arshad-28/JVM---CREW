@@ -32,10 +32,13 @@ import {
   HistoryItem,
 } from '../types';
 
-const ENV_API_URL = (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } })?.env?.VITE_API_BASE_URL;
-const BASE_URL = (typeof ENV_API_URL === 'string' && ENV_API_URL.trim().length > 0)
-  ? ENV_API_URL.trim().replace(/\/+$/, '')
-  : '/api';
+const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
+let BASE_URL = '/api';
+
+if (rawEnvUrl && typeof rawEnvUrl === 'string' && rawEnvUrl.trim() !== '') {
+  const cleaned = rawEnvUrl.trim().replace(/\/+$/, '');
+  BASE_URL = cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`;
+}
 
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('jvmcrew_token');
