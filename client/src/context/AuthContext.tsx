@@ -98,37 +98,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const authData = await api.login(email, password);
-      if (authData.token) {
-        try {
-          localStorage.setItem('jvmcrew_token', authData.token);
-        } catch (e) {
-          console.warn('localStorage setItem error:', e);
-        }
+    const authData = await api.login(email, password);
+    if (authData && authData.token) {
+      try {
+        localStorage.setItem('jvmcrew_token', authData.token);
+      } catch (e) {
+        console.warn('localStorage setItem error:', e);
       }
-      setUser(authData);
-    } finally {
-      setLoading(false);
     }
+    setUser(authData);
   };
 
   const register = async (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }) => {
-    setLoading(true);
-    try {
-      const authData = await api.register(data);
-      if (authData.token) {
-        try {
-          localStorage.setItem('jvmcrew_token', authData.token);
-        } catch (e) {
-          console.warn('localStorage setItem error:', e);
-        }
+    const authData = await api.register(data);
+    if (authData && authData.token) {
+      try {
+        localStorage.setItem('jvmcrew_token', authData.token);
+      } catch (e) {
+        console.warn('localStorage setItem error:', e);
       }
-      setUser(authData);
-    } finally {
-      setLoading(false);
     }
+    setUser(authData);
   };
 
   const updateAccount = async (data: {
