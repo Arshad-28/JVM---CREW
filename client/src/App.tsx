@@ -1,19 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/common/Header';
 import { LoginPage } from './pages/auth/LoginPage';
-import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
-import { KanbanBoardPage } from './pages/tasks/KanbanBoardPage';
-import { TeamDashboardPage } from './pages/team/TeamDashboardPage';
-import { HomeworkPage } from './pages/homework/HomeworkPage';
-import { MeetTheCrewPage } from './pages/crew/MeetTheCrewPage';
-import { MyProfilePage } from './pages/profile/MyProfilePage';
-import { AccountSettingsPage } from './pages/settings/AccountSettingsPage';
-import { InterviewLabPage } from './pages/interview/InterviewLabPage';
-import { DailyStandupModal } from './pages/standup/DailyStandupModal';
-import { LeaveEmailModal } from './components/common/LeaveEmailModal';
 import { cleanTeamDisplayName } from './utils/greetingEngine';
 import { api, getLocalTodayDateString } from './services/api';
+
+import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
+import { DailyStandupModal } from './pages/standup/DailyStandupModal';
+import { LeaveEmailModal } from './components/common/LeaveEmailModal';
+
+// Lazy-loaded heavy secondary route components
+const KanbanBoardPage = lazy(() => import('./pages/tasks/KanbanBoardPage').then(m => ({ default: m.KanbanBoardPage })));
+const TeamDashboardPage = lazy(() => import('./pages/team/TeamDashboardPage').then(m => ({ default: m.TeamDashboardPage })));
+const HomeworkPage = lazy(() => import('./pages/homework/HomeworkPage').then(m => ({ default: m.HomeworkPage })));
+const MeetTheCrewPage = lazy(() => import('./pages/crew/MeetTheCrewPage').then(m => ({ default: m.MeetTheCrewPage })));
+const MyProfilePage = lazy(() => import('./pages/profile/MyProfilePage').then(m => ({ default: m.MyProfilePage })));
+const AccountSettingsPage = lazy(() => import('./pages/settings/AccountSettingsPage').then(m => ({ default: m.AccountSettingsPage })));
+const InterviewLabPage = lazy(() => import('./pages/interview/InterviewLabPage').then(m => ({ default: m.InterviewLabPage })));
+
+const PageFallback: React.FC = () => (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[300px]">
+    <div className="font-mono text-xs text-muted flex items-center space-x-2.5">
+      <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+      <span>Loading view...</span>
+    </div>
+  </div>
+);
 
 
 
@@ -144,19 +156,21 @@ const MainLayout: React.FC = () => {
       />
 
       <main className="flex-1 pb-20 md:pb-12 min-w-0">
-        {activeTab === 'home' && <HomeDashboardPage onNavigateTab={handleNavigateTab} />}
-        {activeTab === 'tasks' && <KanbanBoardPage />}
-        {activeTab === 'homework' && <HomeworkPage />}
-        {activeTab === 'interview-lab' && <InterviewLabPage initialTopic={labInitialTopic} />}
-        {activeTab === 'profile' && <MyProfilePage />}
-        {activeTab === 'settings' && (
-          <AccountSettingsPage
-            onNavigateTab={handleNavigateTab}
-            onOpenLeaveEmail={() => setGlobalLeaveEmailOpen(true)}
-          />
-        )}
-        {activeTab === 'crew' && <MeetTheCrewPage />}
-        {activeTab === 'team' && (isLead ? <TeamDashboardPage /> : <MeetTheCrewPage />)}
+        <Suspense fallback={<PageFallback />}>
+          {activeTab === 'home' && <HomeDashboardPage onNavigateTab={handleNavigateTab} />}
+          {activeTab === 'tasks' && <KanbanBoardPage />}
+          {activeTab === 'homework' && <HomeworkPage />}
+          {activeTab === 'interview-lab' && <InterviewLabPage initialTopic={labInitialTopic} />}
+          {activeTab === 'profile' && <MyProfilePage />}
+          {activeTab === 'settings' && (
+            <AccountSettingsPage
+              onNavigateTab={handleNavigateTab}
+              onOpenLeaveEmail={() => setGlobalLeaveEmailOpen(true)}
+            />
+          )}
+          {activeTab === 'crew' && <MeetTheCrewPage />}
+          {activeTab === 'team' && (isLead ? <TeamDashboardPage /> : <MeetTheCrewPage />)}
+        </Suspense>
       </main>
 
       <footer className="border-t border-line py-3 bg-paper">

@@ -66,7 +66,7 @@ class StorageServiceTest {
 
         assertFalse(supabase.isConfigured());
         assertEquals("SUPABASE", supabase.getProviderName());
-        assertEquals("jvmcrew-audio", supabase.getEffectiveBucket());
+        assertEquals("jvmcrew-files", supabase.getEffectiveBucket());
 
         assertThrows(IllegalStateException.class, () -> supabase.store("path/to/file.webm", new byte[]{1, 2, 3}, "audio/webm"));
         assertThrows(IllegalStateException.class, () -> supabase.loadAsResource("path/to/file.webm"));

@@ -24,7 +24,7 @@ public class SupabaseStorageService implements StorageService {
     @Value("${app.supabase.key:}")
     private String supabaseKey;
 
-    @Value("${app.supabase.bucket:jvmcrew-audio}")
+    @Value("${app.supabase.bucket:jvmcrew-files}")
     private String supabaseBucket;
 
     private HttpClient httpClient;
@@ -45,7 +45,7 @@ public class SupabaseStorageService implements StorageService {
     }
 
     public String getEffectiveBucket() {
-        return StringUtils.hasText(supabaseBucket) ? supabaseBucket.trim() : "jvmcrew-audio";
+        return StringUtils.hasText(supabaseBucket) ? supabaseBucket.trim() : "jvmcrew-files";
     }
 
     @Override
@@ -76,15 +76,27 @@ public class SupabaseStorageService implements StorageService {
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 log.info("Uploaded object to Supabase Storage: bucket={}, path={}, size={} bytes",
                         getEffectiveBucket(), storagePath, data.length);
+            } else if (response.statusCode() == 404) {
+                log.error("Supabase Storage upload failed (HTTP 404): Bucket '{}' or endpoint not found.", getEffectiveBucket());
+                throw new IllegalStateException("Storage bucket '" + getEffectiveBucket() + "' not found. Please verify the Supabase bucket configuration.");
+            } else if (response.statusCode() == 401 || response.statusCode() == 403) {
+                log.error("Supabase Storage upload failed (HTTP {}): Authorization failed for bucket '{}'.", response.statusCode(), getEffectiveBucket());
+                throw new IllegalStateException("Storage authorization failed. Please verify Supabase service role credentials.");
+            } else if (response.statusCode() == 413) {
+                log.error("Supabase Storage upload failed (HTTP 413): Payload too large ({} bytes).", data.length);
+                throw new IllegalArgumentException("The uploaded file exceeds the maximum allowed storage upload size.");
             } else {
-                log.error("Supabase Storage upload returned HTTP {}: {}", response.statusCode(), response.body());
-                throw new RuntimeException("Supabase Storage upload failed with status " + response.statusCode());
+                log.error("Supabase Storage upload failed with HTTP {}: bucket={}, path={}", response.statusCode(), getEffectiveBucket(), storagePath);
+                throw new RuntimeException("Storage upload failed with status " + response.statusCode());
             }
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            throw ex;
         } catch (Exception ex) {
-            log.error("Failed to store file in Supabase Storage at {}: {}", storagePath, ex.getMessage(), ex);
+            log.error("Failed to store file in Supabase Storage at path '{}': {}", storagePath, ex.getMessage());
             throw new RuntimeException("Could not save file to Supabase cloud storage: " + ex.getMessage(), ex);
         }
     }

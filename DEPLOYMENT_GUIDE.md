@@ -45,9 +45,9 @@
    jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require
    ```
 
-### C. Create Audio Storage Bucket
+### C. Create Audio & File Storage Bucket
 1. In Supabase dashboard, click **Storage** → **Create a new bucket**.
-2. Bucket name: `jvmcrew-audio`
+2. Bucket name: `jvmcrew-files`
 3. Privacy: **Private** (recommended; access is securely authenticated and mediated by the Spring Boot backend).
 4. Go to **Project Settings** → **API**.
 5. Copy your **Project URL** (`https://<project-ref>.supabase.co`) and **`service_role` (secret) key**.
@@ -86,7 +86,7 @@ Add the following environment variables in the Render **Environment** tab:
 | `STORAGE_PROVIDER` | `supabase` | Enables persistent cloud storage |
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` | Supabase API endpoint |
 | `SUPABASE_SERVICE_ROLE_KEY` | `<supabase-service-role-secret>` | Backend secret for private bucket operations |
-| `SUPABASE_STORAGE_BUCKET` | `jvmcrew-audio` | Storage bucket name |
+| `SUPABASE_STORAGE_BUCKET` | `jvmcrew-files` | Storage bucket name |
 | `AI_PROVIDER` | `gemini` | AI provider for Interview Lab |
 | `AI_API_KEY` | `<your-gemini-api-key>` | Google Gemini API key |
 | `AI_MODEL` | `gemini-3.6-flash` | Gemini model name |
@@ -123,7 +123,7 @@ In Netlify **Site configuration** → **Environment variables**:
 2. **Supabase Inactivity Pausing**:
    - Supabase free tier databases pause after 7 days of inactivity. Simply unpause via dashboard if needed.
 3. **Data & File Persistence**:
-   - Standup voice recordings are stored in Supabase Storage (`jvmcrew-audio`), ensuring zero data loss during Render container restarts or redeploys.
+   - Standup voice recordings are stored in Supabase Storage (`jvmcrew-files`), ensuring zero data loss during Render container restarts or redeploys.
    - Standup PDFs, Homework submissions, and solutions are stored directly in PostgreSQL tables (`standup_pdfs`, `homework_submissions`).
 
 ---
