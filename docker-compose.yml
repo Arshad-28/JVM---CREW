@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: jvmcrew-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jvmcrew
+      POSTGRES_USER: jvmcrew
+      POSTGRES_PASSWORD: jvmcrew_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jvmcrew -d jvmcrew"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: jvmcrew-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: jvmcrew
+      DB_USERNAME: jvmcrew
+      DB_PASSWORD: jvmcrew_password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jvmcrew
+      SPRING_DATASOURCE_USERNAME: jvmcrew
+      SPRING_DATASOURCE_PASSWORD: jvmcrew_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      APP_AUDIO_UPLOAD_DIR: /app/uploads/audio
+      AI_PROVIDER: ${AI_PROVIDER:-gemini}
+      AI_API_KEY: ${AI_API_KEY:-${GEMINI_API_KEY:-}}
+      AI_MODEL: ${AI_MODEL:-gemini-3.6-flash}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - standup_audio_data:/app/uploads/audio
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: jvmcrew-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
+  standup_audio_data:
