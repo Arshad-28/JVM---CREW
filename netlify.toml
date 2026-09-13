@@ -1,0 +1,10 @@
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm run build"
+
+# Fallback for Single Page Application client routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

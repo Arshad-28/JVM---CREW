@@ -1,0 +1,3 @@
+# Netlify SPA redirect rule
+# Ensures client-side React routes (e.g. /crew, /tasks, /workspace) resolve on page reload
+/*    /index.html   200

@@ -32,7 +32,10 @@ import {
   HistoryItem,
 } from '../types';
 
-const BASE_URL = '/api';
+const ENV_API_URL = (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } })?.env?.VITE_API_BASE_URL;
+const BASE_URL = (typeof ENV_API_URL === 'string' && ENV_API_URL.trim().length > 0)
+  ? ENV_API_URL.trim().replace(/\/+$/, '')
+  : '/api';
 
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('jvmcrew_token');

@@ -1,5 +1,8 @@
 package com.jvmcrew.service;
 
+import com.jvmcrew.service.storage.LocalStorageService;
+import com.jvmcrew.service.storage.StorageService;
+import com.jvmcrew.service.storage.SupabaseStorageService;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,15 +11,11 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.nio.file.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -24,10 +23,17 @@ import java.util.UUID;
 @Slf4j
 public class AudioStorageService {
 
-    @Value("${app.audio.upload-dir:uploads/audio}")
-    private String uploadDirProperty;
+    @Value("${app.storage.provider:auto}")
+    private String configuredProvider;
 
-    private Path rootAudioPath;
+    private final LocalStorageService localStorageService;
+    private final SupabaseStorageService supabaseStorageService;
+    private StorageService activeStorageService;
+
+    public AudioStorageService(LocalStorageService localStorageService, SupabaseStorageService supabaseStorageService) {
+        this.localStorageService = localStorageService;
+        this.supabaseStorageService = supabaseStorageService;
+    }
 
     @Data
     @NoArgsConstructor
@@ -42,14 +48,18 @@ public class AudioStorageService {
 
     @PostConstruct
     public void init() {
-        try {
-            this.rootAudioPath = Paths.get(uploadDirProperty).toAbsolutePath().normalize();
-            Files.createDirectories(this.rootAudioPath);
-            log.info("Standup audio storage initialized at: {}", this.rootAudioPath);
-        } catch (IOException e) {
-            log.error("Could not initialize audio storage directory at: {}", uploadDirProperty, e);
-            throw new RuntimeException("Could not initialize audio storage directory", e);
+        String provider = configuredProvider != null ? configuredProvider.trim().toLowerCase() : "auto";
+        if ("supabase".equals(provider) || ("auto".equals(provider) && supabaseStorageService.isConfigured())) {
+            this.activeStorageService = supabaseStorageService;
+            log.info("AudioStorageService initialized with SUPABASE persistent cloud storage");
+        } else {
+            this.activeStorageService = localStorageService;
+            log.info("AudioStorageService initialized with LOCAL filesystem storage");
         }
+    }
+
+    public StorageService getActiveStorageService() {
+        return activeStorageService != null ? activeStorageService : localStorageService;
     }
 
     private static final java.util.Set<String> ALLOWED_AUDIO_MIME_TYPES = java.util.Set.of(
@@ -98,28 +108,18 @@ public class AudioStorageService {
         int year = targetDate.getYear();
         int month = targetDate.getMonthValue();
         long safeTeamId = teamId != null ? teamId : 0L;
+        long safeUserId = userId != null ? userId : 0L;
 
-        String relativeFolder = String.format("standups/%d/%d/%02d/%d", safeTeamId, year, month, userId);
+        String relativeFolder = String.format("standups/%d/%d/%02d/%d", safeTeamId, year, month, safeUserId);
         String uniqueFileName = String.format("voice_%s_%s%s", safeDateStr, UUID.randomUUID().toString().substring(0, 8), extension);
         String storagePath = relativeFolder + "/" + uniqueFileName;
 
         try {
-            Path targetDir = this.rootAudioPath.resolve(relativeFolder).normalize();
-            if (!targetDir.startsWith(this.rootAudioPath)) {
-                throw new SecurityException("Cannot store audio file outside target directory.");
-            }
-            Files.createDirectories(targetDir);
+            byte[] fileBytes = file.getBytes();
+            getActiveStorageService().store(storagePath, fileBytes, contentType);
 
-            Path targetLocation = targetDir.resolve(uniqueFileName).normalize();
-            if (!targetLocation.startsWith(this.rootAudioPath)) {
-                throw new SecurityException("Cannot store audio file outside target directory.");
-            }
-
-            try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            log.info("Stored team-scoped standup voice recording: {} (size: {} bytes, type: {})", storagePath, file.getSize(), contentType);
+            log.info("Stored voice recording (provider: {}, path: {}, size: {} bytes)",
+                    getActiveStorageService().getProviderName(), storagePath, fileBytes.length);
 
             return StoredAudioMetadata.builder()
                     .fileName(uniqueFileName)
@@ -127,10 +127,9 @@ public class AudioStorageService {
                     .contentType(contentType)
                     .fileSize(file.getSize())
                     .build();
-
         } catch (IOException ex) {
-            log.error("Failed to save voice recording for team {} user {}: {}", safeTeamId, userId, ex.getMessage(), ex);
-            throw new RuntimeException("Could not save voice recording file on server.", ex);
+            log.error("Failed to read audio file bytes for team {} user {}: {}", safeTeamId, safeUserId, ex.getMessage(), ex);
+            throw new RuntimeException("Could not process audio upload.", ex);
         }
     }
 
@@ -142,48 +141,13 @@ public class AudioStorageService {
         if (!StringUtils.hasText(relativePath)) {
             return false;
         }
-        try {
-            Path filePath = this.rootAudioPath.resolve(relativePath).normalize();
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                log.info("Deleted previous standup voice file: {}", relativePath);
-                return true;
-            }
-        } catch (Exception e) {
-            log.warn("Could not delete audio file {}: {}", relativePath, e.getMessage());
-        }
-        return false;
+        return getActiveStorageService().delete(relativePath);
     }
 
     public Resource loadAudioAsResource(String relativePath) {
         if (!StringUtils.hasText(relativePath)) {
             throw new IllegalArgumentException("Audio path is missing.");
         }
-        try {
-            Path filePath = this.rootAudioPath.resolve(relativePath).normalize();
-            if (!filePath.startsWith(this.rootAudioPath)) {
-                throw new SecurityException("Access denied: Invalid audio path");
-            }
-            Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            } else {
-                throw new RuntimeException("Audio file not found or not readable: " + relativePath);
-            }
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Malformed path for audio file: " + relativePath, e);
-        }
-    }
-
-    public Path getAudioPath(String relativePath) {
-        if (!StringUtils.hasText(relativePath)) {
-            throw new IllegalArgumentException("Audio path is missing.");
-        }
-        Path filePath = this.rootAudioPath.resolve(relativePath).normalize();
-        if (!filePath.startsWith(this.rootAudioPath)) {
-            throw new SecurityException("Access denied: Invalid audio path");
-        }
-        return filePath;
+        return getActiveStorageService().loadAsResource(relativePath);
     }
 }
-

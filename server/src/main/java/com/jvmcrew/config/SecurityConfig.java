@@ -65,7 +65,7 @@ public class SecurityConfig {
                                 "style-src 'self' 'unsafe-inline'; " +
                                 "img-src 'self' data: https:; " +
                                 "font-src 'self' data:; " +
-                                "connect-src 'self' http://localhost:8080 http://localhost:3000; " +
+                                "connect-src 'self' https: http: ws: wss:; " +
                                 "frame-ancestors 'none';"
                         ))
                 )
