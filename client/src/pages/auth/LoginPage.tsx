@@ -76,10 +76,10 @@ export const LoginPage: React.FC = () => {
             <Terminal className="w-4 h-4 text-paper" />
           </div>
           <span className="font-display font-bold text-sm tracking-tight text-ink">
-            TEAM PORTAL
+            EngineerSpace
           </span>
         </div>
-        <span className="font-mono text-[11px] text-muted">Engineering Workspace</span>
+        <span className="font-mono text-[11px] text-muted">Engineering Team Platform</span>
       </div>
 
       {/* Centered Modern Card */}
@@ -237,7 +237,7 @@ export const LoginPage: React.FC = () => {
 
       {/* Footer */}
       <div className="w-full max-w-5xl py-3 border-t border-line flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-muted gap-2 mt-auto">
-        <span className="text-ink font-medium tracking-tight">JVM CREW · Built by Mohammed Arshad</span>
+        <span className="text-ink font-medium tracking-tight">EngineerSpace · Built by Mohammed Arshad</span>
         <span className="text-[10px] text-muted">Engineering Platform · Secure Authentication</span>
       </div>
     </div>

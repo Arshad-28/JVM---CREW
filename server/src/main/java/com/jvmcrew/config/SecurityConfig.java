@@ -36,7 +36,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitingFilter rateLimitingFilter;
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost,http://localhost:80,http://127.0.0.1:3000,http://127.0.0.1:80,http://localhost:5173}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost,http://localhost:80,http://127.0.0.1:3000,http://127.0.0.1:80,http://localhost:5173,https://engineerspace.netlify.app}")
     private String allowedOriginsConfig;
 
     @Bean
@@ -70,6 +70,18 @@ public class SecurityConfig {
                         ))
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Authentication required\",\"timestamp\":\"" + java.time.Instant.now() + "\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Access denied\",\"timestamp\":\"" + java.time.Instant.now() + "\"}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Public health & minimal actuator endpoints
                         .requestMatchers("/health", "/actuator/health", "/actuator/info").permitAll()

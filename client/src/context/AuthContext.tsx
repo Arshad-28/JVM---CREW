@@ -36,22 +36,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('localStorage getItem error:', e);
     }
 
-    if (token) {
+    const isValidToken = Boolean(
+      token &&
+      typeof token === 'string' &&
+      token.trim() !== '' &&
+      token !== 'null' &&
+      token !== 'undefined'
+    );
+
+    if (isValidToken && token) {
+      let isMounted = true;
+
+      // Timeout safety: Ensure loading doesn't hang forever if backend cold start or network fails
+      const timeoutId = setTimeout(() => {
+        if (isMounted) {
+          console.warn('Auth session verification timed out. Falling back to login.');
+          setLoading(false);
+        }
+      }, 10000);
+
       api
         .getCurrentUser()
         .then((userData) => {
-          setUser(userData);
+          if (isMounted) {
+            if (userData && userData.id) {
+              setUser(userData);
+            } else {
+              try {
+                localStorage.removeItem('jvmcrew_token');
+              } catch (e) {}
+              setUser(null);
+            }
+          }
         })
-        .catch(() => {
-          try {
-            localStorage.removeItem('jvmcrew_token');
-          } catch (e) {}
-          setUser(null);
+        .catch((err) => {
+          console.warn('Failed to restore session:', err);
+          if (isMounted) {
+            try {
+              localStorage.removeItem('jvmcrew_token');
+            } catch (e) {}
+            setUser(null);
+          }
         })
         .finally(() => {
-          setLoading(false);
+          clearTimeout(timeoutId);
+          if (isMounted) {
+            setLoading(false);
+          }
         });
+
+      return () => {
+        isMounted = false;
+        clearTimeout(timeoutId);
+      };
     } else {
+      try {
+        if (token) localStorage.removeItem('jvmcrew_token');
+      } catch (e) {}
       setLoading(false);
     }
   }, []);

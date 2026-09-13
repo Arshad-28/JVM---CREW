@@ -55,21 +55,45 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 25000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) {
     return null as unknown as T;
   }
   if (!res.ok) {
-    let errorMessage = 'An error occurred';
+    let errorMessage = res.statusText || `Request failed with status ${res.status}`;
     try {
-      const errorData = await res.json();
-      errorMessage = errorData.message || errorData.error || errorMessage;
+      const text = await res.text();
+      if (text) {
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          if (text.length < 200) {
+            errorMessage = text;
+          }
+        }
+      }
     } catch {
-      errorMessage = res.statusText;
+      // ignore
     }
     throw new Error(errorMessage);
   }
-  return res.json();
+  const text = await res.text();
+  return text ? (JSON.parse(text) as T) : (null as unknown as T);
 }
 
 export function getLocalTodayDateString(): string {
@@ -83,27 +107,27 @@ export function getLocalTodayDateString(): string {
 export const api = {
   // Auth
   async login(email: string, password: string): Promise<AuthUser> {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
-    });
+    }, 25000);
     return handleResponse<AuthUser>(res);
   },
 
   async register(data: { name: string; email: string; password: string; teamName?: string }): Promise<AuthUser> {
-    const res = await fetch(`${BASE_URL}/auth/register`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
+    }, 25000);
     return handleResponse<AuthUser>(res);
   },
 
   async getCurrentUser(): Promise<AuthUser> {
-    const res = await fetch(`${BASE_URL}/auth/me`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/me`, {
       headers: getHeaders(),
-    });
+    }, 10000);
     return handleResponse<AuthUser>(res);
   },
 

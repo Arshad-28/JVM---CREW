@@ -1,5 +1,5 @@
 /**
- * Greeting Engine for JVM CREW My Day Workspace
+ * Greeting Engine for EngineerSpace My Day Workspace
  * Provides deterministic, date-anchored, time-aware personalized greetings
  * with dynamic real-data context derivation.
  */

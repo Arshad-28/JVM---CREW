@@ -1541,7 +1541,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                       className={`flex flex-col ${msg.role === 'USER' ? 'items-end' : 'items-start'}`}
                     >
                       <span className="font-mono text-[9px] text-muted mb-1 uppercase">
-                        {msg.role === 'USER' ? 'You' : 'JVM CREW Coach'}
+                        {msg.role === 'USER' ? 'You' : 'EngineerSpace Coach'}
                       </span>
                       <div
                         className={`p-3 rounded-xs text-xs max-w-xl leading-relaxed whitespace-pre-wrap ${

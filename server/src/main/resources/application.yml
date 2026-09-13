@@ -54,7 +54,7 @@ app:
     key: ${SUPABASE_SERVICE_ROLE_KEY:${SUPABASE_KEY:}}
     bucket: ${SUPABASE_STORAGE_BUCKET:jvmcrew-audio}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:80,http://127.0.0.1:3000,http://127.0.0.1:80,http://localhost:5173}}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:80,http://127.0.0.1:3000,http://127.0.0.1:80,http://localhost:5173,https://engineerspace.netlify.app}}
 
 
 ai:

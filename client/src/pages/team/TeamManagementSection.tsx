@@ -918,7 +918,7 @@ export const TeamManagementSection: React.FC = () => {
       )}
 
       {/* ==================================================== */}
-      {/* MODAL 4: ALL JVM CREW TEAMS (ORGANIZATION OVERVIEW) */}
+      {/* MODAL 4: ALL ORGANIZATION TEAMS (ORGANIZATION OVERVIEW) */}
       {/* ==================================================== */}
       {orgTeamsModalOpen && (
         <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-xs flex items-center justify-center p-4">

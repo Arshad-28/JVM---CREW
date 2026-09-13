@@ -113,7 +113,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
 
   if (!isRendered && !isOpen) return null;
 
-  const displayTeam = teamName && teamName.trim().length > 0 ? teamName.trim() : 'JVM CREW';
+  const displayTeam = teamName && teamName.trim().length > 0 ? teamName.trim() : 'EngineerSpace';
   const displayInitial =
     teamInitial && teamInitial.trim().length > 0
       ? teamInitial.trim().toUpperCase()
