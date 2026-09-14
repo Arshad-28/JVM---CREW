@@ -128,27 +128,45 @@ public class SupabaseStorageService implements StorageService {
         }
 
         try {
-            String normalizedBase = supabaseUrl.trim().replaceAll("/+$", "");
-            String targetUrl = normalizedBase + "/storage/v1/object/authenticated/" + getEffectiveBucket() + "/" + storagePath;
+            String cleanUrl = getCleanUrl();
+            String cleanBucket = getEffectiveBucket();
             String cleanKey = getCleanKey();
+
+            // Try authenticated endpoint first
+            String targetUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
                     .header("Authorization", "Bearer " + cleanKey)
                     .header("apikey", cleanKey)
                     .GET()
-                    .timeout(Duration.ofSeconds(30))
+                    .timeout(Duration.ofSeconds(20))
                     .build();
 
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 return new ByteArrayResource(response.body(), "Supabase: " + storagePath);
-            } else {
-                log.error("Supabase Storage fetch returned HTTP {} for path: {}", response.statusCode(), storagePath);
-                throw new RuntimeException("File not found in Supabase Storage: " + storagePath);
             }
+
+            // If not found in authenticated, try public endpoint
+            String publicUrl = cleanUrl + "/storage/v1/object/public/" + cleanBucket + "/" + storagePath;
+            HttpRequest pubRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(publicUrl))
+                    .GET()
+                    .timeout(Duration.ofSeconds(15))
+                    .build();
+
+            HttpResponse<byte[]> pubResponse = httpClient.send(pubRequest, HttpResponse.BodyHandlers.ofByteArray());
+            if (pubResponse.statusCode() >= 200 && pubResponse.statusCode() < 300) {
+                return new ByteArrayResource(pubResponse.body(), "Supabase Public: " + storagePath);
+            }
+
+            log.warn("Supabase Storage fetch returned HTTP {} for path: {}", response.statusCode(), storagePath);
+            throw new IllegalStateException("Voice recording not found in Supabase storage: " + storagePath);
+        } catch (IllegalStateException ex) {
+            throw ex;
         } catch (Exception ex) {
-            log.error("Supabase Storage load failed for path '{}'", storagePath, ex);
+            log.warn("Supabase Storage load failed for path '{}': {}", storagePath, ex.getMessage());
             String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
             throw new RuntimeException("Could not load file from Supabase cloud storage: " + message, ex);
         }
@@ -161,20 +179,22 @@ public class SupabaseStorageService implements StorageService {
         }
 
         try {
-            String normalizedBase = supabaseUrl.trim().replaceAll("/+$", "");
-            String targetUrl = normalizedBase + "/storage/v1/object/" + getEffectiveBucket() + "/" + storagePath;
+            String cleanUrl = getCleanUrl();
+            String cleanBucket = getEffectiveBucket();
+            String cleanKey = getCleanKey();
+            String targetUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + storagePath;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
-                    .header("Authorization", "Bearer " + supabaseKey.trim())
-                    .header("apikey", supabaseKey.trim())
+                    .header("Authorization", "Bearer " + cleanKey)
+                    .header("apikey", cleanKey)
                     .DELETE()
                     .timeout(Duration.ofSeconds(15))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                log.info("Deleted object from Supabase Storage: bucket={}, path={}", getEffectiveBucket(), storagePath);
+                log.info("Deleted object from Supabase Storage: bucket={}, path={}", cleanBucket, storagePath);
                 return true;
             } else {
                 log.warn("Supabase Storage delete returned HTTP {} for path: {}", response.statusCode(), storagePath);
@@ -191,13 +211,15 @@ public class SupabaseStorageService implements StorageService {
             return false;
         }
         try {
-            String normalizedBase = supabaseUrl.trim().replaceAll("/+$", "");
-            String targetUrl = normalizedBase + "/storage/v1/object/authenticated/" + getEffectiveBucket() + "/" + storagePath;
+            String cleanUrl = getCleanUrl();
+            String cleanBucket = getEffectiveBucket();
+            String cleanKey = getCleanKey();
+            String targetUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
-                    .header("Authorization", "Bearer " + supabaseKey.trim())
-                    .header("apikey", supabaseKey.trim())
+                    .header("Authorization", "Bearer " + cleanKey)
+                    .header("apikey", cleanKey)
                     .method("HEAD", HttpRequest.BodyPublishers.noBody())
                     .timeout(Duration.ofSeconds(10))
                     .build();

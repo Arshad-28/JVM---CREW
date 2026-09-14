@@ -116,24 +116,23 @@ public class AudioStorageService {
 
         try {
             byte[] fileBytes = file.getBytes();
-            StorageService active = getActiveStorageService();
-            boolean storedInCloud = false;
 
-            if (active instanceof SupabaseStorageService) {
-                try {
-                    active.store(storagePath, fileBytes, contentType);
-                    storedInCloud = true;
-                    log.info("Stored voice recording in SUPABASE (path: {}, size: {} bytes)", storagePath, fileBytes.length);
-                } catch (Exception ex) {
-                    log.warn("Supabase storage upload failed for path '{}'. Falling back to local disk storage. Reason: {}",
-                            storagePath, ex.getMessage(), ex);
-                }
+            // 1. Always store in local filesystem for immediate zero-latency playback
+            try {
+                localStorageService.store(storagePath, fileBytes, contentType);
+                log.info("Stored voice recording locally: {} (size: {} bytes)", storagePath, fileBytes.length);
+            } catch (Exception ex) {
+                log.warn("Failed to store voice recording locally at {}: {}", storagePath, ex.getMessage());
             }
 
-            if (!storedInCloud) {
-                // Store in local filesystem (either as configured primary or resilient fallback)
-                localStorageService.store(storagePath, fileBytes, contentType);
-                log.info("Stored voice recording in LOCAL disk storage (path: {}, size: {} bytes)", storagePath, fileBytes.length);
+            // 2. Also store in Supabase persistent cloud storage if configured
+            if (supabaseStorageService.isConfigured()) {
+                try {
+                    supabaseStorageService.store(storagePath, fileBytes, contentType);
+                    log.info("Stored voice recording in Supabase: {} (size: {} bytes)", storagePath, fileBytes.length);
+                } catch (Exception ex) {
+                    log.warn("Supabase persistent cloud storage upload failed for {}: {}", storagePath, ex.getMessage());
+                }
             }
 
             return StoredAudioMetadata.builder()
@@ -157,17 +156,20 @@ public class AudioStorageService {
             return false;
         }
         boolean deleted = false;
-        try {
-            deleted = getActiveStorageService().delete(relativePath);
-        } catch (Exception e) {
-            log.warn("Active storage delete failed for path {}: {}", relativePath, e.getMessage());
-        }
         if (localStorageService.exists(relativePath)) {
             try {
                 localStorageService.delete(relativePath);
                 deleted = true;
             } catch (Exception e) {
                 log.warn("Local storage delete failed for path {}: {}", relativePath, e.getMessage());
+            }
+        }
+        if (supabaseStorageService.isConfigured()) {
+            try {
+                supabaseStorageService.delete(relativePath);
+                deleted = true;
+            } catch (Exception e) {
+                log.warn("Supabase delete failed for path {}: {}", relativePath, e.getMessage());
             }
         }
         return deleted;
@@ -178,19 +180,34 @@ public class AudioStorageService {
             throw new IllegalArgumentException("Audio path is missing.");
         }
 
-        StorageService active = getActiveStorageService();
-        if (active instanceof SupabaseStorageService) {
+        // 1. Try local disk first (fastest)
+        if (localStorageService.exists(relativePath)) {
             try {
-                return active.loadAsResource(relativePath);
+                return localStorageService.loadAsResource(relativePath);
             } catch (Exception ex) {
-                log.warn("Could not load audio from Supabase at '{}', checking local disk storage fallback: {}", relativePath, ex.getMessage());
+                log.warn("Local storage resource load failed for '{}': {}", relativePath, ex.getMessage());
             }
         }
 
-        if (localStorageService.exists(relativePath)) {
-            return localStorageService.loadAsResource(relativePath);
+        // 2. Try Supabase cloud storage
+        if (supabaseStorageService.isConfigured()) {
+            try {
+                Resource resource = supabaseStorageService.loadAsResource(relativePath);
+                if (resource != null && resource.exists()) {
+                    // Cache locally for subsequent fast plays
+                    try {
+                        byte[] bytes = resource.getInputStream().readAllBytes();
+                        if (bytes.length > 0) {
+                            localStorageService.store(relativePath, bytes, "audio/webm");
+                        }
+                    } catch (Exception ignored) {}
+                    return resource;
+                }
+            } catch (Exception ex) {
+                log.warn("Supabase cloud storage load failed for '{}': {}", relativePath, ex.getMessage());
+            }
         }
 
-        return active.loadAsResource(relativePath);
+        throw new IllegalStateException("Voice recording is currently unavailable or still uploading. Please try again or re-record.");
     }
 }
