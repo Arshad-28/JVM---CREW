@@ -43,13 +43,26 @@ public class SupabaseStorageService implements StorageService {
     }
 
     private String getCleanUrl() {
-        if (!StringUtils.hasText(supabaseUrl)) return "";
-        return supabaseUrl.trim().replaceAll("^[\"']|[\"']$", "").replaceAll("/+$", "");
+        String raw = supabaseUrl;
+        if (!StringUtils.hasText(raw)) {
+            raw = "https://flvddrrjeydnkmyeqiqn.supabase.co";
+        }
+        String url = raw.trim().replaceAll("^[\"']|[\"']$", "").replaceAll("/+$", "");
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            if (url.contains(".")) {
+                url = "https://" + url;
+            } else {
+                url = "https://" + url + ".supabase.co";
+            }
+        }
+        return url;
     }
 
     private String getCleanKey() {
         if (!StringUtils.hasText(supabaseKey)) return "";
-        return supabaseKey.replaceAll("\\s+", "").replaceAll("^[\"']|[\"']$", "");
+        return supabaseKey.replaceAll("\\s+", "")
+                .replaceAll("^[\"']|[\"']$", "")
+                .replaceFirst("^(?i)bearer\\s*", "");
     }
 
     public boolean isConfigured() {

@@ -128,11 +128,15 @@ public class StandupController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
         StandupService.VoiceRecordingData data = standupService.getVoiceRecording(id, principal.getId());
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(data.getContentType()))
+        var builder = ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(data.getContentType() != null ? data.getContentType() : "audio/webm"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + data.getFilename() + "\"")
                 .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                .body(data.getResource());
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600");
+        if (data.getFileSize() != null && data.getFileSize() > 0) {
+            builder.contentLength(data.getFileSize());
+        }
+        return builder.body(data.getResource());
     }
 
     @PostMapping("/{id}/answer")

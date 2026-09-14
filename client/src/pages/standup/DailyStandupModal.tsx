@@ -154,7 +154,16 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Studio-grade audio constraints for maximum voice clarity & background noise suppression
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000,
+          channelCount: 1,
+        },
+      });
       streamRef.current = stream;
 
       let mimeType = '';
@@ -174,7 +183,10 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
         }
       }
 
-      const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+      const options: MediaRecorderOptions = {
+        ...(mimeType ? { mimeType } : {}),
+        audioBitsPerSecond: 128000, // 128 kbps crystal-clear studio voice recording
+      };
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -201,7 +213,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
         }
       };
 
-      mediaRecorder.start(250);
+      mediaRecorder.start(100);
       setIsRecording(true);
 
       timerIntervalRef.current = setInterval(() => {
