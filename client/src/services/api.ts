@@ -299,11 +299,11 @@ export const api = {
   },
 
   async submitVoiceStandup(formData: FormData): Promise<Standup> {
-    const res = await fetch(`${BASE_URL}/standups/submit-voice`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/standups/submit-voice`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: formData,
-    });
+    }, 60000);
     return handleResponse<Standup>(res);
   },
 

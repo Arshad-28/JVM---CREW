@@ -107,12 +107,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
-        log.error("Unhandled internal server exception occurred", ex);
-        // Do not leak stack traces or internal SQL exceptions to the client
+        log.error("Unhandled internal server exception occurred: {}", ex.getMessage(), ex);
+        String rawMessage = ex.getMessage();
+        String safeMessage = "An unexpected internal error occurred. Please try again later.";
+
+        if (rawMessage != null && !rawMessage.isBlank()) {
+            String lower = rawMessage.toLowerCase();
+            // Suppress internal database/driver internals from leaking
+            if (!lower.contains("sql") && !lower.contains("jdbc") && !lower.contains("hibernate") && !lower.contains("column") && !lower.contains("table") && !lower.contains("syntax")) {
+                safeMessage = rawMessage;
+            }
+        }
+
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Server Error",
-                "An unexpected internal error occurred. Please try again later.",
+                safeMessage,
                 Instant.now().toString()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
