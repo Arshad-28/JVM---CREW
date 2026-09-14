@@ -103,13 +103,21 @@ public class StandupController {
             @RequestParam(value = "audio", required = false) org.springframework.web.multipart.MultipartFile audioFile,
             @RequestParam(value = "voice", required = false) org.springframework.web.multipart.MultipartFile voiceFile,
             @RequestParam(value = "durationSeconds", required = false) Integer durationSeconds,
-            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "date", required = false) String dateStr,
             @RequestParam(value = "questionForLead", required = false) String questionForLead,
             @RequestParam(value = "confidence", required = false) Integer confidence,
             @RequestParam(value = "confidenceLabel", required = false) String confidenceLabel) {
         org.springframework.web.multipart.MultipartFile file = audioFile != null ? audioFile : voiceFile;
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Voice recording file is required");
+        }
+        LocalDate date = null;
+        if (org.springframework.util.StringUtils.hasText(dateStr)) {
+            try {
+                date = LocalDate.parse(dateStr.trim());
+            } catch (Exception ignored) {
+                date = LocalDate.now();
+            }
         }
         return ResponseEntity.ok(standupService.submitVoiceStandup(
                 principal.getId(), file, durationSeconds, date, questionForLead, confidence, confidenceLabel));

@@ -478,15 +478,15 @@ public class StandupService {
 
         String durStr = durationSeconds != null && durationSeconds > 0 ? (durationSeconds + "s") : "Recorded";
         standup.setYesterday("Voice Standup Recording (" + durStr + ")");
-        standup.setToday(null);
-        standup.setLearned(null);
+        standup.setToday("Voice Standup Recording");
+        standup.setLearned("Voice Standup Recording");
 
         if (confidence != null && confidence >= 1 && confidence <= 5) {
             standup.setConfidence(confidence);
             standup.setConfidenceLabel(confidenceLabel != null ? confidenceLabel : (confidence + "/5"));
         } else {
-            standup.setConfidence(null);
-            standup.setConfidenceLabel(null);
+            standup.setConfidence(4);
+            standup.setConfidenceLabel("4/5");
         }
 
         if (StringUtils.hasText(questionForLead)) {
