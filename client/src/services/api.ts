@@ -55,7 +55,7 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 25000): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 60000): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -64,6 +64,11 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
       signal: options.signal || controller.signal,
     });
     return response;
+  } catch (err: any) {
+    if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
+      throw new Error('Server took too long to respond. If the cloud service was asleep, it is waking up now. Please try again.');
+    }
+    throw err;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -105,13 +110,21 @@ export function getLocalTodayDateString(): string {
 }
 
 export const api = {
+  // Non-blocking background warmup ping for sleeping Render dynos
+  warmup(): void {
+    try {
+      const healthUrl = BASE_URL.endsWith('/api') ? BASE_URL.replace(/\/api$/, '/health') : `${BASE_URL}/health`;
+      fetch(healthUrl, { method: 'GET', mode: 'cors' }).catch(() => {});
+    } catch (e) {}
+  },
+
   // Auth
   async login(email: string, password: string): Promise<AuthUser> {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
-    }, 25000);
+    }, 60000);
     return handleResponse<AuthUser>(res);
   },
 
@@ -120,14 +133,14 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }, 25000);
+    }, 60000);
     return handleResponse<AuthUser>(res);
   },
 
   async getCurrentUser(): Promise<AuthUser> {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/me`, {
       headers: getHeaders(),
-    }, 10000);
+    }, 60000);
     return handleResponse<AuthUser>(res);
   },
 

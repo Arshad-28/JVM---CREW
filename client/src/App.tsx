@@ -9,6 +9,35 @@ import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
 import { DailyStandupModal } from './pages/standup/DailyStandupModal';
 import { LeaveEmailModal } from './components/common/LeaveEmailModal';
 
+const WorkspaceLoadingScreen: React.FC = () => {
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 3000);
+    const t2 = setTimeout(() => setPhase(2), 9000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-paper flex items-center justify-center p-4 font-sans">
+      <div className="flex flex-col items-center space-y-3 max-w-sm text-center animate-fade-in">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        <div className="font-mono text-xs text-ink font-medium">
+          {phase === 0 && 'Loading workspace...'}
+          {phase === 1 && 'Connecting to cloud service...'}
+          {phase === 2 && 'Waking up server dyno (first request takes ~20s)...'}
+        </div>
+        <p className="font-mono text-[10px] text-muted uppercase tracking-wider">
+          EngineerSpace Platform
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Lazy-loaded heavy secondary route components
 const KanbanBoardPage = lazy(() => import('./pages/tasks/KanbanBoardPage').then(m => ({ default: m.KanbanBoardPage })));
 const TeamDashboardPage = lazy(() => import('./pages/team/TeamDashboardPage').then(m => ({ default: m.TeamDashboardPage })));
@@ -126,14 +155,7 @@ const MainLayout: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-paper flex items-center justify-center">
-        <div className="font-mono text-xs text-muted flex items-center space-x-2.5">
-          <span className="w-2 h-2 rounded-full bg-accent inline-block"></span>
-          <span>Loading workspace...</span>
-        </div>
-      </div>
-    );
+    return <WorkspaceLoadingScreen />;
   }
 
   if (!user) {

@@ -47,13 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isValidToken && token) {
       let isMounted = true;
 
-      // Timeout safety: Ensure loading doesn't hang forever if backend cold start or network fails
-      const timeoutId = setTimeout(() => {
-        if (isMounted) {
-          console.warn('Auth session verification timed out. Falling back to login.');
-          setLoading(false);
-        }
-      }, 10000);
+      // Trigger non-blocking backend warmup
+      api.warmup();
 
       api
         .getCurrentUser()
@@ -70,16 +65,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         })
         .catch((err) => {
-          console.warn('Failed to restore session:', err);
+          console.warn('Session verification notice:', err?.message || err);
           if (isMounted) {
-            try {
-              localStorage.removeItem('jvmcrew_token');
-            } catch (e) {}
+            // Only remove token if the server explicitly rejected the credentials (401 / 403 / Unauthorized)
+            const isAuthError = err?.message?.includes('401') || err?.message?.includes('Unauthorized') || err?.message?.includes('Invalid token') || err?.message?.includes('403');
+            if (isAuthError) {
+              try {
+                localStorage.removeItem('jvmcrew_token');
+              } catch (e) {}
+            }
             setUser(null);
           }
         })
         .finally(() => {
-          clearTimeout(timeoutId);
           if (isMounted) {
             setLoading(false);
           }
@@ -87,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return () => {
         isMounted = false;
-        clearTimeout(timeoutId);
       };
     } else {
       try {
