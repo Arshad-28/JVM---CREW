@@ -32,7 +32,9 @@ public class SupabaseStorageService implements StorageService {
     @PostConstruct
     public void init() {
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15))
+                .version(HttpClient.Version.HTTP_1_1)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(20))
                 .build();
 
         if (isConfigured()) {
@@ -40,8 +42,12 @@ public class SupabaseStorageService implements StorageService {
         }
     }
 
+    private String getCleanKey() {
+        return StringUtils.hasText(supabaseKey) ? supabaseKey.replaceAll("\\s+", "") : "";
+    }
+
     public boolean isConfigured() {
-        return StringUtils.hasText(supabaseUrl) && StringUtils.hasText(supabaseKey);
+        return StringUtils.hasText(supabaseUrl) && StringUtils.hasText(getCleanKey());
     }
 
     public String getEffectiveBucket() {
@@ -64,11 +70,12 @@ public class SupabaseStorageService implements StorageService {
             String normalizedBase = supabaseUrl.trim().replaceAll("/+$", "");
             String targetUrl = normalizedBase + "/storage/v1/object/" + getEffectiveBucket() + "/" + storagePath;
             String effectiveMime = StringUtils.hasText(contentType) ? contentType : "application/octet-stream";
+            String cleanKey = getCleanKey();
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
-                    .header("Authorization", "Bearer " + supabaseKey.trim())
-                    .header("apikey", supabaseKey.trim())
+                    .header("Authorization", "Bearer " + cleanKey)
+                    .header("apikey", cleanKey)
                     .header("Content-Type", effectiveMime)
                     .header("x-upsert", "true")
                     .POST(HttpRequest.BodyPublishers.ofByteArray(data))
@@ -96,8 +103,9 @@ public class SupabaseStorageService implements StorageService {
         } catch (IllegalArgumentException | IllegalStateException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("Failed to store file in Supabase Storage at path '{}': {}", storagePath, ex.getMessage());
-            throw new RuntimeException("Could not save file to Supabase cloud storage: " + ex.getMessage(), ex);
+            log.error("Supabase Storage upload failed for path '{}'", storagePath, ex);
+            String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+            throw new RuntimeException("Could not save file to Supabase cloud storage: " + message, ex);
         }
     }
 
@@ -113,11 +121,12 @@ public class SupabaseStorageService implements StorageService {
         try {
             String normalizedBase = supabaseUrl.trim().replaceAll("/+$", "");
             String targetUrl = normalizedBase + "/storage/v1/object/authenticated/" + getEffectiveBucket() + "/" + storagePath;
+            String cleanKey = getCleanKey();
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
-                    .header("Authorization", "Bearer " + supabaseKey.trim())
-                    .header("apikey", supabaseKey.trim())
+                    .header("Authorization", "Bearer " + cleanKey)
+                    .header("apikey", cleanKey)
                     .GET()
                     .timeout(Duration.ofSeconds(30))
                     .build();
@@ -130,8 +139,9 @@ public class SupabaseStorageService implements StorageService {
                 throw new RuntimeException("File not found in Supabase Storage: " + storagePath);
             }
         } catch (Exception ex) {
-            log.error("Failed to load file from Supabase Storage at {}: {}", storagePath, ex.getMessage(), ex);
-            throw new RuntimeException("Could not load file from Supabase cloud storage: " + ex.getMessage(), ex);
+            log.error("Supabase Storage load failed for path '{}'", storagePath, ex);
+            String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+            throw new RuntimeException("Could not load file from Supabase cloud storage: " + message, ex);
         }
     }
 
