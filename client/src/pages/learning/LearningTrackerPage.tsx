@@ -264,10 +264,10 @@ export const LearningTrackerPage: React.FC = () => {
 
       {/* Filter Tabs & Quick Instructions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-3">
-        <div className="flex space-x-1 font-mono text-xs">
+        <div className="flex space-x-1 font-mono text-xs overflow-x-auto no-scrollbar pb-1 max-w-full">
           <button
             onClick={() => setFilter('ALL')}
-            className={`px-3 py-1 rounded-sm border transition-colors ${
+            className={`px-3 py-1 rounded-sm border transition-colors shrink-0 ${
               filter === 'ALL'
                 ? 'bg-ink text-paper border-ink font-semibold'
                 : 'bg-paper text-muted border-line hover:border-ink'
@@ -277,7 +277,7 @@ export const LearningTrackerPage: React.FC = () => {
           </button>
           <button
             onClick={() => setFilter('IN_PROGRESS')}
-            className={`px-3 py-1 rounded-sm border transition-colors ${
+            className={`px-3 py-1 rounded-sm border transition-colors shrink-0 ${
               filter === 'IN_PROGRESS'
                 ? 'bg-ink text-paper border-ink font-semibold'
                 : 'bg-paper text-muted border-line hover:border-ink'
@@ -287,7 +287,7 @@ export const LearningTrackerPage: React.FC = () => {
           </button>
           <button
             onClick={() => setFilter('DONE')}
-            className={`px-3 py-1 rounded-sm border transition-colors ${
+            className={`px-3 py-1 rounded-sm border transition-colors shrink-0 ${
               filter === 'DONE'
                 ? 'bg-ink text-paper border-ink font-semibold'
                 : 'bg-paper text-muted border-line hover:border-ink'
@@ -357,12 +357,12 @@ export const LearningTrackerPage: React.FC = () => {
                 className="border border-line bg-paper rounded-sm overflow-hidden"
               >
                 {/* Subject Ledger Header */}
-                <div className="p-3.5 bg-paper-dark border-b border-line flex items-center justify-between hover:bg-paper-light transition-colors">
+                <div className="p-3 sm:p-3.5 bg-paper-dark border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-paper-light transition-colors">
                   <div
                     onClick={() => toggleSubject(subject.subject)}
                     className="flex items-center space-x-2.5 cursor-pointer flex-1 min-w-0"
                   >
-                    <div className="text-muted">
+                    <div className="text-muted shrink-0">
                       {isExpanded ? (
                         <ChevronDown className="w-4 h-4" />
                       ) : (
@@ -379,7 +379,7 @@ export const LearningTrackerPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto">
                     {/* Lead Quick Add Topic to this Subject */}
                     {isLead && (
                       <button
@@ -387,7 +387,7 @@ export const LearningTrackerPage: React.FC = () => {
                           e.stopPropagation();
                           handleOpenAddTopic(subject.subject);
                         }}
-                        className="px-2 py-1 bg-paper border border-line hover:border-ink rounded-xs font-mono text-[10px] font-semibold text-ink flex items-center space-x-1 transition-colors"
+                        className="px-2 py-1 bg-paper border border-line hover:border-ink rounded-xs font-mono text-[10px] font-semibold text-ink flex items-center space-x-1 transition-colors shrink-0"
                         title="Add topic to this subject"
                       >
                         <Plus className="w-3 h-3 text-accent" />
@@ -395,11 +395,11 @@ export const LearningTrackerPage: React.FC = () => {
                       </button>
                     )}
 
-                    <div className="flex items-center space-x-3 w-40 sm:w-48">
+                    <div className="flex items-center space-x-2.5 w-36 sm:w-48 shrink-0">
                       <div className="flex-1">
                         <ProgressBar progressPct={subject.completionPct} />
                       </div>
-                      <span className="font-mono text-xs font-semibold text-ink w-10 text-right">
+                      <span className="font-mono text-xs font-semibold text-ink w-8 text-right">
                         {subject.completionPct}%
                       </span>
                     </div>

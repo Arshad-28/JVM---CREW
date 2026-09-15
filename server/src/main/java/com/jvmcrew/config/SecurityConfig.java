@@ -84,7 +84,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public health & minimal actuator endpoints
-                        .requestMatchers("/health", "/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/health", "/api/health", "/actuator/health", "/actuator/info").permitAll()
                         // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         // OpenAPI / Swagger
@@ -109,7 +109,15 @@ public class SecurityConfig {
                 .filter(s -> !s.isEmpty())
                 .toList();
 
-        configuration.setAllowedOrigins(allowedOrigins);
+        // Support exact origins as well as origin patterns (wildcards for Netlify deploy previews and local ports)
+        configuration.setAllowedOriginPatterns(List.of(
+                "https://*.netlify.app",
+                "https://engineerspace.netlify.app",
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "http://localhost",
+                "http://127.0.0.1"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
                 "Authorization",

@@ -58,8 +58,8 @@ export const MonthlyLecturerReportSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 font-mono text-xs">
-          <div className="flex items-center space-x-1.5 bg-paper-dark border border-line px-2.5 py-1 rounded-xs">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+          <div className="flex items-center space-x-1.5 bg-paper-dark border border-line px-2.5 py-1.5 rounded-xs">
             <Calendar className="w-3.5 h-3.5 text-muted" />
             <select
               value={selectedMonth}
@@ -105,7 +105,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center font-mono text-xs">
                   <div className="p-2.5 bg-paper border border-line rounded-xs space-y-0.5">
                     <span className="text-[10px] text-muted uppercase font-bold block">Tasks Done</span>
                     <span className="text-sm font-black text-ink block">
@@ -146,7 +146,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center font-mono text-xs">
                   <div className="p-2.5 bg-paper border border-line rounded-xs space-y-0.5">
                     <span className="text-[10px] text-muted uppercase font-bold block">Tasks Created</span>
                     <span className="text-sm font-black text-ink block">
@@ -181,7 +181,8 @@ export const MonthlyLecturerReportSection: React.FC = () => {
               COHORT PERFORMANCE MATRIX ({evaluation.monthLabel})
             </span>
 
-            <div className="border border-line rounded-xs overflow-x-auto">
+            {/* Desktop Table View (hidden on md-) */}
+            <div className="hidden md:block border border-line rounded-xs overflow-x-auto">
               <table className="w-full text-left font-mono text-xs">
                 <thead className="bg-paper-dark border-b border-line text-muted uppercase text-[10px]">
                   <tr>
@@ -216,6 +217,47 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card List View (hidden on md+) */}
+            <div className="md:hidden divide-y divide-line border border-line rounded-xs">
+              {evaluation.cohortSummaries.map((m) => (
+                <div key={m.userId} className="p-3.5 space-y-2 bg-paper font-mono text-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-ink">{m.name}</span>
+                      <span className="text-[10px] text-muted ml-1">({m.serialNumber})</span>
+                    </div>
+                    <span className={`px-1.5 py-0.5 rounded-xs text-[10px] font-bold ${
+                      m.roleInMonth.includes('LEAD')
+                        ? 'bg-amber-500/15 text-amber-800 border border-amber-500/30'
+                        : 'bg-paper-dark text-muted border border-line'
+                    }`}>
+                      {m.roleInMonth}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 text-center text-[11px] bg-paper-dark/40 p-2 rounded-xs border border-line">
+                    <div>
+                      <span className="text-[9px] text-muted block uppercase">Tasks</span>
+                      <span className="font-bold text-ink">{m.tasksCompleted}/{m.tasksTotal}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-muted block uppercase">HW</span>
+                      <span className="font-bold text-ink">{m.homeworkSubmitted}/{m.homeworkTotal}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-muted block uppercase">Standups</span>
+                      <span className="font-bold text-ink">{m.standupsSubmitted}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-line">
+                    <span className="text-muted">Monthly Progress Rate:</span>
+                    <span className="font-bold text-accent">{m.progressPct}%</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

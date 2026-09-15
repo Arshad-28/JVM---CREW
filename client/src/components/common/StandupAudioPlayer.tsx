@@ -84,6 +84,9 @@ export const StandupAudioPlayer: React.FC<StandupAudioPlayerProps> = ({
       setSrcUrl(audioUrl);
       setIsLoading(false);
       setError(null);
+    } else {
+      setSrcUrl(null);
+      setIsLoading(false);
     }
   }, [audioUrl, standupId]);
 

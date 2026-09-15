@@ -109,7 +109,7 @@ export const MemberProgressDetailModal: React.FC<MemberProgressDetailModalProps>
         </div>
 
         {/* Tab Strip */}
-        <div className="flex space-x-1 border-b border-line bg-paper-dark px-5 pt-2">
+        <div className="flex space-x-1 border-b border-line bg-paper-dark px-3 sm:px-5 pt-2 overflow-x-auto no-scrollbar max-w-full">
           {(
             [
               { id: 'overview', label: 'Overview & Focus', icon: Activity },
@@ -123,7 +123,7 @@ export const MemberProgressDetailModal: React.FC<MemberProgressDetailModalProps>
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`px-3 py-2 font-mono text-xs font-medium border-b-2 transition-all flex items-center space-x-1.5 ${
+                className={`px-3 py-2 font-mono text-xs font-medium border-b-2 transition-all flex items-center space-x-1.5 shrink-0 ${
                   activeTab === tab.id
                     ? 'border-accent text-accent bg-paper font-bold'
                     : 'border-transparent text-muted hover:text-ink'

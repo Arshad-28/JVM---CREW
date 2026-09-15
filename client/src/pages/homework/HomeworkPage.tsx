@@ -19,6 +19,9 @@ import {
   Bell,
   Check,
   BookOpen,
+  Trash2,
+  AlertCircle,
+  Edit3,
 } from 'lucide-react';
 
 export const HomeworkPage: React.FC = () => {
@@ -76,6 +79,30 @@ export const HomeworkPage: React.FC = () => {
   // Expanded Accordion State
   const [expandedHomework, setExpandedHomework] = useState<Record<number, boolean>>({});
   const [remindedMembersMap, setRemindedMembersMap] = useState<Record<string, boolean>>({});
+
+  // Homework Deletion State
+  const [homeworkToDelete, setHomeworkToDelete] = useState<Homework | null>(null);
+  const [isDeletingHomework, setIsDeletingHomework] = useState<boolean>(false);
+  const [deleteHomeworkError, setDeleteHomeworkError] = useState<string | null>(null);
+
+  const handleConfirmDeleteHomework = async () => {
+    if (!homeworkToDelete) return;
+    try {
+      setIsDeletingHomework(true);
+      setDeleteHomeworkError(null);
+      await api.deleteHomework(homeworkToDelete.id);
+      setHomeworkList((prev) => prev.filter((hw) => hw.id !== homeworkToDelete.id));
+      if (editingHomework?.id === homeworkToDelete.id) {
+        setAddModalOpen(false);
+        setEditingHomework(null);
+      }
+      setHomeworkToDelete(null);
+    } catch (err: any) {
+      setDeleteHomeworkError(err.message || 'Failed to delete homework');
+    } finally {
+      setIsDeletingHomework(false);
+    }
+  };
 
   const loadHomework = async () => {
     try {
@@ -473,6 +500,32 @@ export const HomeworkPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
+                      {isLead && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenAddModal(hw);
+                            }}
+                            className="p-1.5 hover:bg-paper border border-line hover:border-ink rounded-sm text-muted hover:text-ink transition-colors"
+                            title="Edit Homework"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHomeworkToDelete(hw);
+                            }}
+                            className="p-1.5 hover:bg-red-500/10 border border-line hover:border-red-500/40 rounded-sm text-muted hover:text-red-600 transition-colors"
+                            title="Delete Homework"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
                       {isExpanded ? (
                         <ChevronUp className="w-4 h-4 text-muted" />
                       ) : (
@@ -590,7 +643,8 @@ export const HomeworkPage: React.FC = () => {
                               </span>
                             </div>
 
-                            <div className="border border-line rounded-sm overflow-hidden">
+                            {/* Member Submissions Tracker: Desktop Table (hidden md:block) */}
+                            <div className="hidden md:block border border-line rounded-sm overflow-hidden">
                               <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                   <tr className="border-b border-line bg-paper-light font-mono text-[11px] text-muted">
@@ -675,6 +729,81 @@ export const HomeworkPage: React.FC = () => {
                                   })}
                                 </tbody>
                               </table>
+                            </div>
+
+                            {/* Member Submissions Tracker: Mobile Cards (md:hidden) */}
+                            <div className="md:hidden space-y-2.5">
+                              {hw.memberSubmissions?.map((m) => {
+                                const isReminded =
+                                  m.isReminded || remindedMembersMap[`${hw.id}-${m.userId}`];
+
+                                return (
+                                  <div
+                                    key={m.userId}
+                                    className="p-3 bg-paper-light border border-line rounded-sm space-y-2"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <span className="font-medium text-ink block text-xs truncate">
+                                          {m.name}
+                                        </span>
+                                        <span className="font-mono text-[10px] text-muted truncate block">
+                                          {m.email}
+                                        </span>
+                                      </div>
+                                      <span
+                                        className={`font-mono text-[10px] px-2 py-0.5 rounded-xs font-bold border shrink-0 ${
+                                          m.status === 'Reviewed'
+                                            ? 'bg-accent/10 text-accent border-accent/30'
+                                            : m.status === 'Submitted'
+                                            ? 'bg-accent/10 text-accent border-accent/30'
+                                            : m.status === 'Overdue'
+                                            ? 'bg-attention/10 text-attention border-attention/30'
+                                            : 'bg-paper text-muted border-line'
+                                        }`}
+                                      >
+                                        {m.status}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1 border-t border-line/60">
+                                      <span className="font-mono text-[10px] text-muted">
+                                        {m.submittedAt
+                                          ? new Date(m.submittedAt).toLocaleString('en-US', {
+                                              month: 'short',
+                                              day: 'numeric',
+                                              hour: 'numeric',
+                                              minute: '2-digit',
+                                            })
+                                          : 'Not submitted yet'}
+                                      </span>
+
+                                      {m.isSubmitted ? (
+                                        <button
+                                          onClick={() => handleOpenReviewModal(hw.id, m)}
+                                          className="px-2.5 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-[11px] font-medium text-ink transition-colors inline-flex items-center space-x-1"
+                                        >
+                                          <Eye className="w-3 h-3 text-accent" />
+                                          <span>{m.isReviewed ? 'View' : 'Review'}</span>
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleRemindMember(hw.id, m.userId)}
+                                          disabled={isReminded}
+                                          className={`px-2.5 py-1 border rounded-sm font-mono text-[11px] transition-colors inline-flex items-center space-x-1 ${
+                                            isReminded
+                                              ? 'border-line bg-paper-dark text-muted cursor-default'
+                                              : 'border-line bg-paper hover:border-ink text-ink'
+                                          }`}
+                                        >
+                                          <Bell className="w-3 h-3" />
+                                          <span>{isReminded ? 'Reminded' : 'Remind'}</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
 
@@ -967,9 +1096,9 @@ export const HomeworkPage: React.FC = () => {
         ) : (
           <div className="divide-y divide-line text-xs">
             {previousHomeworkList.map((hw) => (
-              <div key={hw.id} className="py-3 flex items-center justify-between gap-4">
+              <div key={hw.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                 <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <span className="font-medium text-ink truncate">{hw.title}</span>
                     <span className="font-mono text-[10px] px-1.5 py-0.2 bg-paper-dark border border-line rounded-xs text-muted">
                       {hw.subjectTopic}
@@ -980,11 +1109,21 @@ export const HomeworkPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="shrink-0 flex items-center space-x-2">
+                <div className="shrink-0 flex items-center space-x-2 self-start sm:self-auto">
                   {isLead ? (
-                    <span className="font-mono text-[11px] text-muted">
-                      {hw.submittedCount}/{hw.totalMembers} Submitted
-                    </span>
+                    <>
+                      <span className="font-mono text-[11px] text-muted">
+                        {hw.submittedCount}/{hw.totalMembers} Submitted
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setHomeworkToDelete(hw)}
+                        className="p-1 hover:bg-red-500/10 border border-line hover:border-red-500/40 rounded-sm text-muted hover:text-red-600 transition-colors"
+                        title="Delete Homework"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
                   ) : (
                     <span className="font-mono text-[10px] text-accent font-bold">
                       {hw.myStatus || 'Completed'}
@@ -1180,31 +1319,48 @@ export const HomeworkPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-line">
-              <button
-                type="button"
-                onClick={() => setAddModalOpen(false)}
-                className="px-3.5 py-2 border border-line text-muted hover:text-ink font-mono text-xs rounded-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSaveHomework(false)}
-                disabled={savingHomework}
-                className="px-4 py-2 border border-line hover:bg-paper-dark font-mono text-xs font-semibold rounded-sm transition-colors text-ink disabled:opacity-50"
-              >
-                Save as Draft
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSaveHomework(true)}
-                disabled={savingHomework}
-                className="px-5 py-2 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 shadow-xs"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Publish Homework</span>
-              </button>
+            <div className="flex items-center justify-between pt-3 border-t border-line">
+              {editingHomework ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddModalOpen(false);
+                    setHomeworkToDelete(editingHomework);
+                  }}
+                  className="px-3.5 py-2 border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-red-700 font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  <span>Delete Homework</span>
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setAddModalOpen(false)}
+                  className="px-3.5 py-2 border border-line text-muted hover:text-ink font-mono text-xs rounded-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveHomework(false)}
+                  disabled={savingHomework}
+                  className="px-4 py-2 border border-line hover:bg-paper-dark font-mono text-xs font-semibold rounded-sm transition-colors text-ink disabled:opacity-50"
+                >
+                  Save as Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveHomework(true)}
+                  disabled={savingHomework}
+                  className="px-5 py-2 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 shadow-xs"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Publish Homework</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1408,6 +1564,65 @@ export const HomeworkPage: React.FC = () => {
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>{submittingSolution ? 'Publishing...' : 'Publish Solution'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* DELETE HOMEWORK CONFIRMATION MODAL                                        */}
+      {/* ========================================================================= */}
+      {homeworkToDelete && (
+        <div className="fixed inset-0 z-60 bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="bg-paper border border-line w-full max-w-md rounded-sm shadow-xl p-6 space-y-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-600 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-display text-base font-bold text-ink">
+                  Delete Homework?
+                </h3>
+                <p className="text-xs text-muted leading-relaxed">
+                  Are you sure you want to delete <strong className="text-ink">{homeworkToDelete.title}</strong>? All student submissions, files, and review history will be permanently removed. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {deleteHomeworkError && (
+              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{deleteHomeworkError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-line font-mono text-xs">
+              <button
+                type="button"
+                disabled={isDeletingHomework}
+                onClick={() => {
+                  setHomeworkToDelete(null);
+                  setDeleteHomeworkError(null);
+                }}
+                className="px-4 py-2 bg-paper border border-line hover:border-ink rounded-sm font-bold text-ink transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingHomework}
+                onClick={handleConfirmDeleteHomework}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-sm font-bold transition-colors flex items-center space-x-1.5 shadow-xs disabled:opacity-50"
+              >
+                {isDeletingHomework ? (
+                  <span>Deleting...</span>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Homework</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -19,7 +19,7 @@ public class HealthController {
 
     private final DataSource dataSource;
 
-    @GetMapping("/health")
+    @GetMapping({"/health", "/api/health"})
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> statusMap = new HashMap<>();
         statusMap.put("status", "UP");

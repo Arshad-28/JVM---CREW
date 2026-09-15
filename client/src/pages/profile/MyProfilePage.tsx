@@ -57,9 +57,9 @@ export const MyProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
       {/* Header Banner */}
-      <div className="border border-line bg-paper p-6 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="border border-line bg-paper p-4 sm:p-6 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 px-2 py-0.5 rounded-sm">

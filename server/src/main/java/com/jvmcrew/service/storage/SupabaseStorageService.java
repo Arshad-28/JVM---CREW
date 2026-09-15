@@ -145,23 +145,37 @@ public class SupabaseStorageService implements StorageService {
             String cleanBucket = getEffectiveBucket();
             String cleanKey = getCleanKey();
 
-            // Try authenticated endpoint first
-            String targetUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(targetUrl))
+            // 1. Try standard Supabase object endpoint with auth headers
+            String standardUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + storagePath;
+            HttpRequest stdRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(standardUrl))
                     .header("Authorization", "Bearer " + cleanKey)
                     .header("apikey", cleanKey)
                     .GET()
                     .timeout(Duration.ofSeconds(20))
                     .build();
 
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                return new ByteArrayResource(response.body(), "Supabase: " + storagePath);
+            HttpResponse<byte[]> stdResponse = httpClient.send(stdRequest, HttpResponse.BodyHandlers.ofByteArray());
+            if (stdResponse.statusCode() >= 200 && stdResponse.statusCode() < 300) {
+                return new ByteArrayResource(stdResponse.body(), "Supabase: " + storagePath);
             }
 
-            // If not found in authenticated, try public endpoint
+            // 2. Try authenticated endpoint
+            String authUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
+            HttpRequest authRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(authUrl))
+                    .header("Authorization", "Bearer " + cleanKey)
+                    .header("apikey", cleanKey)
+                    .GET()
+                    .timeout(Duration.ofSeconds(15))
+                    .build();
+
+            HttpResponse<byte[]> authResponse = httpClient.send(authRequest, HttpResponse.BodyHandlers.ofByteArray());
+            if (authResponse.statusCode() >= 200 && authResponse.statusCode() < 300) {
+                return new ByteArrayResource(authResponse.body(), "Supabase Authenticated: " + storagePath);
+            }
+
+            // 3. Try public endpoint as fallback
             String publicUrl = cleanUrl + "/storage/v1/object/public/" + cleanBucket + "/" + storagePath;
             HttpRequest pubRequest = HttpRequest.newBuilder()
                     .uri(URI.create(publicUrl))
@@ -174,7 +188,7 @@ public class SupabaseStorageService implements StorageService {
                 return new ByteArrayResource(pubResponse.body(), "Supabase Public: " + storagePath);
             }
 
-            log.warn("Supabase Storage fetch returned HTTP {} for path: {}", response.statusCode(), storagePath);
+            log.warn("Supabase Storage fetch returned HTTP {} for path: {}", stdResponse.statusCode(), storagePath);
             throw new IllegalStateException("Voice recording not found in Supabase storage: " + storagePath);
         } catch (IllegalStateException ex) {
             throw ex;
@@ -227,8 +241,8 @@ public class SupabaseStorageService implements StorageService {
             String cleanUrl = getCleanUrl();
             String cleanBucket = getEffectiveBucket();
             String cleanKey = getCleanKey();
-            String targetUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
 
+            String targetUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + storagePath;
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
                     .header("Authorization", "Bearer " + cleanKey)
@@ -238,7 +252,21 @@ public class SupabaseStorageService implements StorageService {
                     .build();
 
             HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return true;
+            }
+
+            String authUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
+            HttpRequest authRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(authUrl))
+                    .header("Authorization", "Bearer " + cleanKey)
+                    .header("apikey", cleanKey)
+                    .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                    .timeout(Duration.ofSeconds(10))
+                    .build();
+
+            HttpResponse<Void> authResponse = httpClient.send(authRequest, HttpResponse.BodyHandlers.discarding());
+            return authResponse.statusCode() >= 200 && authResponse.statusCode() < 300;
         } catch (Exception e) {
             return false;
         }

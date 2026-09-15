@@ -95,4 +95,13 @@ public class HomeworkController {
         homeworkService.remindMember(id, principal.getId(), userId);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('LEAD', 'ADMIN')")
+    public ResponseEntity<Void> deleteHomework(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        homeworkService.deleteHomework(id, principal.getId());
+        return ResponseEntity.noContent().build();
+    }
 }

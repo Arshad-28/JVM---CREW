@@ -27,14 +27,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         String cleanEmail = email != null ? email.trim() : "";
-        User user = userRepository.findByEmailIgnoreCase(cleanEmail)
-                .or(() -> userRepository.findByEmail(cleanEmail))
+        User user = userRepository.findByEmail(cleanEmail)
+                .or(() -> userRepository.findByEmailIgnoreCase(cleanEmail))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        TeamMember teamMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(user)
-                .orElse(teamMemberRepository.findFirstByUser(user).orElse(null));
+        TeamMember teamMember = teamMemberRepository.findActiveWithTeamByUser(user)
+                .orElseGet(() -> teamMemberRepository.findFirstByUser(user).orElse(null));
 
-        Long teamId = teamMember != null ? teamMember.getTeam().getId() : null;
+        Long teamId = teamMember != null && teamMember.getTeam() != null ? teamMember.getTeam().getId() : null;
 
         // Dynamic Role Resolution: Check if user is the designated active Lead for today
         LocalDate today = LocalDate.now();
@@ -51,6 +51,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         Role role = isActiveLead ? Role.LEAD : Role.MEMBER;
 
-        return new UserPrincipal(user, teamId, role);
+        return new UserPrincipal(user, teamMember, teamId, role);
     }
 }
+

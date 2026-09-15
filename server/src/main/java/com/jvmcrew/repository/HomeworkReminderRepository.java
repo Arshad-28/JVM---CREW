@@ -12,4 +12,6 @@ import java.util.List;
 public interface HomeworkReminderRepository extends JpaRepository<HomeworkReminder, Long> {
     List<HomeworkReminder> findByUserAndIsReadFalse(User user);
     List<HomeworkReminder> findByHomeworkAndUser(Homework homework, User user);
+    List<HomeworkReminder> findByHomework(Homework homework);
+    void deleteByHomework(Homework homework);
 }

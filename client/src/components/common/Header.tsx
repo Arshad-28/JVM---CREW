@@ -292,7 +292,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 {/* 2. USER NAME & ROLE BADGE */}
-                <div className="flex flex-col min-w-0 justify-center">
+                <div className="hidden sm:flex flex-col min-w-0 justify-center">
                   <span className="font-display font-bold text-xs sm:text-sm text-ink tracking-tight leading-tight truncate max-w-[95px] xs:max-w-[130px] sm:max-w-[160px] md:max-w-[190px]">
                     {user.name}
                   </span>

@@ -389,15 +389,15 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
 
         {/* Tab Controls (Only shown when not view-only) */}
         {!viewOnly && !initialStandup && (
-          <div className="px-4 pt-3 pb-2 border-b border-line bg-paper flex items-center justify-between">
-            <div className="flex space-x-1.5 font-mono text-xs">
+          <div className="px-4 pt-3 pb-2 border-b border-line bg-paper flex items-center justify-between overflow-x-auto no-scrollbar gap-2">
+            <div className="flex space-x-1.5 font-mono text-xs shrink-0">
               <button
                 type="button"
                 onClick={() => {
                   cleanupVoice();
                   setActiveTab('WRITE');
                 }}
-                className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 shrink-0 ${
                   activeTab === 'WRITE'
                     ? 'bg-ink text-paper shadow-xs'
                     : 'bg-paper-dark hover:bg-line text-muted hover:text-ink border border-line'
@@ -412,7 +412,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                 onClick={() => {
                   setActiveTab('VOICE');
                 }}
-                className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 shrink-0 ${
                   activeTab === 'VOICE'
                     ? 'bg-ink text-paper shadow-xs'
                     : 'bg-paper-dark hover:bg-line text-muted hover:text-ink border border-line'
@@ -429,7 +429,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                     cleanupVoice();
                     setActiveTab('VIEW');
                   }}
-                  className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+                  className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 shrink-0 ${
                     activeTab === 'VIEW'
                       ? 'bg-ink text-paper shadow-xs'
                       : 'bg-paper-dark hover:bg-line text-muted hover:text-ink border border-line'

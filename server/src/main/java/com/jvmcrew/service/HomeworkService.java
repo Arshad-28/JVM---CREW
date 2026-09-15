@@ -25,6 +25,7 @@ public class HomeworkService {
     private final HomeworkReminderRepository homeworkReminderRepository;
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final LeadershipService leadershipService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional(readOnly = true)
@@ -491,6 +492,51 @@ public class HomeworkService {
                 .isReminded(isReminded)
                 .memberSubmissions(memberStatuses)
                 .build();
+    }
+
+    @Transactional
+    public void deleteHomework(Long homeworkId, Long currentUserId) {
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUserId));
+
+        Homework hw = homeworkRepository.findById(homeworkId)
+                .orElseThrow(() -> new IllegalArgumentException("Homework not found: " + homeworkId));
+
+        var teamMemberOpt = teamMemberRepository.findFirstByUserAndIsActiveTrue(user);
+        if (teamMemberOpt.isEmpty()) {
+            throw new IllegalStateException("User does not belong to any active team");
+        }
+
+        Team userTeam = teamMemberOpt.get().getTeam();
+        if (!hw.getTeam().getId().equals(userTeam.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You are not authorized to delete homework from another team.");
+        }
+
+        verifyLeadAuthorization(user, hw.getTeam());
+
+        List<HomeworkSubmission> submissions = homeworkSubmissionRepository.findByHomework(hw);
+        if (!submissions.isEmpty()) {
+            homeworkSubmissionRepository.deleteAll(submissions);
+        }
+
+        List<HomeworkReminder> reminders = homeworkReminderRepository.findByHomework(hw);
+        if (!reminders.isEmpty()) {
+            homeworkReminderRepository.deleteAll(reminders);
+        }
+
+        homeworkRepository.delete(hw);
+    }
+
+    private void verifyLeadAuthorization(User user, Team team) {
+        if (user == null || team == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication and valid team required.");
+        }
+        boolean isLeadToday = leadershipService.isUserActiveLead(user, team, LocalDate.now());
+        var membershipOpt = teamMemberRepository.findByTeamAndUserAndIsActiveTrue(team, user);
+        if (isLeadToday || (membershipOpt.isPresent() && (membershipOpt.get().getRole() == Role.LEAD || membershipOpt.get().getRole() == Role.ADMIN))) {
+            return;
+        }
+        throw new org.springframework.security.access.AccessDeniedException("Only the active Lead of " + team.getFormattedDisplayName() + " can delete homework.");
     }
 
     private HomeworkSubmissionResponse mapToSubmissionDto(HomeworkSubmission s) {

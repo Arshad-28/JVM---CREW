@@ -3,32 +3,18 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/common/Header';
 import { LoginPage } from './pages/auth/LoginPage';
 import { cleanTeamDisplayName } from './utils/greetingEngine';
-import { api, getLocalTodayDateString } from './services/api';
 
 import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
 import { DailyStandupModal } from './pages/standup/DailyStandupModal';
 import { LeaveEmailModal } from './components/common/LeaveEmailModal';
 
 const WorkspaceLoadingScreen: React.FC = () => {
-  const [phase, setPhase] = useState(0);
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 3000);
-    const t2 = setTimeout(() => setPhase(2), 9000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4 font-sans">
       <div className="flex flex-col items-center space-y-3 max-w-sm text-center animate-fade-in">
         <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
         <div className="font-mono text-xs text-ink font-medium">
-          {phase === 0 && 'Loading workspace...'}
-          {phase === 1 && 'Connecting to cloud service...'}
-          {phase === 2 && 'Waking up server dyno (first request takes ~20s)...'}
+          Verifying workspace session...
         </div>
         <p className="font-mono text-[10px] text-muted uppercase tracking-wider">
           EngineerSpace Platform
@@ -109,31 +95,24 @@ const MainLayout: React.FC = () => {
     }
   }, [user]);
 
-  const checkStandupStatus = async () => {
-    if (!user) return;
-    try {
-      const todayStr = getLocalTodayDateString();
-      const standup = await api.getTodayStandup(todayStr);
-      const isDone = Boolean(standup && (standup.id != null || standup.submittedAt != null));
-      setStandupDoneToday(isDone);
-    } catch (err) {
-      console.error('Failed to check standup status:', err);
-    }
-  };
-
   useEffect(() => {
-    if (user) {
-      checkStandupStatus();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    const handleStandupEvent = () => {
-      checkStandupStatus();
+    const handleStatusSync = (e: any) => {
+      if (typeof e.detail?.isDone === 'boolean') {
+        setStandupDoneToday(e.detail.isDone);
+      }
     };
-    window.addEventListener('jvm_standup_submitted', handleStandupEvent);
-    return () => window.removeEventListener('jvm_standup_submitted', handleStandupEvent);
-  }, [user]);
+    const handleStandupSubmitted = () => {
+      setStandupDoneToday(true);
+    };
+
+    window.addEventListener('jvm_standup_status_synced', handleStatusSync);
+    window.addEventListener('jvm_standup_submitted', handleStandupSubmitted);
+
+    return () => {
+      window.removeEventListener('jvm_standup_status_synced', handleStatusSync);
+      window.removeEventListener('jvm_standup_submitted', handleStandupSubmitted);
+    };
+  }, []);
 
   useEffect(() => {
     const handleOpenLab = (e: any) => {

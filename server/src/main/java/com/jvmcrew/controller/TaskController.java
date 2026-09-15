@@ -92,7 +92,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('LEAD')")
+    @PreAuthorize("hasAnyRole('LEAD', 'ADMIN')")
     public ResponseEntity<Void> deleteTask(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {

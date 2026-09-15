@@ -25,6 +25,7 @@ import {
   FileCheck,
   ShieldAlert,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 
 const COLUMNS: {
@@ -95,6 +96,29 @@ export const KanbanBoardPage: React.FC = () => {
   const [estHours, setEstHours] = useState('4.0');
   const [selectedLabels, setSelectedLabels] = useState<string[]>(['Java', 'Core Java']);
   const [isLabelPickerOpen, setIsLabelPickerOpen] = useState<boolean>(false);
+
+  // Task Deletion State
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isDeletingTask, setIsDeletingTask] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleConfirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+    try {
+      setIsDeletingTask(true);
+      setDeleteError(null);
+      await api.deleteTask(taskToDelete.id);
+      setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+      if (selectedTask?.id === taskToDelete.id) {
+        setSelectedTask(null);
+      }
+      setTaskToDelete(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete task');
+    } finally {
+      setIsDeletingTask(false);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -952,7 +976,22 @@ export const KanbanBoardPage: React.FC = () => {
                           }`}
                         >
                           <div className="flex items-center justify-between text-[10px] font-mono">
-                            <span className="text-muted font-bold">TASK-{task.id}</span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-muted font-bold">TASK-{task.id}</span>
+                              {isLead && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTaskToDelete(task);
+                                  }}
+                                  className="opacity-70 md:opacity-0 md:group-hover:opacity-100 hover:!opacity-100 p-0.5 hover:bg-red-500/10 text-muted hover:text-red-600 rounded-xs transition-opacity"
+                                  title="Delete Task"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                             <StatusBadge type="priority" value={task.priority} />
                           </div>
 
@@ -1076,13 +1115,24 @@ export const KanbanBoardPage: React.FC = () => {
                 <StatusBadge type="priority" value={selectedTask.priority} />
                 <StatusBadge type="status" value={selectedTask.status} />
               </div>
-              <button
-                onClick={() => setSelectedTask(null)}
-                className="p-1 text-muted hover:text-ink rounded-sm transition-colors"
-                title="Close Modal (Esc)"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center space-x-2">
+                {isLead && (
+                  <button
+                    onClick={() => setTaskToDelete(selectedTask)}
+                    className="p-1 text-muted hover:text-red-600 hover:bg-red-500/10 rounded-sm transition-colors"
+                    title="Delete Task"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  className="p-1 text-muted hover:text-ink rounded-sm transition-colors"
+                  title="Close Modal (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* MODAL TITLE & DESCRIPTION */}
@@ -1345,13 +1395,82 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
 
             {/* MODAL FOOTER */}
-            <div className="p-4 border-t border-line bg-paper-dark flex justify-end font-mono text-xs">
+            <div className="p-4 border-t border-line bg-paper-dark flex items-center justify-between font-mono text-xs">
+              {isLead ? (
+                <button
+                  type="button"
+                  onClick={() => setTaskToDelete(selectedTask)}
+                  className="px-3.5 py-1.5 border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-red-700 font-bold rounded-sm transition-colors flex items-center space-x-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  <span>Delete Task</span>
+                </button>
+              ) : (
+                <div />
+              )}
               <button
                 type="button"
                 onClick={() => setSelectedTask(null)}
                 className="px-4 py-1.5 bg-paper border border-line hover:border-ink rounded-sm font-bold text-ink transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE TASK CONFIRMATION MODAL */}
+      {taskToDelete && (
+        <div className="fixed inset-0 z-60 bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="bg-paper border border-line w-full max-w-md rounded-sm shadow-xl p-6 space-y-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-600 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-display text-base font-bold text-ink">
+                  Delete Task?
+                </h3>
+                <p className="text-xs text-muted leading-relaxed">
+                  Are you sure you want to delete <strong className="text-ink">TASK-{taskToDelete.id}: {taskToDelete.title}</strong>? All comments and audit history will be permanently removed. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-line font-mono text-xs">
+              <button
+                type="button"
+                disabled={isDeletingTask}
+                onClick={() => {
+                  setTaskToDelete(null);
+                  setDeleteError(null);
+                }}
+                className="px-4 py-2 bg-paper border border-line hover:border-ink rounded-sm font-bold text-ink transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingTask}
+                onClick={handleConfirmDeleteTask}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-sm font-bold transition-colors flex items-center space-x-1.5 shadow-xs disabled:opacity-50"
+              >
+                {isDeletingTask ? (
+                  <span>Deleting...</span>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Task</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

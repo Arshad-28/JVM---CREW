@@ -25,6 +25,7 @@ public class TaskService {
     private final UserRepository userRepository;
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final LeadershipService leadershipService;
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasks(Long teamId, Long assigneeId, TaskStatus status) {
@@ -246,9 +247,26 @@ public class TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
         verifyTaskTeam(task, teamId);
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + currentUserId));
+        verifyLeadAuthorization(user, task.getTeam());
+
         taskHistoryRepository.deleteAll(taskHistoryRepository.findByTaskOrderByChangedAtDesc(task));
         taskCommentRepository.deleteAll(taskCommentRepository.findByTaskIdOrderByCreatedAtAsc(id));
         taskRepository.delete(task);
+    }
+
+    private void verifyLeadAuthorization(User user, Team team) {
+        if (user == null || team == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication and valid team required.");
+        }
+        boolean isLeadToday = leadershipService.isUserActiveLead(user, team, java.time.LocalDate.now());
+        var membershipOpt = teamMemberRepository.findByTeamAndUserAndIsActiveTrue(team, user);
+        if (isLeadToday || (membershipOpt.isPresent() && (membershipOpt.get().getRole() == com.jvmcrew.model.enums.Role.LEAD || membershipOpt.get().getRole() == com.jvmcrew.model.enums.Role.ADMIN))) {
+            return;
+        }
+        throw new org.springframework.security.access.AccessDeniedException("Only the active Lead of " + team.getFormattedDisplayName() + " can delete tasks.");
     }
 
     private void verifyTaskTeam(Task task, Long teamId) {

@@ -24,27 +24,49 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let token: string | null = null;
-    try {
-      token = localStorage.getItem('jvmcrew_token');
-    } catch (e) {
-      console.warn('localStorage getItem error:', e);
-    }
-
-    const isValidToken = Boolean(
+const hasStoredToken = (): boolean => {
+  try {
+    const token = localStorage.getItem('jvmcrew_token');
+    return Boolean(
       token &&
       typeof token === 'string' &&
       token.trim() !== '' &&
       token !== 'null' &&
       token !== 'undefined'
     );
+  } catch {
+    return false;
+  }
+};
 
-    if (isValidToken && token) {
+const getCachedUser = (): AuthUser | null => {
+  if (!hasStoredToken()) return null;
+  try {
+    const raw = localStorage.getItem('jvmcrew_cached_user');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.id && parsed.email) {
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(getCachedUser);
+  const [loading, setLoading] = useState<boolean>(() => {
+    // If we have a stored token but NO cached user, show quick loading while fetching.
+    // If we have a cached user, loading is FALSE (instant render) and we verify in background.
+    return hasStoredToken() && !getCachedUser();
+  });
+
+  useEffect(() => {
+    const isValidToken = hasStoredToken();
+
+    if (isValidToken) {
       let isMounted = true;
 
       // Trigger non-blocking backend warmup
@@ -56,9 +78,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (isMounted) {
             if (userData && userData.id) {
               setUser(userData);
+              try {
+                localStorage.setItem('jvmcrew_cached_user', JSON.stringify(userData));
+              } catch (e) {}
             } else {
               try {
                 localStorage.removeItem('jvmcrew_token');
+                localStorage.removeItem('jvmcrew_cached_user');
               } catch (e) {}
               setUser(null);
             }
@@ -67,13 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .catch((err) => {
           console.warn('Session verification notice:', err?.message || err);
           if (isMounted) {
-            // Only remove token if the server explicitly rejected the credentials (401 / 403 / Unauthorized)
-            const isAuthError = err?.message?.includes('401') || err?.message?.includes('Unauthorized') || err?.message?.includes('Invalid token') || err?.message?.includes('403');
-            if (isAuthError) {
-              try {
-                localStorage.removeItem('jvmcrew_token');
-              } catch (e) {}
-            }
+            try {
+              localStorage.removeItem('jvmcrew_token');
+              localStorage.removeItem('jvmcrew_cached_user');
+            } catch (e) {}
             setUser(null);
           }
         })
@@ -87,9 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isMounted = false;
       };
     } else {
-      try {
-        if (token) localStorage.removeItem('jvmcrew_token');
-      } catch (e) {}
       setLoading(false);
     }
   }, []);
@@ -99,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (authData && authData.token) {
       try {
         localStorage.setItem('jvmcrew_token', authData.token);
+        localStorage.setItem('jvmcrew_cached_user', JSON.stringify(authData));
       } catch (e) {
         console.warn('localStorage setItem error:', e);
       }
@@ -111,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (authData && authData.token) {
       try {
         localStorage.setItem('jvmcrew_token', authData.token);
+        localStorage.setItem('jvmcrew_cached_user', JSON.stringify(authData));
       } catch (e) {
         console.warn('localStorage setItem error:', e);
       }
@@ -134,9 +156,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (updated.token) {
       try {
         localStorage.setItem('jvmcrew_token', updated.token);
+        localStorage.setItem('jvmcrew_cached_user', JSON.stringify(updated));
       } catch (e) {
         console.warn('localStorage setItem error:', e);
       }
+    } else if (updated) {
+      try {
+        localStorage.setItem('jvmcrew_cached_user', JSON.stringify(updated));
+      } catch (e) {}
     }
     setUser(updated);
     return updated;
@@ -145,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     try {
       localStorage.removeItem('jvmcrew_token');
+      localStorage.removeItem('jvmcrew_cached_user');
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 import {
   Terminal,
   Lock,
@@ -9,6 +10,7 @@ import {
   EyeOff,
   User,
   Users,
+  Loader2,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -21,6 +23,10 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.warmup();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,10 +127,11 @@ export const LoginPage: React.FC = () => {
                     <input
                       type="text"
                       required
+                      disabled={loading}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Rahul Kumar"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink"
+                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -138,10 +145,11 @@ export const LoginPage: React.FC = () => {
                     <input
                       type="text"
                       required
+                      disabled={loading}
                       value={teamName}
                       onChange={(e) => setTeamName(e.target.value)}
                       placeholder="e.g. STACK, PHOENIX, NOVA"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink"
+                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
                     />
                   </div>
                   <p className="text-[10px] font-mono text-muted mt-1">
@@ -160,13 +168,14 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="email"
                   required
+                  disabled={loading}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@gmail.com"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink"
+                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
                   autoFocus={!isRegister}
                 />
               </div>
@@ -183,15 +192,17 @@ export const LoginPage: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  disabled={loading}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
-                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink"
+                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
                 />
                 <button
                   type="button"
+                  disabled={loading}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted hover:text-ink p-0.5"
+                  className="absolute right-3 top-3 text-muted hover:text-ink p-0.5 disabled:opacity-50"
                   aria-label="Toggle password visibility"
                 >
                   {showPassword ? (
@@ -207,14 +218,19 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm disabled:opacity-60 font-mono"
+                className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm disabled:opacity-60 font-mono cursor-pointer disabled:cursor-not-allowed"
               >
-                <span>
-                  {loading
-                    ? isRegister ? 'Creating Team & Lead...' : 'Signing in...'
-                    : isRegister ? 'Create Team & Lead Account' : 'Continue'}
-                </span>
-                {!loading && <ArrowRight className="w-3.5 h-3.5" />}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                    <span>{isRegister ? 'Creating Team & Lead...' : 'Signing in...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{isRegister ? 'Create Team & Lead Account' : 'Continue'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
               </button>
             </div>
           </form>

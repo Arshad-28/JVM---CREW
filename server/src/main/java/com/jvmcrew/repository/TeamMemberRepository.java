@@ -20,6 +20,10 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Optional<TeamMember> findByTeamIdAndUserId(Long teamId, Long userId);
     Optional<TeamMember> findFirstByUser(User user);
     Optional<TeamMember> findFirstByUserAndIsActiveTrue(User user);
+    Optional<TeamMember> findFirstByTeamAndRoleAndIsActiveTrue(Team team, com.jvmcrew.model.enums.Role role);
+    @org.springframework.data.jpa.repository.Query("SELECT tm FROM TeamMember tm JOIN FETCH tm.team WHERE tm.user = :user AND tm.isActive = true")
+    Optional<TeamMember> findActiveWithTeamByUser(@org.springframework.data.repository.query.Param("user") User user);
+
     boolean existsByTeamAndUser(Team team, User user);
     boolean existsByTeamAndUserAndIsActiveTrue(Team team, User user);
     long countByTeamAndIsActiveTrue(Team team);

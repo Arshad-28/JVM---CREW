@@ -16,4 +16,5 @@ public interface HomeworkSubmissionRepository extends JpaRepository<HomeworkSubm
     List<HomeworkSubmission> findByUserOrderBySubmittedAtDesc(User user);
     long countByHomework(Homework homework);
     long countByHomeworkAndStatus(Homework homework, String status);
+    void deleteByHomework(Homework homework);
 }

@@ -124,10 +124,10 @@ public class AuthService {
                 .assignedBy(user)
                 .build());
 
-        UserPrincipal principal = new UserPrincipal(user, team.getId(), Role.LEAD);
+        UserPrincipal principal = new UserPrincipal(user, member, team.getId(), Role.LEAD);
         String token = tokenProvider.generateToken(principal);
 
-        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team.getId(), today);
+        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team, today);
         String leadPeriod = leadInfo != null ? leadInfo.getPeriodLabel() : null;
 
         String finalDisplayName = team.getFormattedDisplayName().isEmpty() ? team.getName() : team.getFormattedDisplayName();
@@ -160,33 +160,37 @@ public class AuthService {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
-        User user = userRepository.findById(principal.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = principal.getUser() != null 
+                ? principal.getUser() 
+                : userRepository.findById(principal.getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        TeamMember teamMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(user)
-                .orElse(teamMemberRepository.findFirstByUser(user).orElse(null));
+        TeamMember teamMember = principal.getTeamMember() != null
+                ? principal.getTeamMember()
+                : teamMemberRepository.findActiveWithTeamByUser(user).orElseGet(() -> teamMemberRepository.findFirstByUser(user).orElse(null));
 
-        Long teamId = teamMember != null ? teamMember.getTeam().getId() : principal.getTeamId();
-        String teamName = teamMember != null 
-                ? (teamMember.getTeam().getFormattedDisplayName().isEmpty() ? teamMember.getTeam().getName() : teamMember.getTeam().getFormattedDisplayName())
+        Team team = teamMember != null ? teamMember.getTeam() : null;
+        Long teamId = team != null ? team.getId() : principal.getTeamId();
+        String teamName = team != null 
+                ? (team.getFormattedDisplayName().isEmpty() ? team.getName() : team.getFormattedDisplayName())
                 : "";
 
         String serialNumber = teamMember != null && teamMember.getSerialNumber() != null
                 ? teamMember.getSerialNumber()
-                : (teamMember != null ? String.format("%s-%03d", teamMember.getTeam().getCrewIdPrefix(), user.getId()) : "MEMBER");
+                : (team != null ? String.format("%s-%03d", team.getCrewIdPrefix(), user.getId()) : "MEMBER");
         String position = teamMember != null && teamMember.getPosition() != null ? teamMember.getPosition() : "SDE Intern";
 
-        boolean isCurrentLead = leadershipService.isUserActiveLead(user, java.time.LocalDate.now());
-        Role role = isCurrentLead ? Role.LEAD : (teamMember != null ? teamMember.getRole() : principal.getRole());
+        Role role = principal.getRole() != null ? principal.getRole() : Role.MEMBER;
+        boolean isCurrentLead = role == Role.LEAD;
 
-        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), teamId, java.time.LocalDate.now());
+        LocalDate today = LocalDate.now();
+        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team, today);
         String leadPeriod = leadInfo != null ? leadInfo.getPeriodLabel() : null;
 
-        String token = tokenProvider.generateToken(new UserPrincipal(user, teamId, role));
+        String token = tokenProvider.generateToken(new UserPrincipal(user, teamMember, teamId, role));
 
-        AuthResponse.TeamSummary teamSummary = teamMember != null ? AuthResponse.TeamSummary.builder()
-                .id(teamMember.getTeam().getId())
-                .name(teamMember.getTeam().getName())
+        AuthResponse.TeamSummary teamSummary = team != null ? AuthResponse.TeamSummary.builder()
+                .id(team.getId())
+                .name(team.getName())
                 .displayName(teamName)
                 .build() : null;
 
@@ -215,33 +219,36 @@ public class AuthService {
     }
 
     public AuthResponse getCurrentUser(UserPrincipal principal) {
-        User user = userRepository.findById(principal.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = principal.getUser() != null
+                ? principal.getUser()
+                : userRepository.findById(principal.getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        TeamMember teamMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(user)
-                .orElse(teamMemberRepository.findFirstByUser(user).orElse(null));
+        TeamMember teamMember = principal.getTeamMember() != null
+                ? principal.getTeamMember()
+                : teamMemberRepository.findActiveWithTeamByUser(user).orElseGet(() -> teamMemberRepository.findFirstByUser(user).orElse(null));
 
-        Long teamId = teamMember != null ? teamMember.getTeam().getId() : null;
-        String teamName = teamMember != null 
-                ? (teamMember.getTeam().getFormattedDisplayName().isEmpty() ? teamMember.getTeam().getName() : teamMember.getTeam().getFormattedDisplayName())
+        Team team = teamMember != null ? teamMember.getTeam() : null;
+        Long teamId = team != null ? team.getId() : principal.getTeamId();
+        String teamName = team != null 
+                ? (team.getFormattedDisplayName().isEmpty() ? team.getName() : team.getFormattedDisplayName())
                 : "";
         String serialNumber = teamMember != null && teamMember.getSerialNumber() != null
                 ? teamMember.getSerialNumber()
-                : (teamMember != null ? String.format("%s-%03d", teamMember.getTeam().getCrewIdPrefix(), user.getId()) : "MEMBER");
+                : (team != null ? String.format("%s-%03d", team.getCrewIdPrefix(), user.getId()) : "MEMBER");
         String position = teamMember != null && teamMember.getPosition() != null ? teamMember.getPosition() : "SDE Intern";
 
-        // Dynamic Role Check on Current Date
-        boolean isCurrentLead = leadershipService.isUserActiveLead(user, java.time.LocalDate.now());
-        Role role = isCurrentLead ? Role.LEAD : (teamMember != null ? teamMember.getRole() : Role.MEMBER);
+        LocalDate today = LocalDate.now();
+        boolean isCurrentLead = leadershipService.isUserActiveLead(user, team, today);
+        Role role = isCurrentLead ? Role.LEAD : (teamMember != null ? teamMember.getRole() : principal.getRole());
 
-        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), teamId, java.time.LocalDate.now());
+        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team, today);
         String leadPeriod = leadInfo != null ? leadInfo.getPeriodLabel() : null;
 
-        String token = tokenProvider.generateToken(new UserPrincipal(user, teamId, role));
+        String token = tokenProvider.generateToken(new UserPrincipal(user, teamMember, teamId, role));
 
-        AuthResponse.TeamSummary teamSummary = teamMember != null ? AuthResponse.TeamSummary.builder()
-                .id(teamMember.getTeam().getId())
-                .name(teamMember.getTeam().getName())
+        AuthResponse.TeamSummary teamSummary = team != null ? AuthResponse.TeamSummary.builder()
+                .id(team.getId())
+                .name(team.getName())
                 .displayName(teamName)
                 .build() : null;
 
@@ -323,29 +330,31 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        TeamMember teamMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(savedUser)
-                .orElse(teamMemberRepository.findFirstByUser(savedUser).orElse(null));
+        TeamMember teamMember = teamMemberRepository.findActiveWithTeamByUser(savedUser)
+                .orElseGet(() -> teamMemberRepository.findFirstByUser(savedUser).orElse(null));
 
-        Long teamId = teamMember != null ? teamMember.getTeam().getId() : null;
-        String teamName = teamMember != null 
-                ? (teamMember.getTeam().getFormattedDisplayName().isEmpty() ? teamMember.getTeam().getName() : teamMember.getTeam().getFormattedDisplayName())
+        Team team = teamMember != null ? teamMember.getTeam() : null;
+        Long teamId = team != null ? team.getId() : null;
+        String teamName = team != null 
+                ? (team.getFormattedDisplayName().isEmpty() ? team.getName() : team.getFormattedDisplayName())
                 : "";
         String serialNumber = teamMember != null && teamMember.getSerialNumber() != null
                 ? teamMember.getSerialNumber()
-                : (teamMember != null ? String.format("%s-%03d", teamMember.getTeam().getCrewIdPrefix(), savedUser.getId()) : "MEMBER");
+                : (team != null ? String.format("%s-%03d", team.getCrewIdPrefix(), savedUser.getId()) : "MEMBER");
         String position = teamMember != null && teamMember.getPosition() != null ? teamMember.getPosition() : "SDE Intern";
 
-        boolean isCurrentLead = leadershipService.isUserActiveLead(savedUser, java.time.LocalDate.now());
+        LocalDate today = LocalDate.now();
+        boolean isCurrentLead = leadershipService.isUserActiveLead(savedUser, team, today);
         Role role = isCurrentLead ? Role.LEAD : (teamMember != null ? teamMember.getRole() : Role.MEMBER);
 
-        var leadInfo = leadershipService.getCurrentLeadInfo(savedUser.getId(), teamId, java.time.LocalDate.now());
+        var leadInfo = leadershipService.getCurrentLeadInfo(savedUser.getId(), team, today);
         String leadPeriod = leadInfo != null ? leadInfo.getPeriodLabel() : null;
 
-        String newToken = tokenProvider.generateToken(new UserPrincipal(savedUser, teamId, role));
+        String newToken = tokenProvider.generateToken(new UserPrincipal(savedUser, teamMember, teamId, role));
 
-        AuthResponse.TeamSummary teamSummary = teamMember != null ? AuthResponse.TeamSummary.builder()
-                .id(teamMember.getTeam().getId())
-                .name(teamMember.getTeam().getName())
+        AuthResponse.TeamSummary teamSummary = team != null ? AuthResponse.TeamSummary.builder()
+                .id(team.getId())
+                .name(team.getName())
                 .displayName(teamName)
                 .build() : null;
 

@@ -244,10 +244,10 @@ export const TeamDashboardPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* 1. TOP HEADER */}
-      <div className="border border-line bg-paper p-5 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="border border-line bg-paper p-4 sm:p-5 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2.5">
-            <h1 className="font-display text-xl font-bold text-ink">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-lg sm:text-xl font-bold text-ink">
               Team Cockpit — Team Progress
             </h1>
             <span className="font-mono text-xs px-2 py-0.5 bg-paper-dark border border-line rounded-sm text-muted">
@@ -259,7 +259,7 @@ export const TeamDashboardPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={fetchDashboard}
             className="p-2 bg-paper border border-line hover:border-ink rounded-sm text-muted hover:text-ink transition-colors flex items-center space-x-1.5 text-xs font-mono"
@@ -278,7 +278,7 @@ export const TeamDashboardPage: React.FC = () => {
 
       {/* 2. INDIVIDUAL MEMBER SELECTOR DROPDOWN (PRIMARY CONTROL) */}
       <div className="border border-line bg-paper p-4 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:space-x-3 w-full sm:w-auto">
           <label className="font-mono text-xs font-bold text-ink shrink-0 flex items-center space-x-1.5">
             <User className="w-4 h-4 text-accent" />
             <span>Select Member:</span>
@@ -286,7 +286,7 @@ export const TeamDashboardPage: React.FC = () => {
           <select
             value={selectedMemberId || 'ALL'}
             onChange={(e) => setSelectedMemberId(e.target.value === 'ALL' ? null : Number(e.target.value))}
-            className="p-2 bg-paper-dark border border-line rounded-sm text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent min-w-[220px]"
+            className="p-2 bg-paper-dark border border-line rounded-sm text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent w-full sm:w-auto sm:min-w-[220px]"
           >
             <option value="ALL">All Members ({dashboard.totalMembers})</option>
             {dashboard.memberRoster.map((m) => (
@@ -300,7 +300,7 @@ export const TeamDashboardPage: React.FC = () => {
         {selectedMemberId && (
           <button
             onClick={() => setSelectedMemberId(null)}
-            className="px-3 py-1 bg-paper-dark border border-line hover:border-ink rounded-sm text-xs font-mono text-muted hover:text-ink transition-colors flex items-center space-x-1 self-start sm:self-auto"
+            className="px-3 py-1.5 bg-paper-dark border border-line hover:border-ink rounded-sm text-xs font-mono text-muted hover:text-ink transition-colors flex items-center space-x-1 self-start sm:self-auto"
           >
             <span>← Back to All Members Overview</span>
           </button>
@@ -338,7 +338,7 @@ export const TeamDashboardPage: React.FC = () => {
             />
           </div>
 
-          {/* TEAM OVERVIEW TABLE */}
+          {/* TEAM OVERVIEW TABLE / CARD LIST */}
           <div className="border border-line bg-paper rounded-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-paper-dark">
               <div>
@@ -350,19 +350,20 @@ export const TeamDashboardPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-muted absolute left-2.5 top-2" />
+              <div className="relative w-full sm:w-auto">
+                <Search className="w-3.5 h-3.5 text-muted absolute left-2.5 top-2.5" />
                 <input
                   type="text"
                   placeholder="Search member..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1 bg-paper border border-line rounded-sm text-xs font-mono text-ink placeholder:text-muted focus:outline-none focus:border-accent w-44"
+                  className="pl-8 pr-3 py-1.5 bg-paper border border-line rounded-sm text-xs font-mono text-ink placeholder:text-muted focus:outline-none focus:border-accent w-full sm:w-48"
                 />
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View (hidden on md-) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-line bg-paper-light font-mono text-[11px] text-muted">
@@ -484,6 +485,75 @@ export const TeamDashboardPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Card List (shown on md-) */}
+            <div className="md:hidden divide-y divide-line font-sans">
+              {sortedRoster.map((m: MemberRosterItem) => (
+                <div
+                  key={m.userId}
+                  onClick={() => setSelectedMemberId(m.userId)}
+                  className="p-4 space-y-3 hover:bg-paper-dark/50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-sm bg-accent text-paper font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                        {m.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-ink text-xs block truncate">{m.name}</span>
+                        <span className="font-mono text-[10px] text-muted block truncate">{m.email}</span>
+                      </div>
+                    </div>
+                    {m.standupSubmittedToday ? (
+                      <span className="font-mono text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 rounded-sm font-semibold inline-flex items-center space-x-1 shrink-0">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Submitted</span>
+                      </span>
+                    ) : (
+                      <span className="font-mono text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-600 border border-amber-500/30 rounded-sm inline-flex items-center space-x-1 shrink-0">
+                        <Clock className="w-3 h-3" />
+                        <span>Pending</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-paper-dark/40 p-2.5 rounded-xs border border-line">
+                    <div>
+                      <span className="text-[10px] text-muted uppercase block">Kanban</span>
+                      <span className="font-bold text-ink">{m.taskCompletionPct}%</span>
+                      <span className="text-[10px] text-muted block">({m.completedTasks}/{m.totalTasks} done)</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-muted uppercase block">Homework</span>
+                      <span className="font-bold text-ink">
+                        {m.homeworkTotalCount > 0 ? `${Math.round((m.homeworkSubmittedCount * 100) / m.homeworkTotalCount)}%` : 'None'}
+                      </span>
+                      <span className="text-[10px] text-muted block">({m.homeworkSubmittedCount}/{m.homeworkTotalCount})</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between font-mono text-xs">
+                      <span className="text-muted">Overall Progress</span>
+                      <span className="font-bold text-accent">{m.overallProgressPct}%</span>
+                    </div>
+                    <ProgressBar progressPct={m.overallProgressPct} />
+                  </div>
+
+                  <div className="pt-1 flex justify-end">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMemberId(m.userId);
+                      }}
+                      className="w-full sm:w-auto px-3 py-1.5 bg-paper border border-line hover:border-ink rounded-sm text-xs font-mono font-medium text-ink transition-colors text-center"
+                    >
+                      Inspect Member Progress →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Actionable Needs Attention Ledger */}
@@ -530,7 +600,7 @@ export const TeamDashboardPage: React.FC = () => {
 
                     <button
                       onClick={() => setSelectedMemberId(item.userId)}
-                      className="px-3 py-1 bg-paper border border-line hover:border-ink rounded-sm text-xs font-medium text-ink transition-colors flex items-center space-x-1 shadow-none shrink-0"
+                      className="px-3 py-1.5 bg-paper border border-line hover:border-ink rounded-sm text-xs font-medium text-ink transition-colors flex items-center space-x-1 shadow-none self-start sm:self-auto shrink-0"
                     >
                       <span>View Member</span>
                       <ChevronRight className="w-3.5 h-3.5 text-muted" />
@@ -564,9 +634,9 @@ export const TeamDashboardPage: React.FC = () => {
                 dashboard.recentActivity.slice(0, 8).map((act) => (
                   <div
                     key={act.id}
-                    className="p-3 flex items-center justify-between hover:bg-paper-dark transition-colors"
+                    className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 hover:bg-paper-dark transition-colors"
                   >
-                    <div className="flex items-center space-x-2 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                       <span className="font-semibold text-ink">{act.changedByName}</span>
                       <span className="text-muted">updated</span>
                       <span className="font-medium text-ink truncate max-w-[200px]">
@@ -578,7 +648,7 @@ export const TeamDashboardPage: React.FC = () => {
                       )}
                       <span className="text-accent font-semibold">→ {act.newValue}</span>
                     </div>
-                    <span className="text-muted text-[10px] whitespace-nowrap pl-2">
+                    <span className="text-muted text-[10px] whitespace-nowrap self-start sm:self-auto">
                       {act.changedAt.substring(11, 16)} UTC
                     </span>
                   </div>
@@ -1034,11 +1104,11 @@ export const TeamDashboardPage: React.FC = () => {
                         <span className="uppercase font-bold">This Week's Activity (Mon–Sun)</span>
                         <span>{weekDays.filter(w => w.hasSubmission).length}/7 Active</span>
                       </div>
-                      <div className="grid grid-cols-7 gap-1.5 text-center font-mono text-[10px]">
+                      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 text-center font-mono text-[9px] sm:text-[10px]">
                         {weekDays.map((w, idx) => (
                           <div
                             key={idx}
-                            className={`p-2 border rounded-xs transition-colors ${
+                            className={`p-1 sm:p-2 border rounded-xs transition-colors ${
                               w.hasSubmission
                                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
                                 : w.isToday

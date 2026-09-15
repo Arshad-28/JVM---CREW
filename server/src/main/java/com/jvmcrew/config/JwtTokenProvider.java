@@ -54,6 +54,24 @@ public class JwtTokenProvider {
                 .getPayload();
     }
 
+    public UserPrincipal getUserPrincipalFromToken(String token) {
+        Claims claims = getClaims(token);
+        String email = claims.getSubject();
+        Long userId = claims.get("userId", Long.class);
+        String name = claims.get("name", String.class);
+        String roleStr = claims.get("role", String.class);
+        Long teamId = claims.get("teamId", Long.class);
+
+        com.jvmcrew.model.enums.Role role = com.jvmcrew.model.enums.Role.MEMBER;
+        if (roleStr != null) {
+            try {
+                role = com.jvmcrew.model.enums.Role.valueOf(roleStr);
+            } catch (Exception ignored) {}
+        }
+
+        return new UserPrincipal(userId, email, name, teamId, role);
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);

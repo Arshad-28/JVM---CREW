@@ -66,6 +66,8 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
       ]);
       setData(dash);
       setHistory(hist || []);
+      const isStandupDone = Boolean(dash?.todayStandup && (dash.todayStandup.id != null || dash.todayStandup.submittedAt != null));
+      window.dispatchEvent(new CustomEvent('jvm_standup_status_synced', { detail: { isDone: isStandupDone } }));
     } catch (err: any) {
       console.error('Failed to load Member workspace data:', err);
       setError(err?.message || 'Failed to connect to workspace');

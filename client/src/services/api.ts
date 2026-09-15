@@ -55,7 +55,7 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 60000): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 15000): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -66,7 +66,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
     return response;
   } catch (err: any) {
     if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
-      throw new Error('Server took too long to respond. If the cloud service was asleep, it is waking up now. Please try again.');
+      throw new Error('Server took too long to respond. Please check your connection and try again.');
     }
     throw err;
   } finally {
@@ -110,11 +110,12 @@ export function getLocalTodayDateString(): string {
 }
 
 export const api = {
-  // Non-blocking background warmup ping for sleeping Render dynos
+  // Non-blocking background warmup ping for server / DB pool pre-initialization
   warmup(): void {
     try {
-      const healthUrl = BASE_URL.endsWith('/api') ? BASE_URL.replace(/\/api$/, '/health') : `${BASE_URL}/health`;
+      const healthUrl = BASE_URL.endsWith('/api') ? `${BASE_URL}/health` : `${BASE_URL}/api/health`;
       fetch(healthUrl, { method: 'GET', mode: 'cors' }).catch(() => {});
+      fetch('/health', { method: 'GET', mode: 'cors' }).catch(() => {});
     } catch (e) {}
   },
 
@@ -124,7 +125,7 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
-    }, 60000);
+    }, 15000);
     return handleResponse<AuthUser>(res);
   },
 
@@ -133,14 +134,14 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }, 60000);
+    }, 15000);
     return handleResponse<AuthUser>(res);
   },
 
   async getCurrentUser(): Promise<AuthUser> {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/me`, {
       headers: getHeaders(),
-    }, 60000);
+    }, 8000);
     return handleResponse<AuthUser>(res);
   },
 
@@ -512,6 +513,17 @@ export const api = {
     return handleResponse<Task>(res);
   },
 
+  async deleteTask(id: number): Promise<void> {
+    const res = await fetch(`${BASE_URL}/tasks/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to delete task' }));
+      throw new Error(err.message || 'Failed to delete task');
+    }
+  },
+
   async updateTaskStatus(
     id: number,
     data: { status?: string; progressPct?: number; actualHours?: number }
@@ -727,6 +739,17 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: 'Failed to remind member' }));
       throw new Error(err.message || 'Failed to remind member');
+    }
+  },
+
+  async deleteHomework(id: number): Promise<void> {
+    const res = await fetch(`${BASE_URL}/homework/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to delete homework' }));
+      throw new Error(err.message || 'Failed to delete homework');
     }
   },
 

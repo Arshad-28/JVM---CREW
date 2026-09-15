@@ -1621,7 +1621,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
 
             {/* Controls Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-line">
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <div className="flex items-center space-x-1.5">
                   <span className="font-mono text-[10px] font-bold text-muted uppercase">Difficulty:</span>
                   <select
@@ -1658,7 +1658,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                 type="button"
                 disabled={generating || !topicInput.trim()}
                 onClick={() => handleGenerateSession()}
-                className="px-6 py-2.5 bg-ink text-paper hover:bg-ink-light font-mono text-xs font-bold rounded-sm transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 shadow-xs"
+                className="w-full sm:w-auto px-6 py-2.5 bg-ink text-paper hover:bg-ink-light font-mono text-xs font-bold rounded-sm transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 shadow-xs"
               >
                 <span>{generating ? 'Preparing your practice...' : 'START PRACTICE'}</span>
                 <ArrowRight className="w-4 h-4 text-accent" />
@@ -1717,15 +1717,15 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
               </span>
               <div className="divide-y divide-line">
                 {history.slice(0, 5).map((h, hIdx) => (
-                  <div key={hIdx} className="py-2.5 flex items-center justify-between text-xs">
-                    <div className="flex items-center space-x-2.5">
+                  <div key={hIdx} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 text-xs">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       <span className="font-mono text-[10px] font-bold uppercase px-1.5 py-0.2 bg-paper-dark border border-line text-ink rounded-xs">
                         {h.type === 'MOCK_INTERVIEW' ? 'MOCK INTERVIEW' : 'PRACTICE'}
                       </span>
                       <span className="font-medium text-ink">{h.topic}</span>
                       <span className="font-mono text-[10px] text-muted">· {h.technology}</span>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 self-start sm:self-auto">
                       {h.score != null && (
                         <span className="font-mono font-bold text-ink">{h.score}%</span>
                       )}

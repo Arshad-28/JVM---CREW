@@ -380,7 +380,7 @@ export const TeamManagementSection: React.FC = () => {
 
       {/* 3. TEAM MEMBERS ROSTER */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-mono text-xs font-bold text-muted uppercase tracking-wider">
             TEAM MEMBERS ({teamInfo.members.length} / 5 INTERNS)
           </span>
@@ -388,7 +388,7 @@ export const TeamManagementSection: React.FC = () => {
           {isLeadOrAdmin && (
             <button
               onClick={() => setAddMemberModalOpen(true)}
-              className="px-3 py-1 bg-paper border border-line hover:border-ink font-mono text-xs font-semibold rounded-xs flex items-center space-x-1 text-ink shadow-2xs"
+              className="px-3 py-1.5 bg-paper border border-line hover:border-ink font-mono text-xs font-semibold rounded-xs flex items-center space-x-1 text-ink shadow-2xs"
             >
               <UserPlus className="w-3.5 h-3.5 text-accent" />
               <span>+ ADD MEMBER</span>
@@ -396,7 +396,8 @@ export const TeamManagementSection: React.FC = () => {
           )}
         </div>
 
-        <div className="border border-line rounded-xs overflow-x-auto">
+        {/* Desktop Table View (hidden on md-) */}
+        <div className="hidden md:block border border-line rounded-xs overflow-x-auto">
           <table className="w-full text-left font-mono text-xs">
             <thead className="bg-paper-dark border-b border-line text-muted uppercase text-[10px]">
               <tr>
@@ -483,6 +484,81 @@ export const TeamManagementSection: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card List View (hidden on md+) */}
+        <div className="md:hidden divide-y divide-line border border-line rounded-xs">
+          {teamInfo.members.map((m) => (
+            <div key={m.membershipId} className={`p-3.5 space-y-2.5 ${m.isCurrentLead ? 'bg-amber-500/5' : 'bg-paper'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-ink text-xs font-mono">{m.serialNumber}</span>
+                  <span className="font-bold text-ink text-xs">{m.name}</span>
+                </div>
+                {m.isCurrentLead ? (
+                  <span className="px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-800 border border-amber-500/30 text-[10px] font-bold uppercase font-mono">
+                    CURRENT LEAD
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.5 rounded-xs bg-paper-dark text-muted border border-line text-[10px] font-mono">
+                    MEMBER
+                  </span>
+                )}
+              </div>
+
+              <div className="text-[11px] font-mono text-muted space-y-0.5">
+                <div>Email: <span className="text-ink">{m.email}</span></div>
+                <div>Role: <span className="text-ink">{m.position || 'SDE Intern'}</span></div>
+                <div>Joined: <span className="text-ink">{m.joinedAt ? m.joinedAt.substring(0, 10) : '—'}</span></div>
+              </div>
+
+              {(m.linkedinUrl || m.githubUrl) && (
+                <div className="flex items-center space-x-2 pt-1 font-mono text-[10px]">
+                  {m.linkedinUrl && (
+                    <a
+                      href={sanitizeSocialUrl(m.linkedinUrl) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-[#0077B5]/10 text-[#0077B5] border border-[#0077B5]/30 rounded-xs font-bold"
+                    >
+                      <Linkedin className="w-2.5 h-2.5" />
+                      <span>LinkedIn</span>
+                    </a>
+                  )}
+                  {m.githubUrl && (
+                    <a
+                      href={sanitizeSocialUrl(m.githubUrl) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-slate-900/10 text-slate-900 border border-slate-900/30 rounded-xs font-bold"
+                    >
+                      <Github className="w-2.5 h-2.5" />
+                      <span>GitHub</span>
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {isLeadOrAdmin && (
+                <div className="flex items-center justify-end space-x-2 pt-1 border-t border-line">
+                  <button
+                    onClick={() => handleOpenEditMember(m)}
+                    className="px-3 py-1 border border-line hover:border-ink bg-paper text-ink rounded-xs text-xs font-mono font-bold"
+                  >
+                    Edit Details
+                  </button>
+                  {!m.isCurrentLead && (
+                    <button
+                      onClick={() => handleRemoveMember(m.userId, m.name)}
+                      className="px-3 py-1 border border-red-500/20 text-red-600 hover:bg-red-500/10 rounded-xs text-xs font-mono"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 

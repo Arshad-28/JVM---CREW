@@ -208,6 +208,6 @@ public class AudioStorageService {
             }
         }
 
-        throw new IllegalStateException("Voice recording is currently unavailable or still uploading. Please try again or re-record.");
+        throw new IllegalStateException("Voice recording could not be loaded from storage. Please verify or re-record.");
     }
 }

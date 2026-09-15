@@ -86,22 +86,27 @@ public class LeadershipService {
      */
     @Transactional(readOnly = true)
     public CurrentLeadDto getCurrentLeadInfo(Long userId, LocalDate targetDate) {
-        return getCurrentLeadInfo(userId, null, targetDate);
+        return getCurrentLeadInfo(userId, (Long) null, targetDate);
     }
 
     @Transactional(readOnly = true)
     public CurrentLeadDto getCurrentLeadInfo(Long userId, Long teamId, LocalDate targetDate) {
-        LocalDate date = targetDate != null ? targetDate : LocalDate.now();
         Team team = null;
-
         if (teamId != null) {
             team = teamRepository.findById(teamId).orElse(null);
         }
+        return getCurrentLeadInfo(userId, team, targetDate);
+    }
+
+    @Transactional(readOnly = true)
+    public CurrentLeadDto getCurrentLeadInfo(Long userId, Team team, LocalDate targetDate) {
+        LocalDate date = targetDate != null ? targetDate : LocalDate.now();
 
         if (team == null && userId != null) {
             User currentUser = userRepository.findById(userId).orElse(null);
             if (currentUser != null) {
-                TeamMember tm = teamMemberRepository.findFirstByUserAndIsActiveTrue(currentUser).orElse(null);
+                TeamMember tm = teamMemberRepository.findActiveWithTeamByUser(currentUser)
+                        .orElseGet(() -> teamMemberRepository.findFirstByUser(currentUser).orElse(null));
                 if (tm != null) team = tm.getTeam();
             }
         }
@@ -114,17 +119,15 @@ public class LeadershipService {
         LeadershipAssignment assignment = !activeList.isEmpty() ? activeList.get(0) : null;
 
         User leadUser = assignment != null ? assignment.getUser() : null;
+        TeamMember leadTm = null;
         if (leadUser == null) {
-            leadUser = teamMemberRepository.findByTeamAndIsActiveTrueOrderByJoinedAtAsc(team).stream()
-                    .filter(tm -> tm.getRole() == Role.LEAD)
-                    .map(TeamMember::getUser)
-                    .findFirst()
-                    .orElse(null);
+            leadTm = teamMemberRepository.findFirstByTeamAndRoleAndIsActiveTrue(team, Role.LEAD).orElse(null);
+            leadUser = leadTm != null ? leadTm.getUser() : null;
+        } else {
+            leadTm = teamMemberRepository.findFirstByUserAndIsActiveTrue(leadUser).orElse(null);
         }
 
         if (leadUser == null) return null;
-
-        TeamMember leadTm = teamMemberRepository.findFirstByUserAndIsActiveTrue(leadUser).orElse(null);
         LocalDate start = assignment != null ? assignment.getStartDate() : YearMonth.from(date).atDay(1);
         LocalDate end = assignment != null ? assignment.getEndDate() : YearMonth.from(date).atEndOfMonth();
         String periodLabel = start.format(DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)) + " – " +

@@ -101,6 +101,9 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
       setError(null);
       const data = await api.getLeadDailyBrief(localToday);
       setBrief(data);
+      const leadRow = data.teamSummary?.find((m: any) => m.userId === user?.id);
+      const isStandupDone = Boolean(leadRow && (leadRow.status === 'SUBMITTED' || leadRow.standupId != null || leadRow.submittedAt != null));
+      window.dispatchEvent(new CustomEvent('jvm_standup_status_synced', { detail: { isDone: isStandupDone } }));
       if (data.teamSummary && data.teamSummary.length > 0 && !followUpUserId) {
         setFollowUpUserId(data.teamSummary[0].userId);
       }

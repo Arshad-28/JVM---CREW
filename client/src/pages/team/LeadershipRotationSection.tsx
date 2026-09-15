@@ -142,13 +142,14 @@ export const LeadershipRotationSection: React.FC = () => {
         </div>
       </div>
 
-      {/* ROTATION HISTORY TABLE */}
+      {/* ROTATION HISTORY TABLE / CARDS */}
       <div className="space-y-2">
         <span className="font-mono text-xs font-bold text-muted uppercase tracking-wider block">
           LEADERSHIP TIMELINE & HISTORICAL RECORDS
         </span>
 
-        <div className="border border-line rounded-xs overflow-x-auto">
+        {/* Desktop Table View (hidden on md-) */}
+        <div className="hidden md:block border border-line rounded-xs overflow-x-auto">
           <table className="w-full text-left font-mono text-xs">
             <thead className="bg-paper-dark border-b border-line text-muted uppercase text-[10px]">
               <tr>
@@ -195,6 +196,35 @@ export const LeadershipRotationSection: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card List View (hidden on md+) */}
+        <div className="md:hidden divide-y divide-line border border-line rounded-xs">
+          {history.length > 0 ? (
+            history.map((row) => (
+              <div key={row.id} className={`p-3 space-y-1.5 font-mono text-xs ${row.isCurrent ? 'bg-amber-500/5' : 'bg-paper'}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-ink">{row.monthLabel}</span>
+                  {row.isCurrent ? (
+                    <span className="px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 font-bold text-[10px]">
+                      CURRENT LEAD
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-xs bg-paper-dark text-muted border border-line text-[10px]">
+                      {row.status}
+                    </span>
+                  )}
+                </div>
+                <div className="text-ink font-semibold">{row.userName} <span className="text-muted text-[10px]">({row.serialNumber})</span></div>
+                <div className="text-muted text-[11px]">{row.position} · {row.startDate} to {row.endDate}</div>
+                {row.notes && <div className="text-[10px] text-muted italic">"{row.notes}"</div>}
+              </div>
+            ))
+          ) : (
+            <div className="py-6 text-center text-muted font-mono text-xs">
+              No leadership records logged yet.
+            </div>
+          )}
         </div>
       </div>
 
