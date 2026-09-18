@@ -32,14 +32,14 @@ public class NotificationController {
         int boundedSize = Math.min(Math.max(1, size), 50);
         int boundedPage = Math.max(0, page);
         PageRequest pageRequest = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ResponseEntity.ok(notificationService.getUserNotifications(principal.getUser(), pageRequest));
+        return ResponseEntity.ok(notificationService.getUserNotifications(principal.getId(), pageRequest));
     }
 
     @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Object>> getUnreadCount(
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        long count = notificationService.getUnreadCount(principal.getUser());
+        long count = notificationService.getUnreadCount(principal.getId());
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
 
@@ -48,14 +48,14 @@ public class NotificationController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return ResponseEntity.ok(notificationService.markAsRead(id, principal.getUser()));
+        return ResponseEntity.ok(notificationService.markAsRead(id, principal.getId()));
     }
 
     @PatchMapping("/read-all")
     public ResponseEntity<Map<String, Object>> markAllAsRead(
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        notificationService.markAllAsRead(principal.getUser());
+        notificationService.markAllAsRead(principal.getId());
         return ResponseEntity.ok(Map.of("success", true));
     }
 
@@ -72,7 +72,7 @@ public class NotificationController {
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody PushSubscriptionRequest request
     ) {
-        notificationService.registerPushSubscription(principal.getUser(), request);
+        notificationService.registerPushSubscription(principal.getId(), request);
         return ResponseEntity.ok(Map.of("status", "SUBSCRIBED"));
     }
 
@@ -81,7 +81,7 @@ public class NotificationController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam String endpoint
     ) {
-        notificationService.deletePushSubscription(principal.getUser(), endpoint);
+        notificationService.deletePushSubscription(principal.getId(), endpoint);
         return ResponseEntity.ok(Map.of("status", "DELETED"));
     }
 
@@ -89,7 +89,7 @@ public class NotificationController {
     public ResponseEntity<NotificationPreferenceDto> getPreferences(
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return ResponseEntity.ok(notificationService.getUserPreferences(principal.getUser()));
+        return ResponseEntity.ok(notificationService.getUserPreferences(principal.getId()));
     }
 
     @PutMapping("/preferences")
@@ -97,6 +97,6 @@ public class NotificationController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody NotificationPreferenceDto dto
     ) {
-        return ResponseEntity.ok(notificationService.updateUserPreferences(principal.getUser(), dto));
+        return ResponseEntity.ok(notificationService.updateUserPreferences(principal.getId(), dto));
     }
 }

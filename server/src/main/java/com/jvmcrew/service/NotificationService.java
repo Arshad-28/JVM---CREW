@@ -21,7 +21,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +30,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final PushSubscriptionRepository pushSubscriptionRepository;
     private final NotificationPreferenceRepository preferenceRepository;
+    private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final LeadershipService leadershipService;
     private final WebPushService webPushService;
@@ -89,10 +89,12 @@ public class NotificationService {
         return notification;
     }
 
-    private boolean isPushAllowedForType(User user, NotificationType type) {
-        NotificationPreference pref = preferenceRepository.findByUser(user).orElse(null);
+    private boolean isPushAllowedForType(User recipient, NotificationType type) {
+        NotificationPreference pref = preferenceRepository.findByUser(recipient)
+                .orElse(null);
+
         if (pref == null) {
-            return true; // Default enabled
+            return true; // Default to true if no preference record exists
         }
 
         if (!Boolean.TRUE.equals(pref.getPushEnabled())) {
@@ -102,48 +104,48 @@ public class NotificationService {
         return switch (type) {
             case TASK_ASSIGNED, TASK_REASSIGNED -> Boolean.TRUE.equals(pref.getTaskAssigned());
             case TASK_SUBMITTED, TASK_APPROVED, TASK_CHANGES_REQUESTED -> Boolean.TRUE.equals(pref.getTaskReviews());
-            case HOMEWORK_PUBLISHED, HOMEWORK_DEADLINE_CHANGED -> Boolean.TRUE.equals(pref.getHomeworkPublished());
-            case HOMEWORK_REVIEWED, HOMEWORK_SOLUTION_PUBLISHED -> Boolean.TRUE.equals(pref.getHomeworkReviews());
-            case STANDUP_REMINDER -> Boolean.TRUE.equals(pref.getStandupReminders());
-            case STANDUP_SUBMITTED, STANDUP_ANSWERED, TEAM_UPDATE -> Boolean.TRUE.equals(pref.getTeamUpdates());
+            case HOMEWORK_PUBLISHED, HOMEWORK_DEADLINE_CHANGED, HOMEWORK_SOLUTION_PUBLISHED -> Boolean.TRUE.equals(pref.getHomeworkPublished());
+            case HOMEWORK_REVIEWED -> Boolean.TRUE.equals(pref.getHomeworkReviews());
+            case STANDUP_SUBMITTED, STANDUP_ANSWERED, STANDUP_REMINDER -> Boolean.TRUE.equals(pref.getStandupReminders());
+            case TEAM_UPDATE -> Boolean.TRUE.equals(pref.getTeamUpdates());
         };
     }
 
     // ==========================================
-    // BUSINESS DOMAIN EVENT DISPATCHERS
+    // DOMAIN EVENT LISTENERS / HOOKS
     // ==========================================
 
-    public void notifyTaskAssigned(Task task, User creator) {
+    public void notifyTaskAssigned(Task task, User assigner) {
         if (task == null || task.getAssignee() == null || task.getTeam() == null) return;
-        User assignee = task.getAssignee();
-        if (creator != null && Objects.equals(creator.getId(), assignee.getId())) return; // Avoid self-notification
+        if (assigner != null && Objects.equals(assigner.getId(), task.getAssignee().getId())) return;
 
         createAndSend(
-                assignee,
+                task.getAssignee(),
                 task.getTeam(),
                 NotificationType.TASK_ASSIGNED,
-                "New Task Assigned",
-                "\"" + task.getTitle() + "\" was assigned to you.",
+                "Task Assigned: " + task.getTitle(),
+                (assigner != null ? assigner.getName() : "Lead") + " assigned you the task: " + task.getTitle(),
                 "TASK",
                 task.getId(),
                 "/tasks?taskId=" + task.getId()
         );
     }
 
-    public void notifyTaskReassigned(Task task, User oldAssignee, User newAssignee, User changer) {
-        if (task == null || newAssignee == null || task.getTeam() == null) return;
-        if (changer != null && Objects.equals(changer.getId(), newAssignee.getId())) return;
+    public void notifyTaskReassigned(Task task, User oldAssignee, User newAssignee, User assigner) {
+        if (task == null || task.getTeam() == null) return;
 
-        createAndSend(
-                newAssignee,
-                task.getTeam(),
-                NotificationType.TASK_REASSIGNED,
-                "Task Assigned to You",
-                "\"" + task.getTitle() + "\" was reassigned to you.",
-                "TASK",
-                task.getId(),
-                "/tasks?taskId=" + task.getId()
-        );
+        if (newAssignee != null && (assigner == null || !Objects.equals(assigner.getId(), newAssignee.getId()))) {
+            createAndSend(
+                    newAssignee,
+                    task.getTeam(),
+                    NotificationType.TASK_REASSIGNED,
+                    "Task Assigned: " + task.getTitle(),
+                    (assigner != null ? assigner.getName() : "Lead") + " assigned you the task: " + task.getTitle(),
+                    "TASK",
+                    task.getId(),
+                    "/tasks?taskId=" + task.getId()
+            );
+        }
     }
 
     public void notifyTaskSubmittedForReview(Task task, User submitter) {
@@ -153,13 +155,13 @@ public class NotificationService {
         User lead = activeLeadOpt.get();
         if (submitter != null && Objects.equals(lead.getId(), submitter.getId())) return;
 
-        String submitterName = submitter != null ? submitter.getName() : "Team Member";
+        String submitterName = submitter != null ? submitter.getName() : "A team member";
         createAndSend(
                 lead,
                 task.getTeam(),
                 NotificationType.TASK_SUBMITTED,
-                "Task Submitted for Review",
-                submitterName + " submitted \"" + task.getTitle() + "\" for review.",
+                "Task Review Requested: " + task.getTitle(),
+                submitterName + " submitted task \"" + task.getTitle() + "\" for review.",
                 "TASK",
                 task.getId(),
                 "/tasks?taskId=" + task.getId()
@@ -168,54 +170,55 @@ public class NotificationService {
 
     public void notifyTaskApproved(Task task, User reviewer) {
         if (task == null || task.getAssignee() == null || task.getTeam() == null) return;
-        User assignee = task.getAssignee();
-        if (reviewer != null && Objects.equals(reviewer.getId(), assignee.getId())) return;
+        if (reviewer != null && Objects.equals(reviewer.getId(), task.getAssignee().getId())) return;
 
         createAndSend(
-                assignee,
+                task.getAssignee(),
                 task.getTeam(),
                 NotificationType.TASK_APPROVED,
-                "Task Approved",
-                "Your task \"" + task.getTitle() + "\" was approved.",
+                "Task Approved: " + task.getTitle(),
+                "Your task \"" + task.getTitle() + "\" has been approved!",
                 "TASK",
                 task.getId(),
                 "/tasks?taskId=" + task.getId()
         );
     }
 
-    public void notifyTaskChangesRequested(Task task, User reviewer) {
+    public void notifyTaskChangesRequested(Task task, User reviewer, String feedback) {
         if (task == null || task.getAssignee() == null || task.getTeam() == null) return;
-        User assignee = task.getAssignee();
-        if (reviewer != null && Objects.equals(reviewer.getId(), assignee.getId())) return;
+        if (reviewer != null && Objects.equals(reviewer.getId(), task.getAssignee().getId())) return;
 
-        String reviewerName = reviewer != null ? reviewer.getName() : "Your Lead";
+        String msg = "Changes requested on \"" + task.getTitle() + "\"";
+        if (StringUtils.hasText(feedback)) {
+            msg += ": " + feedback;
+        }
+
         createAndSend(
-                assignee,
+                task.getAssignee(),
                 task.getTeam(),
                 NotificationType.TASK_CHANGES_REQUESTED,
-                "Changes Requested on Task",
-                reviewerName + " requested changes on \"" + task.getTitle() + "\".",
+                "Changes Requested: " + task.getTitle(),
+                msg,
                 "TASK",
                 task.getId(),
                 "/tasks?taskId=" + task.getId()
         );
     }
 
-    public void notifyHomeworkPublished(Homework homework, User creator) {
+    public void notifyHomeworkPublished(Homework homework, User publisher) {
         if (homework == null || homework.getTeam() == null) return;
         List<TeamMember> members = teamMemberRepository.findByTeam(homework.getTeam());
 
         for (TeamMember tm : members) {
             if (tm.getUser() == null || !Boolean.TRUE.equals(tm.getIsActive())) continue;
-            if (creator != null && Objects.equals(tm.getUser().getId(), creator.getId())) continue;
             if (tm.getRole() == Role.LEAD) continue;
 
             createAndSend(
                     tm.getUser(),
                     homework.getTeam(),
                     NotificationType.HOMEWORK_PUBLISHED,
-                    "New Homework Published",
-                    "\"" + homework.getTitle() + "\" has been published for your team.",
+                    "New Homework: " + homework.getTitle(),
+                    "A new assignment \"" + homework.getTitle() + "\" is now available.",
                     "HOMEWORK",
                     homework.getId(),
                     "/homework?homeworkId=" + homework.getId()
@@ -235,8 +238,8 @@ public class NotificationService {
                     tm.getUser(),
                     homework.getTeam(),
                     NotificationType.HOMEWORK_DEADLINE_CHANGED,
-                    "Homework Deadline Updated",
-                    "\"" + homework.getTitle() + "\" deadline is now " + homework.getDueDate() + ".",
+                    "Homework Deadline Updated: " + homework.getTitle(),
+                    "The deadline for \"" + homework.getTitle() + "\" has been updated.",
                     "HOMEWORK",
                     homework.getId(),
                     "/homework?homeworkId=" + homework.getId()
@@ -245,7 +248,7 @@ public class NotificationService {
     }
 
     public void notifyHomeworkReviewed(HomeworkSubmission submission, User reviewer) {
-        if (submission == null || submission.getUser() == null || submission.getHomework() == null) return;
+        if (submission == null || submission.getHomework() == null || submission.getUser() == null) return;
         User recipient = submission.getUser();
         if (reviewer != null && Objects.equals(reviewer.getId(), recipient.getId())) return;
 
@@ -322,18 +325,21 @@ public class NotificationService {
     // ==========================================
 
     @Transactional(readOnly = true)
-    public Page<NotificationResponse> getUserNotifications(User user, Pageable pageable) {
+    public Page<NotificationResponse> getUserNotifications(Long userId, Pageable pageable) {
+        User user = resolveUser(userId);
         return notificationRepository.findByRecipientOrderByCreatedAtDesc(user, pageable)
                 .map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
-    public long getUnreadCount(User user) {
+    public long getUnreadCount(Long userId) {
+        User user = resolveUser(userId);
         return notificationRepository.countByRecipientAndIsReadFalse(user);
     }
 
     @Transactional
-    public NotificationResponse markAsRead(Long notificationId, User user) {
+    public NotificationResponse markAsRead(Long notificationId, Long userId) {
+        User user = resolveUser(userId);
         Notification notification = notificationRepository.findByIdAndRecipient(notificationId, user)
                 .orElseThrow(() -> new IllegalArgumentException("Notification not found or access denied"));
 
@@ -347,7 +353,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markAllAsRead(User user) {
+    public void markAllAsRead(Long userId) {
+        User user = resolveUser(userId);
         notificationRepository.markAllAsReadForUser(user, Instant.now());
     }
 
@@ -356,11 +363,12 @@ public class NotificationService {
     // ==========================================
 
     @Transactional
-    public void registerPushSubscription(User user, PushSubscriptionRequest request) {
-        if (user == null || request == null || !StringUtils.hasText(request.getEndpoint())) {
+    public void registerPushSubscription(Long userId, PushSubscriptionRequest request) {
+        if (userId == null || request == null || !StringUtils.hasText(request.getEndpoint())) {
             throw new IllegalArgumentException("Invalid subscription payload");
         }
 
+        User user = resolveUser(userId);
         String endpoint = request.getEndpoint().trim();
         String p256dh = request.getKeys() != null ? request.getKeys().getP256dh() : "";
         String auth = request.getKeys() != null ? request.getKeys().getAuth() : "";
@@ -391,7 +399,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public void deletePushSubscription(User user, String endpoint) {
+    public void deletePushSubscription(Long userId, String endpoint) {
         if (StringUtils.hasText(endpoint)) {
             pushSubscriptionRepository.deactivateEndpoint(endpoint.trim(), Instant.now());
         }
@@ -402,7 +410,8 @@ public class NotificationService {
     // ==========================================
 
     @Transactional(readOnly = true)
-    public NotificationPreferenceDto getUserPreferences(User user) {
+    public NotificationPreferenceDto getUserPreferences(Long userId) {
+        User user = resolveUser(userId);
         NotificationPreference pref = preferenceRepository.findByUser(user)
                 .orElseGet(() -> NotificationPreference.builder().user(user).build());
 
@@ -418,7 +427,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationPreferenceDto updateUserPreferences(User user, NotificationPreferenceDto dto) {
+    public NotificationPreferenceDto updateUserPreferences(Long userId, NotificationPreferenceDto dto) {
+        User user = resolveUser(userId);
         NotificationPreference pref = preferenceRepository.findByUser(user)
                 .orElseGet(() -> NotificationPreference.builder().user(user).build());
 
@@ -433,7 +443,15 @@ public class NotificationService {
         pref.setUpdatedAt(Instant.now());
         pref = preferenceRepository.save(pref);
 
-        return getUserPreferences(user);
+        return getUserPreferences(userId);
+    }
+
+    private User resolveUser(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
     }
 
     private NotificationResponse mapToResponse(Notification n) {
