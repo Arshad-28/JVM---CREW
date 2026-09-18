@@ -55,8 +55,24 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 15000): Promise<Response> {
+export type AuthStatusCallback = (statusMessage: string) => void;
+
+async function fetchWithAdaptiveTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = 20000,
+  onStatusUpdate?: AuthStatusCallback
+): Promise<Response> {
   const controller = new AbortController();
+  
+  // Status update timer for cold-start visibility
+  let statusTimer: ReturnType<typeof setTimeout> | null = null;
+  if (onStatusUpdate) {
+    statusTimer = setTimeout(() => {
+      onStatusUpdate('Connecting to workspace (waking up server)...');
+    }, 3500);
+  }
+
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, {
@@ -66,12 +82,24 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
     return response;
   } catch (err: any) {
     if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
-      throw new Error('Server took too long to respond. Please check your connection and try again.');
+      throw new Error('The server is taking longer than expected to respond. Please try again.');
+    }
+    if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
+      throw new Error('Unable to connect to the server. Please check your network or try again in a few moments.');
     }
     throw err;
   } finally {
     clearTimeout(timeoutId);
+    if (statusTimer) clearTimeout(statusTimer);
   }
+}
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = 20000
+): Promise<Response> {
+  return fetchWithAdaptiveTimeout(url, options, timeoutMs);
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -79,21 +107,37 @@ async function handleResponse<T>(res: Response): Promise<T> {
     return null as unknown as T;
   }
   if (!res.ok) {
-    let errorMessage = res.statusText || `Request failed with status ${res.status}`;
+    let errorMessage = '';
+    if (res.status === 401) {
+      errorMessage = 'Invalid email or password.';
+    } else if (res.status === 429) {
+      errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
+    } else if (res.status === 502 || res.status === 503 || res.status === 504) {
+      errorMessage = 'The server is temporarily starting up. Please try again in a few seconds.';
+    }
+
     try {
       const text = await res.text();
       if (text) {
         try {
           const errorData = JSON.parse(text);
-          errorMessage = errorData.message || errorData.error || errorMessage;
+          if (errorData.message && res.status !== 401) {
+            errorMessage = errorData.message;
+          } else if (errorData.error && res.status !== 401) {
+            errorMessage = errorData.error;
+          }
         } catch {
-          if (text.length < 200) {
+          if (!errorMessage && text.length < 200) {
             errorMessage = text;
           }
         }
       }
     } catch {
-      // ignore
+      // ignore text parsing error
+    }
+
+    if (!errorMessage) {
+      errorMessage = res.statusText || `Request failed with status ${res.status}`;
     }
     throw new Error(errorMessage);
   }
@@ -110,38 +154,59 @@ export function getLocalTodayDateString(): string {
 }
 
 export const api = {
-  // Non-blocking background warmup ping for server / DB pool pre-initialization
+  // Non-blocking proactive warmup ping for server / DB pool pre-initialization
   warmup(): void {
     try {
-      const healthUrl = BASE_URL.endsWith('/api') ? `${BASE_URL}/health` : `${BASE_URL}/api/health`;
-      fetch(healthUrl, { method: 'GET', mode: 'cors' }).catch(() => {});
-      fetch('/health', { method: 'GET', mode: 'cors' }).catch(() => {});
+      const targetHost = BASE_URL.endsWith('/api') ? BASE_URL.slice(0, -4) : BASE_URL;
+      const endpoints = [
+        `${targetHost}/health`,
+        `${targetHost}/api/health`,
+        `${targetHost}/api/readiness`,
+        '/health',
+      ];
+      endpoints.forEach((ep) => {
+        fetch(ep, { method: 'GET', mode: 'cors', keepalive: true }).catch(() => {});
+      });
     } catch (e) {}
   },
 
   // Auth
-  async login(email: string, password: string): Promise<AuthUser> {
-    const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    }, 15000);
+  async login(email: string, password: string, onStatus?: AuthStatusCallback): Promise<AuthUser> {
+    const res = await fetchWithAdaptiveTimeout(
+      `${BASE_URL}/auth/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      },
+      45000,
+      onStatus
+    );
     return handleResponse<AuthUser>(res);
   },
 
-  async register(data: { name: string; email: string; password: string; teamName?: string }): Promise<AuthUser> {
-    const res = await fetchWithTimeout(`${BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    }, 15000);
+  async register(data: { name: string; email: string; password: string; teamName?: string }, onStatus?: AuthStatusCallback): Promise<AuthUser> {
+    const res = await fetchWithAdaptiveTimeout(
+      `${BASE_URL}/auth/register`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      45000,
+      onStatus
+    );
     return handleResponse<AuthUser>(res);
   },
 
   async getCurrentUser(): Promise<AuthUser> {
-    const res = await fetchWithTimeout(`${BASE_URL}/auth/me`, {
-      headers: getHeaders(),
-    }, 8000);
+    const res = await fetchWithAdaptiveTimeout(
+      `${BASE_URL}/auth/me`,
+      {
+        headers: getHeaders(),
+      },
+      20000
+    );
     return handleResponse<AuthUser>(res);
   },
 

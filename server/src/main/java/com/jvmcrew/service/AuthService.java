@@ -25,6 +25,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
@@ -183,8 +185,12 @@ public class AuthService {
         boolean isCurrentLead = role == Role.LEAD;
 
         LocalDate today = LocalDate.now();
-        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team, today);
-        String leadPeriod = leadInfo != null ? leadInfo.getPeriodLabel() : null;
+        String leadPeriod = null;
+        if (isCurrentLead) {
+            YearMonth ym = YearMonth.from(today);
+            leadPeriod = ym.atDay(1).format(DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)) + " – " +
+                         ym.atEndOfMonth().format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH));
+        }
 
         String token = tokenProvider.generateToken(new UserPrincipal(user, teamMember, teamId, role));
 
@@ -237,12 +243,16 @@ public class AuthService {
                 : (team != null ? String.format("%s-%03d", team.getCrewIdPrefix(), user.getId()) : "MEMBER");
         String position = teamMember != null && teamMember.getPosition() != null ? teamMember.getPosition() : "SDE Intern";
 
-        LocalDate today = LocalDate.now();
-        boolean isCurrentLead = leadershipService.isUserActiveLead(user, team, today);
-        Role role = isCurrentLead ? Role.LEAD : (teamMember != null ? teamMember.getRole() : principal.getRole());
+        Role role = principal.getRole() != null ? principal.getRole() : Role.MEMBER;
+        boolean isCurrentLead = role == Role.LEAD;
 
-        var leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team, today);
-        String leadPeriod = leadInfo != null ? leadInfo.getPeriodLabel() : null;
+        LocalDate today = LocalDate.now();
+        String leadPeriod = null;
+        if (isCurrentLead) {
+            YearMonth ym = YearMonth.from(today);
+            leadPeriod = ym.atDay(1).format(DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)) + " – " +
+                         ym.atEndOfMonth().format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH));
+        }
 
         String token = tokenProvider.generateToken(new UserPrincipal(user, teamMember, teamId, role));
 

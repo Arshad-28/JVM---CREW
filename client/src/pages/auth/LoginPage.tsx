@@ -23,6 +23,7 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     api.warmup();
@@ -30,6 +31,8 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
     if (!email.trim() || !password.trim()) {
       setError('Please enter your email and password.');
       return;
@@ -52,24 +55,34 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
+    setStatusMessage(isRegister ? 'Creating Team & Lead...' : 'Signing in...');
+
+    const handleStatusUpdate = (msg: string) => {
+      setStatusMessage(msg);
+    };
+
     try {
       const cleanEmail = email.trim().toLowerCase();
       if (isRegister) {
-        await register({
-          name: name.trim(),
-          email: cleanEmail,
-          password: password.trim(),
-          teamName: teamName.trim(),
-          role: 'LEAD',
-        });
+        await register(
+          {
+            name: name.trim(),
+            email: cleanEmail,
+            password: password.trim(),
+            teamName: teamName.trim(),
+            role: 'LEAD',
+          },
+          handleStatusUpdate
+        );
       } else {
-        await login(cleanEmail, password.trim());
+        await login(cleanEmail, password.trim(), handleStatusUpdate);
       }
       window.dispatchEvent(new CustomEvent('jvm_fresh_login'));
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
+      setStatusMessage(null);
     }
   };
 
@@ -223,7 +236,7 @@ export const LoginPage: React.FC = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-                    <span>{isRegister ? 'Creating Team & Lead...' : 'Signing in...'}</span>
+                    <span>{statusMessage || (isRegister ? 'Creating Team & Lead...' : 'Signing in...')}</span>
                   </>
                 ) : (
                   <>
@@ -233,6 +246,14 @@ export const LoginPage: React.FC = () => {
                 )}
               </button>
             </div>
+
+            {loading && statusMessage && (
+              <div className="text-center pt-1">
+                <p className="text-[11px] font-mono text-muted animate-pulse">
+                  {statusMessage}
+                </p>
+              </div>
+            )}
           </form>
 
           {/* Footer toggle */}

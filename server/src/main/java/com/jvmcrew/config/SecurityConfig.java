@@ -83,8 +83,8 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Public health & minimal actuator endpoints
-                        .requestMatchers("/health", "/api/health", "/actuator/health", "/actuator/info").permitAll()
+                        // Public health, readiness & minimal actuator endpoints
+                        .requestMatchers("/health", "/api/health", "/readiness", "/api/readiness", "/actuator/health", "/actuator/info").permitAll()
                         // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         // OpenAPI / Swagger

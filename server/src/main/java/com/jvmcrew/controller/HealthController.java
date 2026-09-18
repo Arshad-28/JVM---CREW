@@ -28,14 +28,34 @@ public class HealthController {
         statusMap.put("version", "1.0.0");
 
         try (Connection connection = dataSource.getConnection()) {
-            boolean isValid = connection.isValid(2);
+            boolean isValid = connection.isValid(1);
             statusMap.put("database", isValid ? "CONNECTED" : "DISCONNECTED");
         } catch (Exception e) {
-            log.error("Database health check probe failed", e);
+            log.warn("Database health probe non-critical warning: {}", e.getMessage());
             statusMap.put("database", "DOWN");
-            // Do not leak raw exception messages or credentials in public health response
         }
 
         return ResponseEntity.ok(statusMap);
+    }
+
+    @GetMapping({"/readiness", "/api/readiness"})
+    public ResponseEntity<Map<String, Object>> readiness() {
+        Map<String, Object> statusMap = new HashMap<>();
+        statusMap.put("status", "READY");
+        statusMap.put("timestamp", Instant.now().toString());
+
+        try (Connection connection = dataSource.getConnection()) {
+            boolean isValid = connection.isValid(1);
+            if (isValid) {
+                statusMap.put("ready", true);
+                return ResponseEntity.ok(statusMap);
+            } else {
+                statusMap.put("ready", false);
+                return ResponseEntity.status(503).body(statusMap);
+            }
+        } catch (Exception e) {
+            statusMap.put("ready", false);
+            return ResponseEntity.status(503).body(statusMap);
+        }
     }
 }

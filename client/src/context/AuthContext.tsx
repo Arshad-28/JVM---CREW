@@ -5,8 +5,8 @@ import { api } from '../services/api';
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }) => Promise<void>;
+  login: (email: string, password: string, onStatus?: (status: string) => void) => Promise<void>;
+  register: (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }, onStatus?: (status: string) => void) => Promise<void>;
   logout: () => void;
   updateAccount: (data: {
     name: string;
@@ -114,8 +114,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const authData = await api.login(email, password);
+  const login = async (email: string, password: string, onStatus?: (status: string) => void) => {
+    const authData = await api.login(email, password, onStatus);
     if (authData && authData.token) {
       try {
         localStorage.setItem('jvmcrew_token', authData.token);
@@ -127,8 +127,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(authData);
   };
 
-  const register = async (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }) => {
-    const authData = await api.register(data);
+  const register = async (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }, onStatus?: (status: string) => void) => {
+    const authData = await api.register(data, onStatus);
     if (authData && authData.token) {
       try {
         localStorage.setItem('jvmcrew_token', authData.token);
