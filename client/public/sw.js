@@ -1,4 +1,4 @@
-﻿// sw.js - EngineerSpace Production Service Worker for Standards-Based Web Push
+// sw.js - EngineerSpace Production Service Worker for Standards-Based Web Push
 
 self.addEventListener('install', (event) => {
   // Activate immediately
