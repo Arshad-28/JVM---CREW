@@ -55,7 +55,7 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
-    setStatusMessage(isRegister ? 'Creating Team & Lead...' : 'Signing in...');
+    setStatusMessage(isRegister ? 'Creating Account...' : 'Signing in...');
 
     const handleStatusUpdate = (msg: string) => {
       setStatusMessage(msg);
@@ -236,7 +236,7 @@ export const LoginPage: React.FC = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-                    <span>{statusMessage || (isRegister ? 'Creating Team & Lead...' : 'Signing in...')}</span>
+                    <span>{statusMessage || (isRegister ? 'Creating Account...' : 'Signing in...')}</span>
                   </>
                 ) : (
                   <>
@@ -246,14 +246,6 @@ export const LoginPage: React.FC = () => {
                 )}
               </button>
             </div>
-
-            {loading && statusMessage && (
-              <div className="text-center pt-1">
-                <p className="text-[11px] font-mono text-muted animate-pulse">
-                  {statusMessage}
-                </p>
-              </div>
-            )}
           </form>
 
           {/* Footer toggle */}

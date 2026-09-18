@@ -68,11 +68,11 @@ async function fetchWithAdaptiveTimeout(
 ): Promise<Response> {
   const controller = new AbortController();
   
-  // Status update timer for cold-start visibility
+  // Professional status update timer if request takes longer than 3.5s
   let statusTimer: ReturnType<typeof setTimeout> | null = null;
   if (onStatusUpdate) {
     statusTimer = setTimeout(() => {
-      onStatusUpdate('Connecting to workspace (waking up server)...');
+      onStatusUpdate('Still signing you in...');
     }, 3500);
   }
 
@@ -85,10 +85,10 @@ async function fetchWithAdaptiveTimeout(
     return response;
   } catch (err: any) {
     if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
-      throw new Error('The server is taking longer than expected to respond. Please try again.');
+      throw new Error('Sign-in is taking longer than expected. Please try again.');
     }
     if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
-      throw new Error('Unable to connect to the server. Please check your network or try again in a few moments.');
+      throw new Error('Unable to reach the server. Please check your connection and try again.');
     }
     throw err;
   } finally {
@@ -114,9 +114,9 @@ async function handleResponse<T>(res: Response): Promise<T> {
     if (res.status === 401) {
       errorMessage = 'Invalid email or password.';
     } else if (res.status === 429) {
-      errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
-    } else if (res.status === 502 || res.status === 503 || res.status === 504) {
-      errorMessage = 'The server is temporarily starting up. Please try again in a few seconds.';
+      errorMessage = 'Too many login attempts. Please wait a moment and try again.';
+    } else if (res.status >= 500) {
+      errorMessage = 'Sign-in is temporarily unavailable. Please try again.';
     }
 
     try {
@@ -124,13 +124,13 @@ async function handleResponse<T>(res: Response): Promise<T> {
       if (text) {
         try {
           const errorData = JSON.parse(text);
-          if (errorData.message && res.status !== 401) {
+          if (errorData.message && res.status !== 401 && res.status < 500) {
             errorMessage = errorData.message;
-          } else if (errorData.error && res.status !== 401) {
+          } else if (errorData.error && res.status !== 401 && res.status < 500) {
             errorMessage = errorData.error;
           }
         } catch {
-          if (!errorMessage && text.length < 200) {
+          if (!errorMessage && text.length < 200 && res.status < 500) {
             errorMessage = text;
           }
         }
