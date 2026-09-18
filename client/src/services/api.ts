@@ -30,6 +30,9 @@ import {
   MockInterviewState,
   LearningInsights,
   HistoryItem,
+  WorkspaceNotification,
+  NotificationPreferences,
+  PushConfig,
 } from '../types';
 
 const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
@@ -1099,6 +1102,87 @@ export const api = {
       headers: getHeaders(),
     });
     return handleResponse<LearningInsights>(res);
+  },
+
+  // ==========================================
+  // NOTIFICATIONS & PUSH NOTIFICATIONS
+  // ==========================================
+
+  async getNotifications(page: number = 0, size: number = 20): Promise<{ content: WorkspaceNotification[]; totalElements: number; totalPages: number }> {
+    const res = await fetch(`${BASE_URL}/notifications?page=${page}&size=${size}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<{ content: WorkspaceNotification[]; totalElements: number; totalPages: number }>(res);
+  },
+
+  async getUnreadNotificationCount(): Promise<{ unreadCount: number }> {
+    const res = await fetch(`${BASE_URL}/notifications/unread-count`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<{ unreadCount: number }>(res);
+  },
+
+  async markNotificationAsRead(id: number): Promise<WorkspaceNotification> {
+    const res = await fetch(`${BASE_URL}/notifications/${id}/read`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+    });
+    return handleResponse<WorkspaceNotification>(res);
+  },
+
+  async markAllNotificationsAsRead(): Promise<{ success: boolean }> {
+    const res = await fetch(`${BASE_URL}/notifications/read-all`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+    });
+    return handleResponse<{ success: boolean }>(res);
+  },
+
+  async getPushConfig(): Promise<PushConfig> {
+    const res = await fetch(`${BASE_URL}/notifications/push-config`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<PushConfig>(res);
+  },
+
+  async registerPushSubscription(subscriptionPayload: any, userAgent?: string): Promise<{ status: string }> {
+    const res = await fetch(`${BASE_URL}/notifications/push-subscription`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        endpoint: subscriptionPayload.endpoint,
+        keys: {
+          p256dh: subscriptionPayload.keys?.p256dh,
+          auth: subscriptionPayload.keys?.auth,
+        },
+        userAgent: userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown'),
+      }),
+    });
+    return handleResponse<{ status: string }>(res);
+  },
+
+  async deletePushSubscription(endpoint: string): Promise<{ status: string }> {
+    const res = await fetch(`${BASE_URL}/notifications/push-subscription?endpoint=${encodeURIComponent(endpoint)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse<{ status: string }>(res);
+  },
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    const res = await fetch(`${BASE_URL}/notifications/preferences`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<NotificationPreferences>(res);
+  },
+
+  async updateNotificationPreferences(preferences: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+    const res = await fetch(`${BASE_URL}/notifications/preferences`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(preferences),
+    });
+    return handleResponse<NotificationPreferences>(res);
   },
 };
 

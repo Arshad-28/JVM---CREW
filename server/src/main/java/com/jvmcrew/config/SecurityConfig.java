@@ -85,8 +85,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public health, readiness & minimal actuator endpoints
                         .requestMatchers("/health", "/api/health", "/readiness", "/api/readiness", "/actuator/health", "/actuator/info").permitAll()
-                        // Public auth endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Public auth & push config endpoints
+                        .requestMatchers("/api/auth/**", "/api/notifications/push-config").permitAll()
                         // OpenAPI / Swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         // CORS pre-flight

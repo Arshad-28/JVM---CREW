@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { TeamIdentityReveal } from './TeamIdentityReveal';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 interface HeaderProps {
   activeTab: string;
@@ -263,6 +264,9 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </button>
             )}
+
+            {/* Notification Bell Center */}
+            <NotificationBell onNavigate={(tab) => { setActiveTab(tab); setMobileDrawerOpen(false); }} />
 
             {/* User Profile Identity Container */}
             <div className="relative shrink-0">

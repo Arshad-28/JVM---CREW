@@ -21,6 +21,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { normalizeSocialUrl } from '../../utils/greetingEngine';
+import { pushService, PushPermissionStatus } from '../../services/pushNotificationService';
+import { NotificationPreferences } from '../../types';
 
 interface AccountSettingsPageProps {
   onNavigateTab: (tab: string) => void;
@@ -72,10 +74,62 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Preference toggles
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [taskReminders, setTaskReminders] = useState(true);
-  const [homeworkAlerts, setHomeworkAlerts] = useState(true);
+  // Notification & Web Push Preferences
+  const [pushStatus, setPushStatus] = useState<PushPermissionStatus>('DEFAULT');
+  const [taskAssigned, setTaskAssigned] = useState(true);
+  const [taskReviews, setTaskReviews] = useState(true);
+  const [homeworkPublished, setHomeworkPublished] = useState(true);
+  const [homeworkReviews, setHomeworkReviews] = useState(true);
+  const [standupReminders, setStandupReminders] = useState(true);
+  const [teamUpdates, setTeamUpdates] = useState(true);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushFeedback, setPushFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    pushService.getStatus().then(setPushStatus);
+    api.getNotificationPreferences().then((prefs) => {
+      if (prefs) {
+        setTaskAssigned(prefs.taskAssigned ?? true);
+        setTaskReviews(prefs.taskReviews ?? true);
+        setHomeworkPublished(prefs.homeworkPublished ?? true);
+        setHomeworkReviews(prefs.homeworkReviews ?? true);
+        setStandupReminders(prefs.standupReminders ?? true);
+        setTeamUpdates(prefs.teamUpdates ?? true);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleTogglePushMaster = async () => {
+    setPushLoading(true);
+    setPushFeedback(null);
+    try {
+      if (pushStatus === 'SUBSCRIBED') {
+        const res = await pushService.unsubscribeFromPush();
+        await api.updateNotificationPreferences({ pushEnabled: false });
+        setPushStatus(await pushService.getStatus());
+        setPushFeedback(res.message);
+      } else {
+        const res = await pushService.subscribeToPush();
+        if (res.success) {
+          await api.updateNotificationPreferences({ pushEnabled: true });
+        }
+        setPushStatus(await pushService.getStatus());
+        setPushFeedback(res.message);
+      }
+    } catch (err: any) {
+      setPushFeedback(err.message || 'Failed to update push subscription');
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const handleUpdatePref = async (key: keyof NotificationPreferences, value: boolean) => {
+    try {
+      await api.updateNotificationPreferences({ [key]: value });
+    } catch (err) {
+      console.error('Failed to update preference:', err);
+    }
+  };
 
   if (!user) return null;
 
@@ -547,68 +601,218 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
         </form>
       </div>
 
-      {/* SECTION 3: NOTIFICATIONS & WORKSPACE PREFERENCES */}
+      {/* SECTION 3: NOTIFICATIONS & WEB PUSH PREFERENCES */}
       <div className="bg-paper border border-line rounded-sm p-6 space-y-6 shadow-2xs">
-        <div className="flex items-center space-x-2 border-b border-line pb-3">
-          <Bell className="w-4 h-4 text-accent" />
-          <h2 className="font-display text-sm font-bold text-ink uppercase tracking-wider">
-            Workspace Preferences
-          </h2>
+        <div className="flex items-center justify-between border-b border-line pb-3">
+          <div className="flex items-center space-x-2">
+            <Bell className="w-4 h-4 text-accent" />
+            <h2 className="font-display text-sm font-bold text-ink uppercase tracking-wider">
+              Web Push & Notifications
+            </h2>
+          </div>
+
+          <span
+            className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs uppercase tracking-wider border ${
+              pushStatus === 'SUBSCRIBED'
+                ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
+                : pushStatus === 'DENIED'
+                ? 'bg-rose-500/10 text-rose-800 border-rose-500/30'
+                : pushStatus === 'UNSUPPORTED'
+                ? 'bg-line text-muted border-line-dark'
+                : 'bg-amber-500/10 text-amber-800 border-amber-500/30'
+            }`}
+          >
+            {pushStatus === 'SUBSCRIBED'
+              ? 'Active (Subscribed)'
+              : pushStatus === 'DENIED'
+              ? 'Blocked by Browser'
+              : pushStatus === 'UNSUPPORTED'
+              ? 'Not Supported'
+              : 'Not Enabled'}
+          </span>
         </div>
 
-        <div className="space-y-4">
+        {/* Master Push Toggle */}
+        <div className="p-4 bg-paper-dark/40 border border-line rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold text-ink flex items-center space-x-1.5">
+              <span>Browser Web Push Notifications</span>
+            </p>
+            <p className="font-mono text-[11px] text-muted mt-0.5">
+              Receive instant alerts on your desktop or mobile device even when EngineerSpace is closed.
+            </p>
+            {pushFeedback && (
+              <p className="text-[11px] font-mono text-accent mt-1">
+                {pushFeedback}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            disabled={pushLoading || pushStatus === 'UNSUPPORTED'}
+            onClick={handleTogglePushMaster}
+            className={`px-3 py-1.5 rounded-xs font-mono text-xs font-bold transition-all shadow-2xs flex items-center space-x-1.5 shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+              pushStatus === 'SUBSCRIBED'
+                ? 'bg-paper text-rose-700 border border-rose-300 hover:bg-rose-50'
+                : 'bg-ink text-paper hover:bg-ink-light'
+            }`}
+          >
+            <span>
+              {pushLoading
+                ? 'Updating...'
+                : pushStatus === 'SUBSCRIBED'
+                ? 'Disable Push'
+                : 'Enable Browser Push'}
+            </span>
+          </button>
+        </div>
+
+        {/* Category Toggles */}
+        <div className="space-y-4 pt-1">
+          <p className="font-mono text-[10px] font-bold text-muted uppercase tracking-wider">
+            Notification Categories
+          </p>
+
+          {/* Task Assignments */}
+          <div className="flex items-center justify-between py-2 border-b border-line/60">
+            <div>
+              <p className="text-xs font-semibold text-ink">Task Assignments & Delegations</p>
+              <p className="font-mono text-[11px] text-muted">Alerts when new tasks are assigned or reassigned to you</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !taskAssigned;
+                setTaskAssigned(next);
+                handleUpdatePref('taskAssigned', next);
+              }}
+              className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                taskAssigned ? 'bg-emerald-700' : 'bg-line-dark'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  taskAssigned ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Task Reviews & Approvals */}
+          <div className="flex items-center justify-between py-2 border-b border-line/60">
+            <div>
+              <p className="text-xs font-semibold text-ink">Task Reviews & Approvals</p>
+              <p className="font-mono text-[11px] text-muted">Notify when tasks are approved or submitted for Lead review</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !taskReviews;
+                setTaskReviews(next);
+                handleUpdatePref('taskReviews', next);
+              }}
+              className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                taskReviews ? 'bg-emerald-700' : 'bg-line-dark'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  taskReviews ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Homework Published */}
+          <div className="flex items-center justify-between py-2 border-b border-line/60">
+            <div>
+              <p className="text-xs font-semibold text-ink">Homework & Assignments Published</p>
+              <p className="font-mono text-[11px] text-muted">Notify when new classwork is published or deadlines are updated</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !homeworkPublished;
+                setHomeworkPublished(next);
+                handleUpdatePref('homeworkPublished', next);
+              }}
+              className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                homeworkPublished ? 'bg-emerald-700' : 'bg-line-dark'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  homeworkPublished ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Homework Reviews & Solutions */}
+          <div className="flex items-center justify-between py-2 border-b border-line/60">
+            <div>
+              <p className="text-xs font-semibold text-ink">Homework Reviews & Official Solutions</p>
+              <p className="font-mono text-[11px] text-muted">Notify when solutions are unlocked or submissions are graded</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !homeworkReviews;
+                setHomeworkReviews(next);
+                handleUpdatePref('homeworkReviews', next);
+              }}
+              className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
+                homeworkReviews ? 'bg-emerald-700' : 'bg-line-dark'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  homeworkReviews ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Daily Standup Reminders */}
           <div className="flex items-center justify-between py-2 border-b border-line/60">
             <div>
               <p className="text-xs font-semibold text-ink">Daily Standup Reminders</p>
-              <p className="font-mono text-[11px] text-muted">Receive morning reminder for Daily Standup</p>
+              <p className="font-mono text-[11px] text-muted">Receive reminders for pending daily standup logs</p>
             </div>
             <button
-              onClick={() => setEmailAlerts(!emailAlerts)}
+              onClick={() => {
+                const next = !standupReminders;
+                setStandupReminders(next);
+                handleUpdatePref('standupReminders', next);
+              }}
               className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
-                emailAlerts ? 'bg-emerald-700' : 'bg-line-dark'
+                standupReminders ? 'bg-emerald-700' : 'bg-line-dark'
               }`}
             >
               <div
                 className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  emailAlerts ? 'translate-x-5' : 'translate-x-0'
+                  standupReminders ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>
           </div>
 
-          <div className="flex items-center justify-between py-2 border-b border-line/60">
-            <div>
-              <p className="text-xs font-semibold text-ink">Task Deadline Alerts</p>
-              <p className="font-mono text-[11px] text-muted">Highlight tasks approaching deadline</p>
-            </div>
-            <button
-              onClick={() => setTaskReminders(!taskReminders)}
-              className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
-                taskReminders ? 'bg-emerald-700' : 'bg-line-dark'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  taskReminders ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
+          {/* Team Activity */}
           <div className="flex items-center justify-between py-2">
             <div>
-              <p className="text-xs font-semibold text-ink">Homework Reviews & Solutions</p>
-              <p className="font-mono text-[11px] text-muted">Notify when solution is published or submission reviewed</p>
+              <p className="text-xs font-semibold text-ink">Team Activity & Standup Answers</p>
+              <p className="font-mono text-[11px] text-muted">Notify when Lead answers standup questions or team announcements are made</p>
             </div>
             <button
-              onClick={() => setHomeworkAlerts(!homeworkAlerts)}
+              onClick={() => {
+                const next = !teamUpdates;
+                setTeamUpdates(next);
+                handleUpdatePref('teamUpdates', next);
+              }}
               className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
-                homeworkAlerts ? 'bg-emerald-700' : 'bg-line-dark'
+                teamUpdates ? 'bg-emerald-700' : 'bg-line-dark'
               }`}
             >
               <div
                 className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  homeworkAlerts ? 'translate-x-5' : 'translate-x-0'
+                  teamUpdates ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>

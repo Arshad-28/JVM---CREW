@@ -994,5 +994,51 @@ export interface HistoryItem {
   timestamp: string;
 }
 
+// ==========================================
+// PUSH & NOTIFICATION SYSTEM TYPES
+// ==========================================
 
+export type NotificationType =
+  | 'TASK_ASSIGNED'
+  | 'TASK_REASSIGNED'
+  | 'TASK_SUBMITTED'
+  | 'TASK_APPROVED'
+  | 'TASK_CHANGES_REQUESTED'
+  | 'HOMEWORK_PUBLISHED'
+  | 'HOMEWORK_DEADLINE_CHANGED'
+  | 'HOMEWORK_REVIEWED'
+  | 'HOMEWORK_SOLUTION_PUBLISHED'
+  | 'STANDUP_SUBMITTED'
+  | 'STANDUP_ANSWERED'
+  | 'STANDUP_REMINDER'
+  | 'TEAM_UPDATE';
 
+export interface WorkspaceNotification {
+  id: number;
+  recipientUserId: number;
+  teamId: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  entityType?: string;
+  entityId?: number;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string;
+}
+
+export interface NotificationPreferences {
+  pushEnabled: boolean;
+  taskAssigned: boolean;
+  taskReviews: boolean;
+  homeworkPublished: boolean;
+  homeworkReviews: boolean;
+  standupReminders: boolean;
+  teamUpdates: boolean;
+}
+
+export interface PushConfig {
+  vapidPublicKey: string;
+  pushEnabled: boolean;
+}

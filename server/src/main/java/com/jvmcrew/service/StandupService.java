@@ -38,6 +38,7 @@ public class StandupService {
     private final TeamMemberRepository teamMemberRepository;
     private final AudioStorageService audioStorageService;
     private final LeadershipService leadershipService;
+    private final NotificationService notificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -299,6 +300,11 @@ public class StandupService {
 
         standup = standupRepository.save(standup);
 
+        // Notify active Lead if submitted by a team member
+        if (Boolean.TRUE.equals(standup.getIsCompleted())) {
+            notificationService.notifyStandupSubmitted(standup, user);
+        }
+
         boolean blockerCreated = false;
         // Principle: Capture once, derive everywhere - Auto create blocker if has blockers
         if (hasBlockers && StringUtils.hasText(blockerText)) {
@@ -330,6 +336,8 @@ public class StandupService {
         standup.setLeadAnswer(answer.trim());
         standup.setLeadAnsweredAt(Instant.now());
         standup = standupRepository.save(standup);
+
+        notificationService.notifyStandupAnswered(standup);
 
         return mapToResponse(standup, false);
     }

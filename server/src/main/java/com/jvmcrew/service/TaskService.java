@@ -26,6 +26,7 @@ public class TaskService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final LeadershipService leadershipService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasks(Long teamId, Long assigneeId, TaskStatus status) {
@@ -98,6 +99,11 @@ public class TaskService {
         // Audit Trail entry
         recordHistory(task, "created", null, task.getStatus().name(), currentUser);
 
+        // Web Push / In-App Notification
+        if (task.getAssignee() != null) {
+            notificationService.notifyTaskAssigned(task, currentUser);
+        }
+
         return mapToResponse(task);
     }
 
@@ -110,6 +116,11 @@ public class TaskService {
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
 
         verifyTaskTeam(task, teamId);
+
+        TaskStatus oldStatus = task.getStatus();
+        User oldAssignee = task.getAssignee();
+        boolean assigneeChanged = false;
+        User newAssignee = null;
 
         // Track changes
         if (!Objects.equals(task.getTitle(), request.getTitle())) {
@@ -131,7 +142,7 @@ public class TaskService {
         }
 
         if (request.getAssigneeId() != null) {
-            User newAssignee = userRepository.findById(request.getAssigneeId()).orElse(null);
+            newAssignee = userRepository.findById(request.getAssigneeId()).orElse(null);
             if (newAssignee != null && !teamMemberRepository.findByTeamAndUserAndIsActiveTrue(task.getTeam(), newAssignee).isPresent()) {
                 throw new IllegalArgumentException("Cannot assign task to a user outside of team " + task.getTeam().getFormattedDisplayName());
             }
@@ -142,6 +153,7 @@ public class TaskService {
                         newAssignee != null ? newAssignee.getName() : "Unassigned",
                         currentUser);
                 task.setAssignee(newAssignee);
+                assigneeChanged = true;
             }
         }
 
@@ -159,6 +171,24 @@ public class TaskService {
         }
 
         task = taskRepository.save(task);
+
+        // Trigger notifications based on status or assignee updates
+        if (assigneeChanged && newAssignee != null) {
+            if (oldAssignee == null) {
+                notificationService.notifyTaskAssigned(task, currentUser);
+            } else {
+                notificationService.notifyTaskReassigned(task, oldAssignee, newAssignee, currentUser);
+            }
+        }
+
+        if (oldStatus != task.getStatus()) {
+            if (task.getStatus() == TaskStatus.REVIEW) {
+                notificationService.notifyTaskSubmittedForReview(task, currentUser);
+            } else if (task.getStatus() == TaskStatus.DONE) {
+                notificationService.notifyTaskApproved(task, currentUser);
+            }
+        }
+
         return mapToResponse(task);
     }
 
@@ -171,6 +201,8 @@ public class TaskService {
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
 
         verifyTaskTeam(task, teamId);
+
+        TaskStatus oldStatus = task.getStatus();
 
         if (request.getStatus() != null && task.getStatus() != request.getStatus()) {
             recordHistory(task, "status", task.getStatus().name(), request.getStatus().name(), currentUser);
@@ -191,6 +223,16 @@ public class TaskService {
         }
 
         task = taskRepository.save(task);
+
+        // Notifications
+        if (oldStatus != task.getStatus()) {
+            if (task.getStatus() == TaskStatus.REVIEW) {
+                notificationService.notifyTaskSubmittedForReview(task, currentUser);
+            } else if (task.getStatus() == TaskStatus.DONE) {
+                notificationService.notifyTaskApproved(task, currentUser);
+            }
+        }
+
         return mapToResponse(task);
     }
 

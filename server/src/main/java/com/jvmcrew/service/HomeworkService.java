@@ -26,6 +26,7 @@ public class HomeworkService {
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final LeadershipService leadershipService;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional(readOnly = true)
@@ -135,6 +136,10 @@ public class HomeworkService {
 
         hw = homeworkRepository.save(hw);
 
+        if (publishNow) {
+            notificationService.notifyHomeworkPublished(hw, lead);
+        }
+
         List<TeamMember> teamMembers = teamMemberRepository.findByTeam(team).stream()
                 .filter(tm -> tm.getRole() != Role.LEAD)
                 .collect(Collectors.toList());
@@ -175,8 +180,12 @@ public class HomeworkService {
         }
         hw.setQuestionsJson(questionsJson);
         hw.setInstructions(request.getInstructions());
-        if (request.getDueDate() != null) {
+        
+        LocalDate oldDueDate = hw.getDueDate();
+        boolean dueDateChanged = false;
+        if (request.getDueDate() != null && !request.getDueDate().equals(oldDueDate)) {
             hw.setDueDate(request.getDueDate());
+            dueDateChanged = true;
         }
         if (request.getAttachmentName() != null) {
             hw.setAttachmentName(request.getAttachmentName());
@@ -192,13 +201,21 @@ public class HomeworkService {
             hw.setSolutionAttachmentType(request.getSolutionAttachmentType());
         }
 
+        boolean newlyPublished = false;
         if (Boolean.TRUE.equals(request.getPublishNow()) && !Boolean.TRUE.equals(hw.getIsPublished())) {
             hw.setIsPublished(true);
             hw.setPublishedAt(Instant.now());
+            newlyPublished = true;
         }
 
         hw.setUpdatedAt(Instant.now());
         hw = homeworkRepository.save(hw);
+
+        if (newlyPublished) {
+            notificationService.notifyHomeworkPublished(hw, lead);
+        } else if (dueDateChanged && Boolean.TRUE.equals(hw.getIsPublished())) {
+            notificationService.notifyHomeworkDeadlineChanged(hw, oldDueDate);
+        }
 
         List<TeamMember> teamMembers = teamMemberRepository.findByTeam(hw.getTeam()).stream()
                 .filter(tm -> tm.getRole() != Role.LEAD)
@@ -225,6 +242,8 @@ public class HomeworkService {
         hw.setPublishedAt(Instant.now());
         hw.setUpdatedAt(Instant.now());
         hw = homeworkRepository.save(hw);
+
+        notificationService.notifyHomeworkPublished(hw, lead);
 
         List<TeamMember> teamMembers = teamMemberRepository.findByTeam(hw.getTeam()).stream()
                 .filter(tm -> tm.getRole() != Role.LEAD)
@@ -257,6 +276,13 @@ public class HomeworkService {
                 hw.setSolutionAttachmentType(request.getSolutionAttachmentType());
             }
         }
+
+        hw.setIsSolutionPublished(true);
+        hw.setSolutionPublishedAt(Instant.now());
+        hw.setUpdatedAt(Instant.now());
+        hw = homeworkRepository.save(hw);
+
+        notificationService.notifyHomeworkSolutionPublished(hw);
 
         hw.setIsSolutionPublished(true);
         hw.setSolutionPublishedAt(Instant.now());
@@ -345,6 +371,7 @@ public class HomeworkService {
             sub.setLeadFeedback(request.getFeedback().trim());
         }
         sub = homeworkSubmissionRepository.save(sub);
+        notificationService.notifyHomeworkReviewed(sub, lead);
 
         return mapToSubmissionDto(sub);
     }
