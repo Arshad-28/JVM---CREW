@@ -13,6 +13,7 @@ import { StandupAudioPlayer } from '../../components/common/StandupAudioPlayer';
 import { LeadershipRotationSection } from './LeadershipRotationSection';
 import { MonthlyLecturerReportSection } from './MonthlyLecturerReportSection';
 import { TeamManagementSection } from './TeamManagementSection';
+import { PageContainer } from '../../components/common/PageContainer';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -242,7 +243,7 @@ export const TeamDashboardPage: React.FC = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <PageContainer width="wide" className="space-y-6">
       {/* 1. TOP HEADER */}
       <div className="border border-line bg-paper p-4 sm:p-5 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -1368,6 +1369,6 @@ export const TeamDashboardPage: React.FC = () => {
           )}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

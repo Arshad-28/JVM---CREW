@@ -9,6 +9,7 @@ import { CrewCard3D } from '../../components/crew/CrewCard3D';
 import { EditCrewMemberModal } from '../../components/crew/EditCrewMemberModal';
 import { Users, Crown, ArrowLeft, Shield, Sparkles } from 'lucide-react';
 import { cleanTeamDisplayName } from '../../utils/greetingEngine';
+import { PageContainer } from '../../components/common/PageContainer';
 
 export const MeetTheCrewPage: React.FC = () => {
   const { user, updateAccount } = useAuth();
@@ -98,7 +99,7 @@ export const MeetTheCrewPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
+    <PageContainer width="default" className="space-y-6 sm:space-y-8">
       {/* Page Header */}
       <div className="text-center space-y-2 max-w-2xl mx-auto">
         <div className="inline-flex items-center space-x-2 font-mono text-xs font-bold uppercase tracking-widest px-3 py-1 bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 rounded-sm mb-1">
@@ -244,6 +245,6 @@ export const MeetTheCrewPage: React.FC = () => {
         onClose={() => setEditingMember(null)}
         onSave={handleSaveProfile}
       />
-    </div>
+    </PageContainer>
   );
 };

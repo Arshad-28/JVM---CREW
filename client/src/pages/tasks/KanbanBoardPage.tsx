@@ -5,6 +5,7 @@ import { mapTeamMemberToCrewProfile, CrewMemberProfile } from '../../services/cr
 import { Task, TaskComment, TaskHistoryItem, TaskPriority, TaskStatus } from '../../types';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ProgressBar } from '../../components/common/ProgressBar';
+import { PageContainer } from '../../components/common/PageContainer';
 import { PersonalMissionControl } from './PersonalMissionControl';
 import {
   Plus,
@@ -420,7 +421,7 @@ export const KanbanBoardPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <PageContainer width="wide" className="space-y-6">
       {/* CONDITION A: MEMBER ROLE -> PERSONAL MISSION CONTROL */}
       {!isLead ? (
         <PersonalMissionControl
@@ -929,8 +930,8 @@ export const KanbanBoardPage: React.FC = () => {
             })}
           </div>
 
-          {/* 6-Column Engineering Kanban Columns for Lead */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-start">
+          {/* Responsive Engineering Kanban Columns for Lead */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 items-start">
             {COLUMNS.filter((col) => mobileColumnTab === 'ALL' || col.id === mobileColumnTab).map((col) => {
               const colTasks = filteredTasks.filter((t) => {
                 if (col.id === 'BLOCKED') return t.status === 'IN_PROGRESS' && t.labels?.includes('BLOCKED');
@@ -1872,6 +1873,6 @@ export const KanbanBoardPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

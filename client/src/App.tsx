@@ -34,7 +34,7 @@ const AccountSettingsPage = lazy(() => import('./pages/settings/AccountSettingsP
 const InterviewLabPage = lazy(() => import('./pages/interview/InterviewLabPage').then(m => ({ default: m.InterviewLabPage })));
 
 const PageFallback: React.FC = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[300px]">
+  <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[300px]">
     <div className="font-mono text-xs text-muted flex items-center space-x-2.5">
       <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
       <span>Loading view...</span>
@@ -175,7 +175,7 @@ const MainLayout: React.FC = () => {
       </main>
 
       <footer className="border-t border-line py-3 bg-paper">
-        <div className="max-w-7xl mx-auto px-4 text-center font-mono text-[10px] text-muted flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center font-mono text-[10px] text-muted flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block"></span>
             <span className="uppercase">{cleanTeamDisplayName(user.teamName) || 'Team'} Workspace</span>

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { MemberWorkspaceView } from './MemberWorkspaceView';
 import { LeadDailyBriefView } from './LeadDailyBriefView';
 import { LayoutDashboard, Users } from 'lucide-react';
+import { PageContainer } from '../../components/common/PageContainer';
 
 interface HomeDashboardPageProps {
   onNavigateTab: (tab: string) => void;
@@ -16,7 +17,7 @@ export const HomeDashboardPage: React.FC<HomeDashboardPageProps> = ({ onNavigate
   const [viewMode, setViewMode] = useState<'PERSONAL' | 'COCKPIT'>('PERSONAL');
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <PageContainer width="default" className="space-y-6">
       {/* Lead Dual-Role Mode Switcher Bar */}
       {isLeadOrAdmin && (
         <div className="bg-paper border border-line rounded-sm p-2 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
@@ -63,7 +64,7 @@ export const HomeDashboardPage: React.FC<HomeDashboardPageProps> = ({ onNavigate
       ) : (
         <MemberWorkspaceView onNavigateTab={onNavigateTab} />
       )}
-    </div>
+    </PageContainer>
   );
 };
 

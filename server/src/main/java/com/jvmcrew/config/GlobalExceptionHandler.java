@@ -28,6 +28,18 @@ public class GlobalExceptionHandler {
         private String timestamp;
     }
 
+    @ExceptionHandler(com.jvmcrew.exception.ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(com.jvmcrew.exception.ResourceNotFoundException ex) {
+        log.warn("Handled resource not found exception: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage() != null ? ex.getMessage() : "The requested resource was not found.",
+                Instant.now().toString()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Handled illegal argument exception: {}", ex.getMessage());

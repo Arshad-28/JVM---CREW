@@ -29,6 +29,7 @@ import {
   HelpCircle,
   Sparkles,
 } from 'lucide-react';
+import { PageContainer } from '../../components/common/PageContainer';
 
 interface InterviewLabPageProps {
   initialTopic?: string;
@@ -446,7 +447,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 font-sans">
+    <PageContainer width="default" className="space-y-6 font-sans">
       {/* 1. TOP HEADER & BRANDING */}
       <div className="border border-line bg-paper p-4 sm:p-5 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-2xs">
         <div>
@@ -1740,6 +1741,6 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
           )}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

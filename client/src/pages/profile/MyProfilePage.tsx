@@ -7,6 +7,7 @@ import {
 import { CrewCard3D } from '../../components/crew/CrewCard3D';
 import { EditCrewMemberModal } from '../../components/crew/EditCrewMemberModal';
 import { Edit3 } from 'lucide-react';
+import { PageContainer } from '../../components/common/PageContainer';
 
 export const MyProfilePage: React.FC = () => {
   const { user, updateAccount } = useAuth();
@@ -57,7 +58,7 @@ export const MyProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
+    <PageContainer width="default" className="space-y-6 sm:space-y-8">
       {/* Header Banner */}
       <div className="border border-line bg-paper p-4 sm:p-6 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
@@ -110,6 +111,6 @@ export const MyProfilePage: React.FC = () => {
         onClose={() => setEditingMember(null)}
         onSave={handleSaveProfile}
       />
-    </div>
+    </PageContainer>
   );
 };

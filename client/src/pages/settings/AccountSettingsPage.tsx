@@ -23,6 +23,7 @@ import {
 import { normalizeSocialUrl } from '../../utils/greetingEngine';
 import { pushService, PushPermissionStatus } from '../../services/pushNotificationService';
 import { NotificationPreferences } from '../../types';
+import { PageContainer } from '../../components/common/PageContainer';
 
 interface AccountSettingsPageProps {
   onNavigateTab: (tab: string) => void;
@@ -229,7 +230,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in font-sans">
+    <PageContainer width="narrow" className="space-y-6 sm:space-y-8 animate-fade-in font-sans">
       {/* Top Header & Back Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div className="space-y-1">
@@ -872,6 +873,6 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
           <span>Sign Out</span>
         </button>
       </div>
-    </div>
+    </PageContainer>
   );
 };

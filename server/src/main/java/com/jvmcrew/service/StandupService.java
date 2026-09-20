@@ -455,13 +455,11 @@ public class StandupService {
         // Check for existing standup on this date
         Optional<Standup> existingOpt = standupRepository.findByUserAndDate(user, standupDate);
         Standup standup;
+        String oldAudioPath = null;
 
         if (existingOpt.isPresent()) {
             standup = existingOpt.get();
-            // Clean up previous audio file if replaced
-            if (StringUtils.hasText(standup.getAudioStoragePath())) {
-                audioStorageService.deleteAudioFile(standup.getAudioStoragePath());
-            }
+            oldAudioPath = standup.getAudioStoragePath();
             standup.setUpdatedAt(Instant.now());
         } else {
             standup = Standup.builder()
@@ -472,7 +470,7 @@ public class StandupService {
                     .build();
         }
 
-        // Store new audio file in team-isolated directory
+        // Store new audio file in team-isolated directory (verified in cloud storage before proceeding)
         AudioStorageService.StoredAudioMetadata stored = audioStorageService.storeAudioFile(audioFile, team.getId(), userId, standupDate);
 
         standup.setSubmissionType("VOICE");
@@ -501,7 +499,28 @@ public class StandupService {
             standup.setQuestionForLead(questionForLead.trim());
         }
 
-        Standup saved = standupRepository.save(standup);
+        Standup saved;
+        try {
+            saved = standupRepository.save(standup);
+        } catch (Exception ex) {
+            // Compensate if database save fails: clean up newly created storage file
+            try {
+                audioStorageService.deleteAudioFile(stored.getStoragePath());
+            } catch (Exception deleteEx) {
+                // Ignore compensation cleanup failure
+            }
+            throw ex;
+        }
+
+        // Only after database update succeeds, safely clean up previous recording if it was a different file
+        if (StringUtils.hasText(oldAudioPath) && !oldAudioPath.equals(stored.getStoragePath())) {
+            try {
+                audioStorageService.deleteAudioFile(oldAudioPath);
+            } catch (Exception ex) {
+                // Non-critical old file cleanup
+            }
+        }
+
         return mapToResponse(saved, false);
     }
 
@@ -544,7 +563,7 @@ public class StandupService {
         }
 
         if (!StringUtils.hasText(standup.getAudioStoragePath())) {
-            throw new IllegalArgumentException("No voice recording attached to this standup.");
+            throw new com.jvmcrew.exception.StorageFileNotFoundException("No voice recording attached to standup #" + standupId);
         }
 
         org.springframework.core.io.Resource resource = audioStorageService.loadAudioAsResource(standup.getAudioStoragePath());

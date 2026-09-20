@@ -1,174 +1,140 @@
-# JVM CREW — Engineering Team Platform
+# EngineerSpace
 
-Welcome to the **JVM CREW** project codebase. This document provides a complete guide to the project's folder structure, architectural organization, build system, and a quick-reference guide on **"Where to edit things"**.
+> **The Engineering Team Operating System & AI Learning Platform for SDE Interns and Rotating Leads.**
 
----
-
-## 📁 Project Overview & Architecture
-
-The project is structured as a modern full-stack web application separated into two primary directories:
-
-```
-project-root/
-│
-├── client/                 # Frontend React + TypeScript application (Vite)
-├── server/                 # Backend Java Spring Boot REST API
-├── docker-compose.yml      # Multi-container orchestrator for production/dev deployment
-└── README.md               # Project documentation & structure guide
-```
+[![Production App](https://img.shields.io/badge/Production-engineerspace.netlify.app-10B981?style=for-the-badge)](https://engineerspace.netlify.app)
+[![Backend API](https://img.shields.io/badge/API-jvm--crew.onrender.com-06B6D4?style=for-the-badge)](https://jvm-crew.onrender.com)
+[![Java](https://img.shields.io/badge/Java-21_LTS-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://supabase.com)
 
 ---
 
-## 📂 Detailed Directory Structure
+## 1. Overview
+EngineerSpace is a unified platform designed to streamline daily engineering operations, track curriculum mastery, manage homework assignments, facilitate daily standups with voice audio recordings, and sharpen technical skills with an AI-powered Interview Lab.
 
-### 1. Frontend Client (`client/`)
+---
 
-The frontend is built using **React 18**, **TypeScript**, **Tailwind CSS**, and **Vite**.
+## 2. Core Capabilities
 
-```
-client/
-├── public/                 # Static public assets served directly by Vite
-├── src/                    # Main React application source code
-│   ├── components/         # Reusable UI components
-│   │   ├── common/         # Global shared components (Header, Modals, Badges, Metrics)
-│   │   ├── crew/           # Digital Crew Member Card & Editor components
-│   │   └── team/           # Team Cockpit modals & detail components
-│   │
-│   ├── context/            # React Context providers (Authentication & User Context)
-│   │
-│   ├── pages/              # Full page views / application screens
-│   │   ├── auth/           # Login & Authentication view
-│   │   ├── crew/           # Meet the Crew gallery & detail view
-│   │   ├── dsa/            # Data Structures & Algorithms tracker view
-│   │   ├── home/           # My Day command center & member workspace views
-│   │   ├── homework/       # Homework assignments & submissions view
-│   │   ├── learning/       # Curriculum tracker view
-│   │   ├── profile/        # Personal Profile & Digital Card view
-│   │   ├── standup/        # Daily Standup check-in modals
-│   │   ├── tasks/          # Personal Mission Control & Lead Crew Command Center (KanbanBoardPage.tsx & PersonalMissionControl.tsx)
-│   │   └── team/           # Team Cockpit Lead dashboard view
-│   │
-│   ├── services/           # API communication & local data persistence services
-│   │   ├── api.ts          # Axios / Fetch REST API client
-│   │   ├── crewService.ts  # Crew member dataset & profile state manager
-│   │   └── leaveEmailTemplates.ts # Leave email generator logic
-│   │
-│   ├── types/              # TypeScript interfaces, enums, and type definitions
-│   │   └── index.ts        # Shared data structures (User, Task, Standup, Curriculum)
-│   │
-│   ├── App.tsx             # Root layout wrapper, tab routing & main application state
-│   ├── index.css           # Global Tailwind CSS directives & custom scrollbars/styles
-│   └── main.tsx            # Application entry point rendering React DOM
-│
-├── Dockerfile              # Docker container build script for frontend
-├── index.html              # HTML template entry point
-├── nginx.conf              # Nginx production web server configuration
-├── package.json            # Frontend dependencies & build scripts
-├── postcss.config.js       # PostCSS configuration for Tailwind CSS
-├── tailwind.config.js      # Tailwind CSS design system configuration
-├── tsconfig.json           # TypeScript compiler configuration
-└── vite.config.ts          # Vite build tool configuration
+- **My Day**: Daily command center featuring streak tracking, active task strip, homework milestones, and lead briefs.
+- **Tasks (Kanban)**: 4-stage Kanban workflow (`BACKLOG` -> `IN_PROGRESS` -> `IN_REVIEW` -> `DONE`) with drag-and-drop, role permissions, comments, and audit logs.
+- **Homework Center**: Assignment publishing, solution reveal controls, code submissions, and grading rubrics (0–100).
+- **Curriculum Roadmap**: Structured SDE topic tracking with real calculated mastery metrics.
+- **Daily Standups & Voice Studio**: Check-ins with in-browser audio recording (Opus/WebM), Supabase Cloud Storage persistence, byte-range streaming playback, and PDF generation.
+- **Interview Lab & AI Coach**: Technical mock interviews, concept practice questions with progressive hints, and an in-browser algorithmic coding arena powered by Google Gemini (with OpenAI fallback).
+- **Team Cockpit & Digital Identity**: Team member roster, monthly leadership rotation management, 3D collectible character cards, and dossier links.
+- **Notification Center**: In-app notifications and real-time Web Push notifications via VAPID and Service Worker (`sw.js`).
+
+---
+
+## 3. Architecture Overview
+
+```mermaid
+flowchart LR
+    Client["React 18 + Vite SPA\n(Netlify CDN)"]
+    API["Spring Boot 3.3.4 (Java 21)\n(Render Cloud)"]
+    DB[("PostgreSQL DB\n(Supabase)")]
+    Storage[("Cloud Storage\n(Supabase 'jvmcrew-files')")]
+    AI["Google Gemini AI\n(gemini-1.5-flash)"]
+
+    Client <-->|HTTPS / REST| API
+    API <-->|JPA / Flyway| DB
+    API <-->|REST API| Storage
+    API <-->|REST API| AI
 ```
 
 ---
 
-### 2. Backend Server (`server/`)
+## 4. Documentation Index
 
-The backend is built using **Java 21**, **Spring Boot 3.3**, **Spring Security (JWT)**, and **Spring Data JPA**.
+Comprehensive engineering and governance documentation is maintained in the `docs/` directory:
 
-```
-server/
-├── src/
-│   ├── main/
-│   │   ├── java/com/jvmcrew/   # Java package root
-│   │   │   ├── config/          # Spring Security, JWT, CORS, Data Initializer
-│   │   │   ├── controller/      # REST API Controllers (HTTP Request handlers)
-│   │   │   ├── dto/             # Data Transfer Objects (Request/Response schemas)
-│   │   │   ├── model/           # JPA Entities & Database domain models
-│   │   │   ├── repository/      # Spring Data JPA Repository interfaces
-│   │   │   └── service/         # Business logic services
-│   │   │   └── JvmCrewApplication.java # Spring Boot main entry point class
-│   │   │
-│   │   └── resources/
-│   │       └── application.properties # Spring configuration & database connection settings
-│   │
-│   └── test/                    # Backend unit & integration test suites
-│
-├── Dockerfile                   # Docker container build script for backend Java service
-└── pom.xml                      # Maven build & dependency specification
-```
+| Document | Description |
+| :--- | :--- |
+| [`docs/PRD.md`](docs/PRD.md) | Product Requirement Document — Modules, roles, user stories, and specs. |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Technical Architecture — Complete system design, data flows, and layer breakdown. |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | Global Design System — Layout containers, color tokens, typography, and UI standards. |
+| [`docs/RULES.md`](docs/RULES.md) | 30 Permanent Engineering Rules — Coding, security, and architectural invariants. |
+| [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Master Test Plan — Test matrices, security checks, and execution commands. |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Security Policy & Threat Model — Auth, IDOR defense, rate limits, and runbooks. |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Architecture Decision Records (ADR-001 through ADR-010). |
+| [`docs/MEMORY.md`](docs/MEMORY.md) | Living Project Memory — Verified features, known gotchas, and component maps. |
+| [`TASKS.md`](TASKS.md) | Master Task Tracker — Phased engineering roadmap. |
 
 ---
 
-## 🛠️ Auto-Generated & Dependency Folders
+## 5. Quick Start & Local Development
 
-The following folders are automatically generated by package managers and build tools. They are excluded from version control (`.gitignore`) and should **not** be manually edited:
-
-- `client/node_modules/`: Installed npm packages and frontend libraries.
-- `client/dist/`: Production build artifacts generated by `npm run build`.
-- `server/target/`: Compiled Java `.class` files and `.jar` artifacts generated by `mvn compile` or `mvn package`.
-
----
-
-## 📍 Where Do I Edit Things? (Quick Reference)
-
-Use this lookup guide to easily find where specific features reside in the project:
-
-### Frontend (UI & Components)
-
-| Feature to Edit | File Location | Description |
-| :--- | :--- | :--- |
-| **Global Header / Navigation** | `client/src/components/common/Header.tsx` | Main top navigation bar, logo, and right profile dropdown |
-| **My Day Page** | `client/src/pages/home/HomeDashboardPage.tsx` | Daily operational checklist, streak, and command center |
-| **Personal Task Page (Member)** | `client/src/pages/tasks/PersonalMissionControl.tsx` | Personalized workstation with Next Move, Today's Missions & Momentum |
-| **Crew Command Center (Lead)** | `client/src/pages/tasks/KanbanBoardPage.tsx` | Team-wide Kanban board, member assignment filters & audit trail |
-| **Curriculum Page** | `client/src/pages/learning/LearningTrackerPage.tsx` | Training curriculum roadmap and progress tracking |
-| **Homework Assignments** | `client/src/pages/homework/HomeworkPage.tsx` | Assignments, code submissions, and feedback |
-| **Team Cockpit (Lead View)** | `client/src/pages/team/TeamDashboardPage.tsx` | Lead team overview, standup summary, and blockers |
-| **Meet the Crew Page** | `client/src/pages/crew/MeetTheCrewPage.tsx` | Crew member gallery & focused character card view |
-| **My Profile Page** | `client/src/pages/profile/MyProfilePage.tsx` | Personal profile view and digital identity card |
-| **Digital Member Card (3D)** | `client/src/components/crew/CrewCard3D.tsx` | Front platinum design and single-surface dossier back side |
-| **Profile Editor Modal** | `client/src/components/crew/EditCrewMemberModal.tsx` | Profile editor form with real-time Live Card Preview |
-| **Daily Standup Modal** | `client/src/pages/standup/StandupModal.tsx` | Daily 3-minute check-in modal form |
-| **Leave Email Generator** | `client/src/components/common/LeaveEmailModal.tsx` | Leave email generator modal & template form |
-| **Authentication Context** | `client/src/context/AuthContext.tsx` | User login state, demo account switching, and JWT storage |
-| **Global Styling & Theme** | `client/src/index.css` & `tailwind.config.js` | Colors, typography, scrollbars, and design tokens |
-| **Frontend Data Services** | `client/src/services/crewService.ts` | Local profile storage & crew dataset management |
-
----
-
-### Backend (REST API & Database)
-
-| Backend Logic to Edit | File Location | Description |
-| :--- | :--- | :--- |
-| **REST API Controllers** | `server/src/main/java/com/jvmcrew/controller/` | Endpoints for Auth, Standup, Tasks, Learning, Homework |
-| **Business Logic Services** | `server/src/main/java/com/jvmcrew/service/` | Core backend business rules and data processing |
-| **Database Entities / Models** | `server/src/main/java/com/jvmcrew/model/` | JPA database schemas (User, Task, Standup, Curriculum) |
-| **Database Repositories** | `server/src/main/java/com/jvmcrew/repository/` | Spring Data JPA database queries |
-| **Security & JWT Config** | `server/src/main/java/com/jvmcrew/config/SecurityConfig.java` | Spring Security rules, CORS, and JWT filters |
-| **Database Initializer** | `server/src/main/java/com/jvmcrew/config/DataInitializer.java` | Initial database seeding data for Lead & Members |
-| **Server Configuration** | `server/src/main/resources/application.properties` | Port settings, H2 database connection, JWT secret |
-
----
-
-## 🚀 Running the Project Locally
-
-### 1. Frontend Development Server
+### Option A: Running with Docker Compose (Recommended)
 ```bash
-cd client
-npm install
-npm run dev
-# Running on http://localhost:3000
-```
+# Clone the repository
+git clone https://github.com/Arshad-28/JVM---CREW.git
+cd JVM---CREW
 
-### 2. Backend Development Server
+# Copy environment variables
+cp .env.example .env
+
+# Start all services (PostgreSQL, Backend API, Frontend SPA)
+docker compose up --build
+```
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8080`
+- PostgreSQL: `localhost:5432`
+
+---
+
+### Option B: Running Services Manually
+
+#### Prerequisites
+- Java 21 LTS
+- Node.js 18+ & npm
+- PostgreSQL 15+
+
+#### 1. Backend Setup
 ```bash
 cd server
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
-# Running on http://localhost:8080
+
+# Set environment variables or configure application-dev.yml
+cp .env.example .env
+
+# Build and run with Maven wrapper
+./mvnw spring-boot:run
+```
+The backend will start at `http://localhost:8080`.
+
+#### 2. Frontend Setup
+```bash
+cd client
+
+# Install dependencies
+npm install
+
+# Start Vite development server
+npm run dev
+```
+The frontend will start at `http://localhost:5173` and automatically proxy `/api` calls to `http://localhost:8080`.
+
+---
+
+## 6. Testing
+
+### Run Backend Tests
+```bash
+cd server
+./mvnw clean test
 ```
 
-### 3. Docker Compose (Full Stack Containerized Deployment)
+### Build & Validate Frontend
 ```bash
-docker-compose up --build
+cd client
+npm run build
 ```
+
+---
+
+## 7. License
+This project is licensed under the terms specified in the [LICENSE](LICENSE) file.\n

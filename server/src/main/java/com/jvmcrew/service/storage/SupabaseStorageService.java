@@ -189,7 +189,9 @@ public class SupabaseStorageService implements StorageService {
             }
 
             log.warn("Supabase Storage fetch returned HTTP {} for path: {}", stdResponse.statusCode(), storagePath);
-            throw new IllegalStateException("Voice recording not found in Supabase storage: " + storagePath);
+            throw new com.jvmcrew.exception.StorageFileNotFoundException("Voice recording not found in Supabase storage: " + storagePath);
+        } catch (com.jvmcrew.exception.StorageFileNotFoundException ex) {
+            throw ex;
         } catch (IllegalStateException ex) {
             throw ex;
         } catch (Exception ex) {

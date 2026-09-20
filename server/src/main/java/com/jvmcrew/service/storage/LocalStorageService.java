@@ -75,10 +75,10 @@ public class LocalStorageService implements StorageService {
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException("File not found or not readable: " + storagePath);
+                throw new com.jvmcrew.exception.StorageFileNotFoundException("File not found or not readable: " + storagePath);
             }
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Malformed path for file: " + storagePath, e);
+            throw new IllegalArgumentException("Malformed path for file: " + storagePath, e);
         }
     }
 

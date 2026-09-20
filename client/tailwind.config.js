@@ -5,6 +5,15 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'xs': '420px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1440px',
+      '3xl': '1600px',
+    },
     extend: {
       colors: {
         paper: '#EFEDE7',
@@ -31,6 +40,17 @@ export default {
         DEFAULT: '3px',
         sm: '2px',
         md: '4px',
+        lg: '6px',
+        xl: '8px',
+      },
+      maxWidth: {
+        'page-narrow': '56rem',   // 896px  (4xl)
+        'page-default': '80rem',  // 1280px (7xl)
+        'page-wide': '90rem',     // 1440px
+      },
+      boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'xs': '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06)',
       },
     },
   },

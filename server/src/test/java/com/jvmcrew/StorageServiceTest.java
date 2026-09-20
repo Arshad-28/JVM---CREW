@@ -131,4 +131,49 @@ class StorageServiceTest {
                 audioStorageService.storeAudioFile(exeFile, 1L, 10L, LocalDate.now())
         );
     }
+
+    @Test
+    void testAudioStorageService_StorageFileNotFoundException_ThrownWhenMissing() {
+        LocalStorageService local = new LocalStorageService();
+        ReflectionTestUtils.setField(local, "uploadDirProperty", tempDir.toString());
+        local.init();
+
+        SupabaseStorageService supabase = new SupabaseStorageService();
+        supabase.init();
+
+        AudioStorageService audioStorageService = new AudioStorageService(local, supabase);
+        audioStorageService.init();
+
+        assertThrows(com.jvmcrew.exception.StorageFileNotFoundException.class, () ->
+                audioStorageService.loadAudioAsResource("standups/999/2026/09/18/voice_non_existent.webm")
+        );
+    }
+
+    @Test
+    void testAudioStorageService_PathFormatStandardization() {
+        LocalStorageService local = new LocalStorageService();
+        ReflectionTestUtils.setField(local, "uploadDirProperty", tempDir.toString());
+        local.init();
+
+        SupabaseStorageService supabase = new SupabaseStorageService();
+        supabase.init();
+
+        AudioStorageService audioStorageService = new AudioStorageService(local, supabase);
+        audioStorageService.init();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "voice",
+                "voice.webm",
+                "audio/webm;codecs=opus",
+                new byte[]{0x1a, 0x45, (byte) 0xdf, (byte) 0xa3}
+        );
+
+        LocalDate specificDate = LocalDate.of(2026, 9, 18);
+        AudioStorageService.StoredAudioMetadata metadata = audioStorageService.storeAudioFile(file, 2L, 42L, specificDate);
+
+        assertNotNull(metadata);
+        assertTrue(metadata.getStoragePath().startsWith("standups/2/2026/09/18/voice_2026-09-18_"));
+        assertTrue(metadata.getStoragePath().endsWith(".webm"));
+        assertEquals("audio/webm;codecs=opus", metadata.getContentType());
+    }
 }

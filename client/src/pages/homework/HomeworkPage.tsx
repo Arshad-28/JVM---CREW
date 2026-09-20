@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Edit3,
 } from 'lucide-react';
+import { PageContainer } from '../../components/common/PageContainer';
 
 export const HomeworkPage: React.FC = () => {
   const { user } = useAuth();
@@ -348,7 +349,7 @@ export const HomeworkPage: React.FC = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+    <PageContainer width="default" className="space-y-6">
       {/* ========================================================================= */}
       {/* PAGE HEADER                                                               */}
       {/* ========================================================================= */}
@@ -1628,6 +1629,6 @@ export const HomeworkPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
