@@ -13,7 +13,8 @@ export interface LeaveEmailRecord {
   userId: number;
   userName: string;
   userEmail: string;
-  recipient: string;
+  recipient?: string;
+  recipients: string[];
   reason: LeaveReason;
   reasonDisplay: string;
   startDate: string;
@@ -24,6 +25,16 @@ export interface LeaveEmailRecord {
   templateId: string;
   sentAt: string;
   status: 'SENT';
+}
+
+export function validateEmail(email: string): boolean {
+  if (!email) return false;
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email.trim());
+}
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
 }
 
 export interface TemplateParams {
@@ -518,7 +529,19 @@ export function getUserLeaveHistory(userId: number): LeaveEmailRecord[] {
   try {
     const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${userId}`);
     if (!raw) return [];
-    return JSON.parse(raw) as LeaveEmailRecord[];
+    const parsed = JSON.parse(raw) as (Partial<LeaveEmailRecord> & { recipient?: string })[];
+    return parsed.map((item) => {
+      const recipients = Array.isArray(item.recipients) && item.recipients.length > 0
+        ? item.recipients.map(normalizeEmail)
+        : item.recipient
+          ? [normalizeEmail(item.recipient)]
+          : ['support@algorithms.com'];
+      return {
+        ...item,
+        recipients,
+        recipient: recipients[0] || 'support@algorithms.com',
+      } as LeaveEmailRecord;
+    });
   } catch {
     return [];
   }
@@ -526,9 +549,17 @@ export function getUserLeaveHistory(userId: number): LeaveEmailRecord[] {
 
 export function saveUserLeaveRecord(userId: number, record: Omit<LeaveEmailRecord, 'id' | 'sentAt' | 'status'>): LeaveEmailRecord {
   const existing = getUserLeaveHistory(userId);
+  const recipients = Array.isArray(record.recipients) && record.recipients.length > 0
+    ? record.recipients.map(normalizeEmail)
+    : record.recipient
+      ? [normalizeEmail(record.recipient)]
+      : ['support@algorithms.com'];
+
   const newRecord: LeaveEmailRecord = {
     ...record,
-    id: `leave_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    recipients,
+    recipient: recipients[0],
+    id: `leave_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     sentAt: new Date().toISOString(),
     status: 'SENT',
   };
