@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthUser } from '../types';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -91,13 +91,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         })
         .catch((err) => {
-          console.warn('Session verification notice:', err?.message || err);
-          if (isMounted) {
-            try {
-              localStorage.removeItem('jvmcrew_token');
-              localStorage.removeItem('jvmcrew_cached_user');
-            } catch (e) {}
-            setUser(null);
+          const isExplicitAuthFailure =
+            (err instanceof ApiError && err.status === 401) ||
+            err?.status === 401 ||
+            err?.message?.includes('401') ||
+            err?.message?.includes('Unauthorized');
+
+          if (isExplicitAuthFailure) {
+            console.warn('Session expired. Logging out.');
+            if (isMounted) {
+              try {
+                localStorage.removeItem('jvmcrew_token');
+                localStorage.removeItem('jvmcrew_cached_user');
+              } catch (e) {}
+              setUser(null);
+            }
+          } else {
+            console.warn('Backend waking or network delayed; preserving session state:', err?.message || err);
+            // Retain cached user during cold starts or transient drops
           }
         })
         .finally(() => {

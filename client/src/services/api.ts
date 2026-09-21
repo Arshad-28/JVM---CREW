@@ -36,11 +36,19 @@ import {
 } from '../types';
 
 const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
+const isLocal =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const DEFAULT_PROD_URL = 'https://jvm-crew.onrender.com';
+
 let BASE_URL = '/api';
 
 if (rawEnvUrl && typeof rawEnvUrl === 'string' && rawEnvUrl.trim() !== '') {
   const cleaned = rawEnvUrl.trim().replace(/\/+$/, '');
   BASE_URL = cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`;
+} else if (!isLocal) {
+  // Direct production routing to Render to bypass intermediate proxy timeouts
+  BASE_URL = `${DEFAULT_PROD_URL}/api`;
 }
 
 function getAuthHeaders(): Record<string, string> {
@@ -60,23 +68,51 @@ function getHeaders(): HeadersInit {
 
 export type AuthStatusCallback = (statusMessage: string) => void;
 
+export class ApiError extends Error {
+  status: number;
+  data?: any;
+  isTransient: boolean;
+
+  constructor(message: string, status: number = 0, data?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+    // Transient errors: network drops (0), timeouts (408), Render cold-start gateway wake-up states (502, 503, 504)
+    this.isTransient = status === 0 || status === 408 || status === 502 || status === 503 || status === 504;
+  }
+}
+
 async function fetchWithAdaptiveTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs: number = 20000,
+  timeoutMs: number = 35000,
   onStatusUpdate?: AuthStatusCallback
 ): Promise<Response> {
   const controller = new AbortController();
-  
-  // Professional status update timer if request takes longer than 3.5s
-  let statusTimer: ReturnType<typeof setTimeout> | null = null;
+  const timers: ReturnType<typeof setTimeout>[] = [];
+
   if (onStatusUpdate) {
-    statusTimer = setTimeout(() => {
-      onStatusUpdate('Still signing you in...');
-    }, 3500);
+    timers.push(
+      setTimeout(() => {
+        onStatusUpdate('Still signing you in...');
+      }, 3500)
+    );
+    timers.push(
+      setTimeout(() => {
+        onStatusUpdate('Connecting to workspace...');
+      }, 12000)
+    );
+    timers.push(
+      setTimeout(() => {
+        onStatusUpdate('Establishing secure connection...');
+      }, 25000)
+    );
   }
 
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  timers.push(timeoutId);
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -85,15 +121,17 @@ async function fetchWithAdaptiveTimeout(
     return response;
   } catch (err: any) {
     if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
-      throw new Error('Sign-in is taking longer than expected. Please try again.');
+      throw new ApiError('Sign-in request timed out while connecting to the server.', 408);
     }
     if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
-      throw new Error('Unable to reach the server. Please check your connection and try again.');
+      throw new ApiError('Unable to reach the server. Please check your connection.', 0);
     }
-    throw err;
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError(err?.message || 'Network request failed', 0);
   } finally {
-    clearTimeout(timeoutId);
-    if (statusTimer) clearTimeout(statusTimer);
+    timers.forEach((t) => clearTimeout(t));
   }
 }
 
@@ -119,15 +157,16 @@ async function handleResponse<T>(res: Response): Promise<T> {
       errorMessage = 'Sign-in is temporarily unavailable. Please try again.';
     }
 
+    let parsedData: any = null;
     try {
       const text = await res.text();
       if (text) {
         try {
-          const errorData = JSON.parse(text);
-          if (errorData.message && res.status !== 401 && res.status < 500) {
-            errorMessage = errorData.message;
-          } else if (errorData.error && res.status !== 401 && res.status < 500) {
-            errorMessage = errorData.error;
+          parsedData = JSON.parse(text);
+          if (parsedData.message && res.status !== 401 && res.status < 500) {
+            errorMessage = parsedData.message;
+          } else if (parsedData.error && res.status !== 401 && res.status < 500) {
+            errorMessage = parsedData.error;
           }
         } catch {
           if (!errorMessage && text.length < 200 && res.status < 500) {
@@ -142,10 +181,49 @@ async function handleResponse<T>(res: Response): Promise<T> {
     if (!errorMessage) {
       errorMessage = res.statusText || `Request failed with status ${res.status}`;
     }
-    throw new Error(errorMessage);
+    throw new ApiError(errorMessage, res.status, parsedData);
   }
   const text = await res.text();
   return text ? (JSON.parse(text) as T) : (null as unknown as T);
+}
+
+async function executeAuthWithRetry<T>(
+  action: (onStatus?: AuthStatusCallback) => Promise<T>,
+  onStatus?: AuthStatusCallback,
+  maxAttempts: number = 3
+): Promise<T> {
+  let lastError: any = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await action(onStatus);
+    } catch (err: any) {
+      lastError = err;
+
+      // Definitive authentication failure (401 invalid creds, 400 bad request, 409 conflict, 429 rate limit)
+      // DO NOT RETRY - fail immediately!
+      const status = err?.status ?? (err instanceof ApiError ? err.status : 0);
+      const isTransient = err?.isTransient ?? (status === 0 || status === 408 || status === 502 || status === 503 || status === 504);
+
+      if (!isTransient || attempt === maxAttempts) {
+        throw err;
+      }
+
+      // If transient cold start delay, smoothly update status and wait before retry
+      if (onStatus) {
+        if (attempt === 1) {
+          onStatus('Still signing you in...');
+        } else {
+          onStatus('Connecting to workspace...');
+        }
+      }
+
+      const delayMs = attempt === 1 ? 1200 : 2000;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw lastError || new ApiError('Sign-in is taking longer than expected. Please try again.', 408);
 }
 
 export function getLocalTodayDateString(): string {
@@ -160,12 +238,12 @@ export const api = {
   // Non-blocking proactive warmup ping for server / DB pool pre-initialization
   warmup(): void {
     try {
-      const targetHost = BASE_URL.endsWith('/api') ? BASE_URL.slice(0, -4) : BASE_URL;
       const endpoints = [
-        `${targetHost}/health`,
-        `${targetHost}/api/health`,
-        `${targetHost}/api/readiness`,
+        'https://jvm-crew.onrender.com/health',
+        'https://jvm-crew.onrender.com/api/health',
+        'https://jvm-crew.onrender.com/api/readiness',
         '/health',
+        '/api/health',
       ];
       endpoints.forEach((ep) => {
         fetch(ep, { method: 'GET', mode: 'cors', keepalive: true }).catch(() => {});
@@ -175,31 +253,43 @@ export const api = {
 
   // Auth
   async login(email: string, password: string, onStatus?: AuthStatusCallback): Promise<AuthUser> {
-    const res = await fetchWithAdaptiveTimeout(
-      `${BASE_URL}/auth/login`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+    return executeAuthWithRetry(
+      async (statusCb) => {
+        const res = await fetchWithAdaptiveTimeout(
+          `${BASE_URL}/auth/login`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          },
+          35000,
+          statusCb
+        );
+        return handleResponse<AuthUser>(res);
       },
-      45000,
-      onStatus
+      onStatus,
+      3
     );
-    return handleResponse<AuthUser>(res);
   },
 
   async register(data: { name: string; email: string; password: string; teamName?: string }, onStatus?: AuthStatusCallback): Promise<AuthUser> {
-    const res = await fetchWithAdaptiveTimeout(
-      `${BASE_URL}/auth/register`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+    return executeAuthWithRetry(
+      async (statusCb) => {
+        const res = await fetchWithAdaptiveTimeout(
+          `${BASE_URL}/auth/register`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          },
+          35000,
+          statusCb
+        );
+        return handleResponse<AuthUser>(res);
       },
-      45000,
-      onStatus
+      onStatus,
+      3
     );
-    return handleResponse<AuthUser>(res);
   },
 
   async getCurrentUser(): Promise<AuthUser> {
@@ -208,7 +298,7 @@ export const api = {
       {
         headers: getHeaders(),
       },
-      20000
+      25000
     );
     return handleResponse<AuthUser>(res);
   },

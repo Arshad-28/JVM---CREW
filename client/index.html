@@ -15,13 +15,18 @@
     <meta name="twitter:description" content="EngineerSpace" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://jvm-crew.onrender.com" crossorigin>
+    <link rel="dns-prefetch" href="https://jvm-crew.onrender.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
       (function() {
         try {
-          // Pre-warm backend TCP connection and DNS immediately on page load
-          fetch('/api/health', { method: 'GET', mode: 'cors' }).catch(function() {});
-          fetch('/health', { method: 'GET', mode: 'cors' }).catch(function() {});
+          var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+          var backendHost = isLocal ? '' : 'https://jvm-crew.onrender.com';
+          // Pre-warm backend TCP connection, DNS, and container immediately on page load
+          fetch(backendHost + '/health', { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
+          fetch(backendHost + '/api/health', { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
+          fetch(backendHost + '/api/readiness', { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
         } catch(e) {}
       })();
     </script>

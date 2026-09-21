@@ -142,6 +142,7 @@ export const LoginPage: React.FC = () => {
                       required
                       disabled={loading}
                       value={name}
+                      onFocus={api.warmup}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Rahul Kumar"
                       className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
@@ -160,6 +161,7 @@ export const LoginPage: React.FC = () => {
                       required
                       disabled={loading}
                       value={teamName}
+                      onFocus={api.warmup}
                       onChange={(e) => setTeamName(e.target.value)}
                       placeholder="e.g. STACK, PHOENIX, NOVA"
                       className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
@@ -183,6 +185,7 @@ export const LoginPage: React.FC = () => {
                   required
                   disabled={loading}
                   value={email}
+                  onFocus={api.warmup}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@gmail.com"
                   autoCapitalize="none"
@@ -207,6 +210,7 @@ export const LoginPage: React.FC = () => {
                   required
                   disabled={loading}
                   value={password}
+                  onFocus={api.warmup}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
                   className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
