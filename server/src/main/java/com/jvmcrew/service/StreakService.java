@@ -38,9 +38,109 @@ public class StreakService {
     @Transactional(readOnly = true)
     public UserStreakDto getUserStreak(User user, LocalDate targetDate) {
         LocalDate today = targetDate != null ? targetDate : LocalDate.now(APP_ZONE_ID);
-
-        // Map of Date -> List of activities performed on that date
         Map<LocalDate, List<String>> dailyActivities = getDailyActivities(user);
+        return buildStreakDtoFromActivities(user, dailyActivities, today);
+    }
+
+    /**
+     * Batch calculation of real activity streaks for multiple users in a single operation.
+     * Executes at most 5 batch queries across the entire team, reducing 50+ DB round-trips to 5.
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, UserStreakDto> getBatchUserStreaks(List<User> users, LocalDate targetDate) {
+        if (users == null || users.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        LocalDate today = targetDate != null ? targetDate : LocalDate.now(APP_ZONE_ID);
+
+        // Map of UserId -> Date -> Activities
+        Map<Long, Map<LocalDate, List<String>>> userDailyActivities = new HashMap<>();
+        for (User u : users) {
+            userDailyActivities.put(u.getId(), new HashMap<>());
+        }
+
+        // 1. Batch Standups
+        List<Standup> standups = standupRepository.findByUserInOrderByDateDesc(users);
+        for (Standup s : standups) {
+            if (Boolean.TRUE.equals(s.getIsCompleted()) && s.getDate() != null && s.getUser() != null) {
+                Long uid = s.getUser().getId();
+                Map<LocalDate, List<String>> userMap = userDailyActivities.get(uid);
+                if (userMap != null) {
+                    String desc = (s.getSubmissionType() != null && s.getSubmissionType().equals("VOICE"))
+                            ? "Voice Standup (" + (s.getAudioDurationSeconds() != null ? s.getAudioDurationSeconds() + "s" : "Recorded") + ")"
+                            : "Daily Standup";
+                    userMap.computeIfAbsent(s.getDate(), k -> new ArrayList<>()).add(desc);
+                }
+            }
+        }
+
+        // 2. Batch Homework Submissions
+        List<HomeworkSubmission> homeworks = homeworkSubmissionRepository.findByUserInOrderBySubmittedAtDesc(users);
+        for (HomeworkSubmission hw : homeworks) {
+            if (hw.getSubmittedAt() != null && hw.getUser() != null) {
+                Long uid = hw.getUser().getId();
+                Map<LocalDate, List<String>> userMap = userDailyActivities.get(uid);
+                if (userMap != null) {
+                    LocalDate d = hw.getSubmittedAt().atZone(APP_ZONE_ID).toLocalDate();
+                    String title = hw.getHomework() != null ? hw.getHomework().getTitle() : "Homework Assignment";
+                    userMap.computeIfAbsent(d, k -> new ArrayList<>()).add("Submitted Homework: " + title);
+                }
+            }
+        }
+
+        // 3. Batch Completed Tasks
+        List<Task> tasks = taskRepository.findByAssigneeInOrderByCreatedAtDesc(users);
+        for (Task t : tasks) {
+            if (t.getStatus() == TaskStatus.DONE && t.getCreatedAt() != null && t.getAssignee() != null) {
+                Long uid = t.getAssignee().getId();
+                Map<LocalDate, List<String>> userMap = userDailyActivities.get(uid);
+                if (userMap != null) {
+                    LocalDate d = t.getCreatedAt().atZone(APP_ZONE_ID).toLocalDate();
+                    userMap.computeIfAbsent(d, k -> new ArrayList<>()).add("Completed Task: " + t.getTitle());
+                }
+            }
+        }
+
+        // 4. Batch Problem Attempts
+        List<ProblemAttempt> attempts = problemAttemptRepository.findByUserIn(users);
+        for (ProblemAttempt pa : attempts) {
+            if (pa.getStatus() == AttemptStatus.SOLVED && pa.getSolvedAt() != null && pa.getUser() != null) {
+                Long uid = pa.getUser().getId();
+                Map<LocalDate, List<String>> userMap = userDailyActivities.get(uid);
+                if (userMap != null) {
+                    LocalDate d = pa.getSolvedAt().atZone(APP_ZONE_ID).toLocalDate();
+                    String pTitle = pa.getProblem() != null ? pa.getProblem().getName() : "Algorithm Problem";
+                    userMap.computeIfAbsent(d, k -> new ArrayList<>()).add("Solved Problem: " + pTitle);
+                }
+            }
+        }
+
+        // 5. Batch Learning Progress
+        List<LearningProgress> progresses = learningProgressRepository.findByUserIn(users);
+        for (LearningProgress lp : progresses) {
+            if (lp.getStatus() == LearningStatus.DONE && lp.getCompletedAt() != null && lp.getUser() != null) {
+                Long uid = lp.getUser().getId();
+                Map<LocalDate, List<String>> userMap = userDailyActivities.get(uid);
+                if (userMap != null) {
+                    LocalDate d = lp.getCompletedAt().atZone(APP_ZONE_ID).toLocalDate();
+                    String tTitle = lp.getTopic() != null ? lp.getTopic().getTitle() : "Learning Topic";
+                    userMap.computeIfAbsent(d, k -> new ArrayList<>()).add("Completed Topic: " + tTitle);
+                }
+            }
+        }
+
+        // Build UserStreakDto for each user in memory
+        Map<Long, UserStreakDto> resultMap = new HashMap<>();
+        for (User u : users) {
+            Map<LocalDate, List<String>> dailyActivities = userDailyActivities.getOrDefault(u.getId(), Collections.emptyMap());
+            resultMap.put(u.getId(), buildStreakDtoFromActivities(u, dailyActivities, today));
+        }
+
+        return resultMap;
+    }
+
+    private UserStreakDto buildStreakDtoFromActivities(User user, Map<LocalDate, List<String>> dailyActivities, LocalDate today) {
         Set<LocalDate> activeDates = dailyActivities.keySet();
 
         boolean hasActivityToday = activeDates.contains(today);
@@ -50,7 +150,6 @@ public class StreakService {
         // 1. Calculate Current Streak
         int currentStreak = 0;
         if (hasActivityToday) {
-            // User was active today -> count backwards starting from today
             currentStreak = 1;
             int offset = 1;
             while (activeDates.contains(today.minusDays(offset))) {
@@ -58,7 +157,6 @@ public class StreakService {
                 offset++;
             }
         } else {
-            // User has no activity today yet -> check if yesterday had activity (streak is active/pending)
             LocalDate yesterday = today.minusDays(1);
             if (activeDates.contains(yesterday)) {
                 currentStreak = 1;
@@ -139,10 +237,13 @@ public class StreakService {
 
         LocalDate today = targetDate != null ? targetDate : LocalDate.now(APP_ZONE_ID);
 
+        List<User> userList = members.stream().map(TeamMember::getUser).collect(Collectors.toList());
+        Map<Long, UserStreakDto> streakMap = getBatchUserStreaks(userList, today);
+
         List<TeamMemberStreakDto> result = new ArrayList<>();
         for (TeamMember tm : members) {
             User u = tm.getUser();
-            UserStreakDto streak = getUserStreak(u, today);
+            UserStreakDto streak = streakMap.getOrDefault(u.getId(), UserStreakDto.builder().currentStreak(0).longestStreak(0).build());
 
             result.add(TeamMemberStreakDto.builder()
                     .userId(u.getId())

@@ -113,15 +113,15 @@ public class DashboardService {
                 ? homeworkRepository.findByTeamAndIsPublishedTrueOrderByCreatedAtDesc(team)
                 : Collections.emptyList();
         long totalHomeworkCount = publishedHomework.size();
-        long submittedHomeworkCount = 0;
-        List<Homework> pendingHomeworkList = new ArrayList<>();
-        for (Homework hw : publishedHomework) {
-            if (homeworkSubmissionRepository.findByHomeworkAndUser(hw, user).isPresent()) {
-                submittedHomeworkCount++;
-            } else {
-                pendingHomeworkList.add(hw);
-            }
-        }
+        Set<Long> submittedHwIds = publishedHomework.isEmpty()
+                ? Collections.emptySet()
+                : homeworkSubmissionRepository.findByHomeworkInAndUser(publishedHomework, user).stream()
+                        .map(s -> s.getHomework().getId())
+                        .collect(Collectors.toSet());
+        long submittedHomeworkCount = submittedHwIds.size();
+        List<Homework> pendingHomeworkList = publishedHomework.stream()
+                .filter(hw -> !submittedHwIds.contains(hw.getId()))
+                .collect(Collectors.toList());
         long pendingHomeworkCount = totalHomeworkCount - submittedHomeworkCount;
 
         // Curriculum metrics
@@ -383,6 +383,9 @@ public class DashboardService {
                 .filter(m -> standupByUserMap.containsKey(m.getUser().getId()))
                 .count();
 
+        List<User> memberUsers = members.stream().map(TeamMember::getUser).collect(Collectors.toList());
+        Map<Long, UserStreakDto> memberStreakMap = streakService.getBatchUserStreaks(memberUsers, today);
+
         List<LeadDailyBriefDto.AttentionItemDto> attentionList = new ArrayList<>();
         List<LeadDailyBriefDto.TeamSummaryRowDto> summaryRows = new ArrayList<>();
         List<LeadDailyBriefDto.AccomplishmentDto> accomplishments = new ArrayList<>();
@@ -410,7 +413,7 @@ public class DashboardService {
             String subType = isSubmitted ? (s.getSubmissionType() != null ? s.getSubmissionType() : (hasVoice ? "VOICE" : "TEXT")) : "TEXT";
             String audioUrl = hasVoice ? ("/api/standups/" + s.getId() + "/voice") : null;
 
-            UserStreakDto memberStreak = streakService.getUserStreak(u, today);
+            UserStreakDto memberStreak = memberStreakMap.getOrDefault(u.getId(), UserStreakDto.builder().currentStreak(0).longestStreak(0).build());
             summaryRows.add(LeadDailyBriefDto.TeamSummaryRowDto.builder()
                     .userId(u.getId())
                     .name(u.getName())

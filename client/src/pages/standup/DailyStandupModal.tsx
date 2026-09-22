@@ -397,10 +397,10 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                   cleanupVoice();
                   setActiveTab('WRITE');
                 }}
-                className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 shrink-0 ${
+                className={`px-3 py-1.5 rounded-md font-semibold transition-all flex items-center space-x-1.5 shrink-0 ${
                   activeTab === 'WRITE'
-                    ? 'bg-ink text-paper shadow-xs'
-                    : 'bg-paper-dark hover:bg-line text-muted hover:text-ink border border-line'
+                    ? 'bg-primary-soft text-primary font-bold border border-primary/25 shadow-2xs'
+                    : 'bg-surface-raised hover:bg-surface-soft text-muted hover:text-ink border border-line'
                 }`}
               >
                 <PenTool className="w-3.5 h-3.5" />
@@ -412,10 +412,10 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                 onClick={() => {
                   setActiveTab('VOICE');
                 }}
-                className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 shrink-0 ${
+                className={`px-3 py-1.5 rounded-md font-semibold transition-all flex items-center space-x-1.5 shrink-0 ${
                   activeTab === 'VOICE'
-                    ? 'bg-ink text-paper shadow-xs'
-                    : 'bg-paper-dark hover:bg-line text-muted hover:text-ink border border-line'
+                    ? 'bg-primary-soft text-primary font-bold border border-primary/25 shadow-2xs'
+                    : 'bg-surface-raised hover:bg-surface-soft text-muted hover:text-ink border border-line'
                 }`}
               >
                 <Mic className="w-3.5 h-3.5" />
@@ -429,10 +429,10 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                     cleanupVoice();
                     setActiveTab('VIEW');
                   }}
-                  className={`px-3 py-1.5 rounded-xs font-semibold transition-colors flex items-center space-x-1.5 shrink-0 ${
+                  className={`px-3 py-1.5 rounded-md font-semibold transition-all flex items-center space-x-1.5 shrink-0 ${
                     activeTab === 'VIEW'
-                      ? 'bg-ink text-paper shadow-xs'
-                      : 'bg-paper-dark hover:bg-line text-muted hover:text-ink border border-line'
+                      ? 'bg-primary-soft text-primary font-bold border border-primary/25 shadow-2xs'
+                      : 'bg-surface-raised hover:bg-surface-soft text-muted hover:text-ink border border-line'
                   }`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -445,7 +445,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('VIEW')}
-                className="text-[11px] font-mono text-accent hover:underline"
+                className="text-[11px] font-mono text-primary hover:underline font-semibold"
               >
                 View current submission
               </button>
@@ -564,10 +564,10 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                           key={lvl}
                           type="button"
                           onClick={() => setConfidence(lvl)}
-                          className={`py-2 px-2 border rounded-sm text-center transition-all ${
+                          className={`py-2 px-2 border rounded-md text-center transition-all ${
                             selected
-                              ? 'bg-ink text-paper border-ink shadow-xs font-bold'
-                              : 'bg-paper hover:bg-paper-dark border-line text-ink'
+                              ? 'bg-primary-soft text-primary border-primary/40 shadow-2xs font-bold'
+                              : 'bg-surface-raised hover:bg-surface-soft border-line text-ink'
                           }`}
                         >
                           <div className="font-mono text-sm">{lvl}</div>
@@ -588,7 +588,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                     value={questionForLead}
                     onChange={(e) => setQuestionForLead(e.target.value)}
                     placeholder="e.g. Could you review PR #42 or discuss architecture on thread safety during 1:1?"
-                    className="w-full p-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none font-sans"
+                    className="w-full p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-md text-xs outline-none font-sans"
                   />
                 </div>
 
@@ -599,21 +599,21 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                     onClick={() => setActiveTab('VOICE')}
                     className="text-xs text-muted hover:text-ink font-mono flex items-center space-x-1 self-start sm:self-auto py-1"
                   >
-                    <Mic className="w-3.5 h-3.5" />
+                    <Mic className="w-3.5 h-3.5 text-primary" />
                     <span>Prefer voice? Record voice instead</span>
                   </button>
                   <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="flex-1 sm:flex-initial px-3 py-2 sm:py-1.5 border border-line hover:border-line-dark rounded-sm text-xs text-muted hover:text-ink transition-colors font-mono"
+                      className="flex-1 sm:flex-initial px-3 py-2 sm:py-1.5 border border-line hover:border-line-dark rounded-md text-xs text-muted hover:text-ink transition-colors font-mono"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting || !yesterday.trim() || !today.trim() || !learned.trim()}
-                      className="flex-1 sm:flex-initial px-4 py-2 sm:py-1.5 bg-accent hover:bg-accent-hover text-paper text-xs font-semibold rounded-sm transition-colors flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                      className="flex-1 sm:flex-initial px-4 py-2 sm:py-1.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-paper text-xs font-semibold rounded-md transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50 shadow-xs hover-lift"
                     >
                       {submitting ? (
                         <>
@@ -622,7 +622,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                         </>
                       ) : (
                         <>
-                          <Send className="w-3.5 h-3.5" />
+                          <Send className="w-3.5 h-3.5 text-primary-soft" />
                           <span>{existingStandup ? 'Update Standup' : 'Submit Standup'}</span>
                         </>
                       )}

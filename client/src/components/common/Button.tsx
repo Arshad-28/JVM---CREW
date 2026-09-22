@@ -1,7 +1,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger' | 'success' | 'outline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -26,30 +26,33 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const variantStyles = {
-    primary: 'bg-ink text-paper hover:bg-ink-light border-ink shadow-xs',
-    secondary: 'bg-paper text-ink hover:bg-paper-dark border-line hover:border-ink shadow-2xs',
-    accent: 'bg-accent text-paper hover:bg-accent-hover border-accent shadow-xs',
-    ghost: 'bg-transparent text-muted hover:text-ink hover:bg-paper-dark border-transparent',
-    danger: 'bg-red-600 text-white hover:bg-red-700 border-red-600 shadow-xs',
-    outline: 'bg-transparent text-ink hover:bg-paper-dark border-line hover:border-ink',
+    primary: 'bg-primary text-white hover:bg-primary-hover border-primary shadow-xs hover:-translate-y-[1px] active:translate-y-0',
+    secondary: 'bg-paper-light text-ink hover:bg-primary-soft hover:text-primary hover:border-primary/40 border-line shadow-2xs hover:-translate-y-[1px] active:translate-y-0',
+    accent: 'bg-ochre text-white hover:bg-[#B57A24] border-ochre shadow-xs hover:-translate-y-[1px] active:translate-y-0',
+    ghost: 'bg-transparent text-muted hover:text-ink hover:bg-paper-dark/60 border-transparent',
+    danger: 'bg-danger text-white hover:bg-danger-hover border-danger shadow-xs hover:-translate-y-[1px] active:translate-y-0',
+    success: 'bg-success text-white hover:bg-success-hover border-success shadow-xs hover:-translate-y-[1px] active:translate-y-0',
+    outline: 'bg-transparent text-ink hover:bg-paper-light border-line hover:border-ink hover:-translate-y-[1px] active:translate-y-0',
   }[variant];
 
   const sizeStyles = {
-    sm: 'px-2.5 py-1 text-xs font-mono font-semibold min-h-[30px] space-x-1.5',
-    md: 'px-3.5 py-2 text-xs font-mono font-bold min-h-[36px] space-x-2',
-    lg: 'px-4 py-2.5 text-sm font-mono font-bold min-h-[42px] space-x-2',
+    sm: 'px-3 py-1.5 text-xs font-mono font-semibold min-h-[32px] space-x-1.5',
+    md: 'px-4 py-2 text-xs font-mono font-bold min-h-[38px] space-x-2',
+    lg: 'px-5 py-2.5 text-sm font-mono font-bold min-h-[44px] space-x-2.5',
   }[size];
 
-  const disabledStyles = (disabled || loading) ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'active:scale-[0.98]';
+  const disabledStyles = (disabled || loading)
+    ? 'opacity-50 cursor-not-allowed pointer-events-none transform-none'
+    : 'cursor-pointer';
 
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center border rounded-sm transition-all select-none ${variantStyles} ${sizeStyles} ${disabledStyles} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`inline-flex items-center justify-center border rounded-sm font-sans transition-all duration-160 select-none focus-ring ${variantStyles} ${sizeStyles} ${disabledStyles} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...props}
     >
       {loading ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
       ) : icon ? (
         <span className="shrink-0">{icon}</span>
       ) : null}

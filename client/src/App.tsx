@@ -7,14 +7,15 @@ import { cleanTeamDisplayName } from './utils/greetingEngine';
 import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
 import { DailyStandupModal } from './pages/standup/DailyStandupModal';
 import { LeaveEmailModal } from './components/common/LeaveEmailModal';
+import { ToastContainer } from './components/common/Toast';
 
 const WorkspaceLoadingScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4 font-sans">
-      <div className="flex flex-col items-center space-y-3 max-w-sm text-center animate-fade-in">
-        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-        <div className="font-mono text-xs text-ink font-medium">
-          Verifying workspace session...
+      <div className="flex flex-col items-center space-y-3.5 max-w-sm text-center animate-fade-in">
+        <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        <div className="font-mono text-xs text-ink font-semibold tracking-tight">
+          Connecting to Workspace...
         </div>
         <p className="font-mono text-[10px] text-muted uppercase tracking-wider">
           EngineerSpace Platform
@@ -24,25 +25,48 @@ const WorkspaceLoadingScreen: React.FC = () => {
   );
 };
 
-// Lazy-loaded heavy secondary route components
+// Lazy-loaded route components
 const KanbanBoardPage = lazy(() => import('./pages/tasks/KanbanBoardPage').then(m => ({ default: m.KanbanBoardPage })));
 const TeamDashboardPage = lazy(() => import('./pages/team/TeamDashboardPage').then(m => ({ default: m.TeamDashboardPage })));
 const HomeworkPage = lazy(() => import('./pages/homework/HomeworkPage').then(m => ({ default: m.HomeworkPage })));
 const MeetTheCrewPage = lazy(() => import('./pages/crew/MeetTheCrewPage').then(m => ({ default: m.MeetTheCrewPage })));
+const TeamMeetingsSection = lazy(() => import('./pages/team/TeamMeetingsSection').then(m => ({ default: m.TeamMeetingsSection })));
 const MyProfilePage = lazy(() => import('./pages/profile/MyProfilePage').then(m => ({ default: m.MyProfilePage })));
 const AccountSettingsPage = lazy(() => import('./pages/settings/AccountSettingsPage').then(m => ({ default: m.AccountSettingsPage })));
 const InterviewLabPage = lazy(() => import('./pages/interview/InterviewLabPage').then(m => ({ default: m.InterviewLabPage })));
+const TeamPerformanceReportPage = lazy(() => import('./pages/reports/TeamPerformanceReportPage').then(m => ({ default: m.TeamPerformanceReportPage })));
+
+// Prefetch route chunks on browser idle
+const prefetchRoutes = () => {
+  try {
+    import('./pages/tasks/KanbanBoardPage');
+    import('./pages/team/TeamDashboardPage');
+    import('./pages/homework/HomeworkPage');
+    import('./pages/crew/MeetTheCrewPage');
+    import('./pages/team/TeamMeetingsSection');
+    import('./pages/profile/MyProfilePage');
+    import('./pages/settings/AccountSettingsPage');
+    import('./pages/interview/InterviewLabPage');
+    import('./pages/reports/TeamPerformanceReportPage');
+  } catch (e) {}
+};
+
+if (typeof window !== 'undefined') {
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => setTimeout(prefetchRoutes, 800));
+  } else {
+    setTimeout(prefetchRoutes, 1500);
+  }
+}
 
 const PageFallback: React.FC = () => (
-  <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[300px]">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center min-h-[350px]">
     <div className="font-mono text-xs text-muted flex items-center space-x-2.5">
-      <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-      <span>Loading view...</span>
+      <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+      <span>Loading workspace view...</span>
     </div>
   </div>
 );
-
-
 
 const getTabFromPath = (): string => {
   const path = window.location.pathname.toLowerCase().replace(/^\/+/, '');
@@ -50,8 +74,9 @@ const getTabFromPath = (): string => {
   if (path === 'settings' || path === 'account-settings') return 'settings';
   if (path === 'tasks' || path === 'my-tasks') return 'tasks';
   if (path === 'homework' || path === 'my-homework') return 'homework';
-  if (path === 'learning' || path === 'curriculum') return 'home';
   if (path === 'interview-lab' || path === 'interview' || path === 'interview-prep') return 'interview-lab';
+  if (path === 'meetings' || path === 'team-meetings' || path === 'sync') return 'meetings';
+  if (path === 'reports' || path === 'performance' || path === 'report' || path === 'team-performance') return 'reports';
   if (path === 'team' || path === 'team-cockpit') return 'team';
   if (path === 'crew' || path === 'meet-the-crew') return 'crew';
   if (path === 'profile' || path === 'my-profile') return 'profile';
@@ -141,7 +166,7 @@ const MainLayout: React.FC = () => {
     return <LoginPage />;
   }
 
-  const isLead = user.role === 'LEAD' || user.role === 'ADMIN';
+  const isLead = Boolean(user.isCurrentLead || user.role === 'LEAD' || user.role === 'ADMIN');
 
   return (
     <div className="min-h-screen bg-paper flex flex-col font-sans">
@@ -162,6 +187,8 @@ const MainLayout: React.FC = () => {
           {activeTab === 'tasks' && <KanbanBoardPage />}
           {activeTab === 'homework' && <HomeworkPage />}
           {activeTab === 'interview-lab' && <InterviewLabPage initialTopic={labInitialTopic} />}
+          {activeTab === 'meetings' && <TeamMeetingsSection />}
+          {activeTab === 'reports' && <TeamPerformanceReportPage />}
           {activeTab === 'profile' && <MyProfilePage />}
           {activeTab === 'settings' && (
             <AccountSettingsPage
@@ -174,13 +201,13 @@ const MainLayout: React.FC = () => {
         </Suspense>
       </main>
 
-      <footer className="border-t border-line py-3 bg-paper">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center font-mono text-[10px] text-muted flex flex-col sm:flex-row items-center justify-between gap-2">
+      <footer className="border-t border-line py-3.5 bg-paper-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center font-mono text-[11px] text-muted flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center space-x-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block"></span>
-            <span className="uppercase">{cleanTeamDisplayName(user.teamName) || 'Team'} Workspace</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+            <span className="uppercase font-semibold text-ink">{cleanTeamDisplayName(user.teamName) || 'Team'} Workspace</span>
           </div>
-          <span>Capture once · Derive everywhere</span>
+          <span className="text-[10px] text-muted">EngineerSpace · Designed & Developed by Mohammed Arshad</span>
         </div>
       </footer>
 
@@ -204,6 +231,9 @@ const MainLayout: React.FC = () => {
         isOpen={globalLeaveEmailOpen}
         onClose={() => setGlobalLeaveEmailOpen(false)}
       />
+
+      {/* Global Application Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 };

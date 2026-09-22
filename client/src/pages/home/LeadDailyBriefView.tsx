@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api, getLocalTodayDateString } from '../../services/api';
+import { api, cacheStore, getLocalTodayDateString } from '../../services/api';
 import { LeadDailyBrief, TeamQuestion, TeamSummaryRow, LeadMessage, Standup } from '../../types';
 import {
   getTimeGreeting,
@@ -23,6 +23,7 @@ import {
   UserCheck,
   FileDown,
   Play,
+  BarChart3,
 } from 'lucide-react';
 import { StandupAudioPlayer } from '../../components/common/StandupAudioPlayer';
 
@@ -52,8 +53,11 @@ const formatShortDate = (dateStr?: string | null) => {
 
 export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNavigateTab }) => {
   const { user } = useAuth();
-  const [brief, setBrief] = useState<LeadDailyBrief | null>(null);
-  const [loading, setLoading] = useState(true);
+  const localToday = getLocalTodayDateString();
+  const { fullTitle } = getFormattedTodayDate();
+
+  const [brief, setBrief] = useState<LeadDailyBrief | null>(() => cacheStore.get<LeadDailyBrief>(`lead_brief_${localToday}`));
+  const [loading, setLoading] = useState<boolean>(() => !cacheStore.get<LeadDailyBrief>(`lead_brief_${localToday}`));
   const [error, setError] = useState<string | null>(null);
 
   // Modals & Action State
@@ -92,12 +96,11 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
   const [selectedMemberUpdate, setSelectedMemberUpdate] = useState<TeamSummaryRow | null>(null);
   const [remindedMembers, setRemindedMembers] = useState<Record<number, boolean>>({});
 
-  const localToday = getLocalTodayDateString();
-  const { fullTitle } = getFormattedTodayDate();
-
-  const loadBrief = async () => {
+  const loadBrief = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent && !brief) {
+        setLoading(true);
+      }
       setError(null);
       const data = await api.getLeadDailyBrief(localToday);
       setBrief(data);
@@ -108,16 +111,18 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
         setFollowUpUserId(data.teamSummary[0].userId);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load team data');
+      if (!brief) {
+        setError(err.message || 'Failed to load team data');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadBrief();
+    loadBrief(Boolean(brief));
     const handleStandupSubmitted = () => {
-      loadBrief();
+      loadBrief(true);
     };
     window.addEventListener('jvm_standup_submitted', handleStandupSubmitted);
     return () => {
@@ -324,15 +329,15 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => onNavigateTab?.('team')}
-                  className="w-full px-3 py-2 bg-ink text-paper hover:bg-ink-light rounded-xs font-mono text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-2xs"
+                  className="w-full px-3 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-[0.99] rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs hover-lift"
                 >
-                  <Users className="w-3.5 h-3.5 text-accent" />
+                  <Users className="w-3.5 h-3.5 text-primary-soft" />
                   <span>TEAM COCKPIT</span>
                 </button>
 
                 <button
                   onClick={() => onNavigateTab?.('tasks')}
-                  className="w-full px-3 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-ink text-ink rounded-xs font-mono text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-2xs"
+                  className="w-full px-3 py-2.5 bg-surface-raised hover:bg-surface-soft border border-line hover:border-primary/40 text-ink rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs"
                 >
                   <CheckSquare className="w-3.5 h-3.5 text-muted" />
                   <span>MY TASKS</span>
@@ -340,11 +345,20 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
               </div>
 
               <button
+                onClick={() => onNavigateTab?.('reports')}
+                className="w-full px-3 py-2.5 bg-surface-raised hover:bg-surface-soft border border-line hover:border-primary/40 text-ink rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs"
+                title="Open Team Performance Intelligence & Progress Reports"
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                <span>TEAM PERFORMANCE INTELLIGENCE</span>
+              </button>
+
+              <button
                 onClick={() => api.downloadTeamStandupPdf(localToday)}
-                className="w-full px-3 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-ink text-ink rounded-xs font-mono text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-2xs"
+                className="w-full px-3 py-2.5 bg-surface-raised hover:bg-surface-soft border border-line hover:border-primary/40 text-ink rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs"
                 title="Download official PDF report of all team members' standups for today"
               >
-                <FileDown className="w-3.5 h-3.5 text-accent" />
+                <FileDown className="w-3.5 h-3.5 text-muted" />
                 <span>EXPORT TODAY'S TEAM STANDUP (PDF)</span>
               </button>
             </div>

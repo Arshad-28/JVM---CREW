@@ -68,11 +68,9 @@ public class AuthService {
 
         // Validate that no active team already has this custom name
         String finalCleanName = cleanTeamName;
-        boolean teamExists = teamRepository.findAll().stream()
-                .anyMatch(t -> Boolean.TRUE.equals(t.getIsActive()) &&
-                        (t.getName().equalsIgnoreCase("JVM CREW " + finalCleanName) ||
-                         t.getName().equalsIgnoreCase(finalCleanName) ||
-                         (t.getCustomName() != null && t.getCustomName().equalsIgnoreCase(finalCleanName))));
+        boolean teamExists = teamRepository.existsByNameIgnoreCaseAndIsActiveTrue(finalCleanName)
+                || teamRepository.existsByNameIgnoreCaseAndIsActiveTrue("JVM CREW " + finalCleanName)
+                || teamRepository.existsByCustomNameIgnoreCaseAndIsActiveTrue(finalCleanName);
 
         if (teamExists) {
             throw new IllegalArgumentException("A team named '" + finalCleanName + "' already exists. Please choose a unique team name.");

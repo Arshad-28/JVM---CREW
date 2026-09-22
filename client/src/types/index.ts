@@ -956,6 +956,7 @@ export interface MockInterviewState {
   report?: MockInterviewReport | null;
 }
 
+
 export interface UserWeakness {
   id: number;
   topic: string;
@@ -990,7 +991,7 @@ export interface HistoryItem {
   technology: string;
   difficulty: string;
   score?: number | null;
-  status: string;
+  status?: string;
   timestamp: string;
 }
 
@@ -1042,3 +1043,459 @@ export interface PushConfig {
   vapidPublicKey: string;
   pushEnabled: boolean;
 }
+
+// ==========================================
+// TEAM MEETINGS & COMMUNICATION TYPES
+// ==========================================
+
+export type MeetingPlatform = 'GOOGLE_MEET' | 'ZOOM' | 'MS_TEAMS' | 'OTHER';
+
+export interface TeamMeeting {
+  id: number;
+  teamId: number;
+  teamName: string;
+  createdById?: number;
+  createdByName?: string;
+  title: string;
+  platform: MeetingPlatform;
+  meetingUrl: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime?: string | null;
+  description?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isUpcoming?: boolean;
+}
+
+export interface CreateTeamMeetingPayload {
+  title: string;
+  platform: MeetingPlatform;
+  meetingUrl: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime?: string;
+  description?: string;
+}
+
+export interface UpdateTeamMeetingPayload {
+  title?: string;
+  platform?: MeetingPlatform;
+  meetingUrl?: string;
+  scheduledDate?: string;
+  startTime?: string;
+  endTime?: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+// ==========================================
+// TEAM PERFORMANCE INTELLIGENCE REPORT TYPES
+// ==========================================
+
+export type ReportPeriodType = 'DAY' | 'YESTERDAY' | 'WEEK' | 'LAST_WEEK' | 'MONTH' | 'LAST_MONTH' | 'CUSTOM';
+
+export interface ExecutiveSummary {
+  totalActiveMembers: number;
+  totalTasksAssigned: number;
+  totalTasksCompleted: number;
+  totalTasksInProgress: number;
+  totalTasksReview: number;
+  totalTasksBlocked: number;
+  totalTasksOverdue: number;
+  taskCompletionRatePct: number;
+  totalHomeworkAssigned: number;
+  totalHomeworkSubmitted: number;
+  totalHomeworkReviewed: number;
+  homeworkSubmissionRatePct: number;
+  totalStandupsExpected: number;
+  totalStandupsSubmitted: number;
+  standupComplianceRatePct: number;
+  curriculumTopicsCompleted: number;
+  teamMeetingsConducted: number;
+  interviewLabSessionsConducted: number;
+  totalActiveBlockers: number;
+  executiveSummaryText: string;
+}
+
+export interface TeamHealth {
+  taskExecutionPct: number;
+  taskExecutionFormula: string;
+  standupParticipationPct: number;
+  standupParticipationFormula: string;
+  homeworkSubmissionPct: number;
+  homeworkSubmissionFormula: string;
+  reviewQueueCount: number;
+  reviewQueueStatus: string;
+  activeBlockersCount: number;
+  activeBlockersStatus: string;
+  membersActiveCount: number;
+  totalEnrolledMembers: number;
+  activeParticipationFormula: string;
+  healthSummary: string;
+}
+
+export interface WorkflowPipeline {
+  backlogCount: number;
+  todoCount: number;
+  inProgressCount: number;
+  blockedCount: number;
+  reviewCount: number;
+  doneCount: number;
+  totalCount: number;
+  backlogPct: number;
+  todoPct: number;
+  inProgressPct: number;
+  blockedPct: number;
+  reviewPct: number;
+  donePct: number;
+}
+
+export interface DailyActivityItem {
+  date: string;
+  dayOfWeek: string;
+  dayLabel: string;
+  isWorkday: boolean;
+  isToday: boolean;
+  tasksCompleted: number;
+  tasksAssigned: number;
+  standupsSubmitted: number;
+  standupsExpected: number;
+  homeworkSubmitted: number;
+  interviewSessions: number;
+  meetingsConducted: number;
+  activeBlockersReported: number;
+  hasActivity: boolean;
+}
+
+export interface WeeklyTrend {
+  weekLabel: string;
+  startDate: string;
+  endDate: string;
+  tasksCompleted: number;
+  tasksAssigned: number;
+  standupsSubmitted: number;
+  homeworkSubmitted: number;
+  interviewSessions: number;
+  activeMembers: number;
+}
+
+export interface PeriodComparison {
+  metricName: string;
+  currentValue: number;
+  previousValue: number;
+  absoluteChange: number;
+  percentageChange?: number | null;
+  changeDirection: 'INCREASED' | 'DECREASED' | 'UNCHANGED' | 'NOT_APPLICABLE';
+  unit: string;
+  explanation: string;
+}
+
+export interface BlockerItem {
+  id: number;
+  userId: number;
+  memberName: string;
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  status: string;
+  createdAt?: string;
+  resolvedAt?: string;
+  daysOpen: number;
+}
+
+export interface BlockerAnalysis {
+  totalActiveBlockers: number;
+  totalResolvedBlockers: number;
+  uniqueMembersAffected: number;
+  activeBlockersList: BlockerItem[];
+  resolvedBlockersList: BlockerItem[];
+  statusSummary: string;
+}
+
+export interface HomeworkAnalysisItem {
+  id: number;
+  title: string;
+  subjectTopic: string;
+  dueDate: string;
+  isPublished: boolean;
+  assignedMembersCount: number;
+  submittedCount: number;
+  reviewedCount: number;
+  pendingCount: number;
+  submissionRatePct: number;
+}
+
+export interface HomeworkAnalysis {
+  totalAssignments: number;
+  totalExpectedSubmissions: number;
+  totalActualSubmissions: number;
+  totalReviewedSubmissions: number;
+  totalPendingReviews: number;
+  submissionRatePct: number;
+  reviewRatePct: number;
+  assignments: HomeworkAnalysisItem[];
+}
+
+export interface CurriculumTopicProgress {
+  topicId: number;
+  subject: string;
+  title: string;
+  membersCompleted: number;
+  membersInProgress: number;
+  lastActivityAt?: string;
+}
+
+export interface CurriculumAnalysis {
+  dataAvailable: boolean;
+  statusMessage: string;
+  totalTopicsAvailable: number;
+  topicsCompletedInPeriod: number;
+  topicsActiveInPeriod: number;
+  uniqueMembersParticipating: number;
+  topicProgress: CurriculumTopicProgress[];
+}
+
+export interface MemberStandupSummary {
+  userId: number;
+  name: string;
+  expected: number;
+  submitted: number;
+  missed: number;
+  compliancePct: number;
+  streakDays: number;
+  avgConfidence?: number | null;
+}
+
+export interface StandupAnalysis {
+  totalEligibleWorkdays: number;
+  totalExpectedSubmissions: number;
+  totalActualSubmissions: number;
+  participationRatePct: number;
+  textSubmissionsCount: number;
+  voiceSubmissionsCount: number;
+  uniqueMembersReportingBlockers: number;
+  averageConfidenceScore?: number | null;
+  confidenceLevel1Count: number;
+  confidenceLevel2Count: number;
+  confidenceLevel3Count: number;
+  confidenceLevel4Count: number;
+  confidenceLevel5Count: number;
+  memberStandupRates: MemberStandupSummary[];
+}
+
+export interface MeetingSummaryItem {
+  id: number;
+  title: string;
+  platform: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime?: string | null;
+  createdByName: string;
+  isUpcoming: boolean;
+}
+
+export interface TeamMeetingsAnalysis {
+  totalMeetingsScheduled: number;
+  totalMeetingsConducted: number;
+  upcomingMeetingsCount: number;
+  meetingsList: MeetingSummaryItem[];
+}
+
+export interface MemberLabActivity {
+  userId: number;
+  memberName: string;
+  sessionsCount: number;
+  practiceAttempts: number;
+  codingAttempts: number;
+  mockInterviews: number;
+  avgScore?: number | null;
+}
+
+export interface InterviewLabAnalytics {
+  activityRecorded: boolean;
+  statusMessage: string;
+  totalLearningSessions: number;
+  totalPracticeQuestionsAttempted: number;
+  totalCodingProblemsAttempted: number;
+  totalMockInterviewsCompleted: number;
+  averageMockScore?: number | null;
+  uniqueMembersActive: number;
+  memberLabActivity: MemberLabActivity[];
+}
+
+export interface DataDerivedInsight {
+  category: 'WHAT_HAPPENED' | 'WHAT_IS_HAPPENING' | 'WHAT_IS_CHANGING' | 'WHAT_NEEDS_ATTENTION';
+  title: string;
+  insightText: string;
+  metricReference: string;
+  supportingData: string;
+}
+
+export interface AttentionAreaItem {
+  type: string;
+  severity: string;
+  title: string;
+  description: string;
+  entityType?: string;
+  entityId?: number;
+  memberName?: string;
+  memberUserId?: number;
+  actionPrompt?: string;
+}
+
+export interface NotableAchievement {
+  category: string;
+  title: string;
+  description: string;
+  memberName?: string;
+  timestamp?: string;
+}
+
+export interface MemberPerformanceSummary {
+  userId: number;
+  name: string;
+  email: string;
+  position: string;
+  serialNumber: string;
+  role: string;
+  isCurrentLead: boolean;
+  avatarUrl?: string;
+  tasksAssigned: number;
+  tasksCompleted: number;
+  tasksInProgress: number;
+  tasksReview: number;
+  tasksBlocked: number;
+  tasksOverdue: number;
+  taskCompletionPct: number;
+  homeworkAssigned: number;
+  homeworkSubmitted: number;
+  homeworkReviewed: number;
+  homeworkPending: number;
+  homeworkSubmissionPct: number;
+  standupsExpected: number;
+  standupsSubmitted: number;
+  standupConsistencyPct: number;
+  streakDays: number;
+  curriculumCompleted: number;
+  interviewSessionsCount: number;
+  lastRecordedActivity?: string;
+  lastRecordedActivityAt?: string;
+  activeWorkloadCount: number;
+  workloadStatus: string;
+  factualSummary: string;
+}
+
+export interface MemberTimelineEvent {
+  eventType: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  formattedDate: string;
+  formattedTime: string;
+  entityId?: string;
+  statusBadge: string;
+}
+
+export interface ReportMethodology {
+  databaseEngine: string;
+  reportingSystem: string;
+  statementOfFact: string;
+  dataSources: string[];
+  calculationRules: string[];
+}
+
+export interface TeamPerformanceReport {
+  reportId: string;
+  periodType: string;
+  periodLabel: string;
+  startDate: string;
+  endDate: string;
+  generatedAt: string;
+  teamId: number;
+  teamName: string;
+  teamCohort: string;
+  currentLeadName: string;
+  currentLeadEmail: string;
+  currentLeadSerialNumber: string;
+  executiveSummary: ExecutiveSummary;
+  teamHealth: TeamHealth;
+  workflowPipeline: WorkflowPipeline;
+  dailyActivity: DailyActivityItem[];
+  weeklyTrends: WeeklyTrend[];
+  periodComparisons: PeriodComparison[];
+  memberSummaries: MemberPerformanceSummary[];
+  blockerAnalysis: BlockerAnalysis;
+  homeworkAnalysis: HomeworkAnalysis;
+  curriculumAnalysis: CurriculumAnalysis;
+  standupAnalysis: StandupAnalysis;
+  meetingAnalysis: TeamMeetingsAnalysis;
+  interviewLabAnalytics: InterviewLabAnalytics;
+  insights: DataDerivedInsight[];
+  attentionAreas: AttentionAreaItem[];
+  notableAchievements: NotableAchievement[];
+  methodology: ReportMethodology;
+  hasSufficientData: boolean;
+  emptyDataMessage?: string;
+}
+
+export interface MemberPerformanceReport {
+  reportId: string;
+  userId: number;
+  name: string;
+  email: string;
+  position: string;
+  serialNumber: string;
+  role: string;
+  isCurrentLead: boolean;
+  teamName: string;
+  teamId: number;
+  avatarUrl?: string;
+  photoUrl?: string;
+  bio?: string;
+  college?: string;
+  organization?: string;
+  joinedAt?: string;
+  periodType: string;
+  periodLabel: string;
+  startDate: string;
+  endDate: string;
+  generatedAt: string;
+  tasksAssigned: number;
+  tasksCompleted: number;
+  tasksInProgress: number;
+  tasksReview: number;
+  tasksBlocked: number;
+  tasksOverdue: number;
+  taskCompletionPct: number;
+  homeworkAssigned: number;
+  homeworkSubmitted: number;
+  homeworkReviewed: number;
+  homeworkPending: number;
+  homeworkOverdue: number;
+  homeworkSubmissionPct: number;
+  standupsExpected: number;
+  standupsSubmitted: number;
+  standupConsistencyPct: number;
+  currentStreakDays: number;
+  averageConfidence?: number | null;
+  curriculumTopicsCompleted: number;
+  curriculumTopicsActive: number;
+  lastLearningActivityAt?: string;
+  interviewSessionsCount: number;
+  practiceQuestionsAttempted: number;
+  codingProblemsSolved: number;
+  mockInterviewsCompleted: number;
+  averageMockScore?: number | null;
+  activeWorkloadCount: number;
+  teamMedianWorkload: number;
+  workloadStatusMessage: string;
+  activityTimeline: MemberTimelineEvent[];
+  memberInsights: DataDerivedInsight[];
+  memberAttentionAreas: AttentionAreaItem[];
+  hasSufficientData: boolean;
+  emptyDataMessage?: string;
+}
+

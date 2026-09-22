@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 public interface BlockerRepository extends JpaRepository<Blocker, Long> {
+    List<Blocker> findByTeamOrderByCreatedAtDesc(Team team);
     List<Blocker> findByStatusOrderByCreatedAtDesc(BlockerStatus status);
     List<Blocker> findByTeamAndStatusOrderByCreatedAtDesc(Team team, BlockerStatus status);
     List<Blocker> findByTeamIdAndStatusOrderByCreatedAtDesc(Long teamId, BlockerStatus status);

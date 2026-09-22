@@ -13,7 +13,9 @@ import java.util.Optional;
 public interface HomeworkSubmissionRepository extends JpaRepository<HomeworkSubmission, Long> {
     List<HomeworkSubmission> findByHomework(Homework homework);
     Optional<HomeworkSubmission> findByHomeworkAndUser(Homework homework, User user);
+    List<HomeworkSubmission> findByHomeworkInAndUser(java.util.Collection<Homework> homeworks, User user);
     List<HomeworkSubmission> findByUserOrderBySubmittedAtDesc(User user);
+    List<HomeworkSubmission> findByUserInOrderBySubmittedAtDesc(java.util.Collection<User> users);
     long countByHomework(Homework homework);
     long countByHomeworkAndStatus(Homework homework, String status);
     void deleteByHomework(Homework homework);

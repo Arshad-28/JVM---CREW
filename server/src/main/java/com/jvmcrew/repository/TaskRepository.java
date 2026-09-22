@@ -19,6 +19,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByTeamIdAndAssigneeIdOrderByCreatedAtDesc(Long teamId, Long assigneeId);
     List<Task> findByTeamAndAssigneeOrderByCreatedAtDesc(Team team, User assignee);
     List<Task> findByAssigneeOrderByCreatedAtDesc(User assignee);
+    List<Task> findByAssigneeInOrderByCreatedAtDesc(java.util.Collection<User> assignees);
     List<Task> findByAssigneeIdOrderByCreatedAtDesc(Long assigneeId);
     List<Task> findByAssigneeAndStatus(User assignee, TaskStatus status);
     List<Task> findByAssigneeAndDeadline(User assignee, LocalDate deadline);

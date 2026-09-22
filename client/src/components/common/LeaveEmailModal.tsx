@@ -402,18 +402,18 @@ ${generatedBody}`;
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. Modal Fixed Header */}
-        <div className="bg-paper-light border-b border-line px-5 py-4 flex items-center justify-between shrink-0">
+        <div className="bg-surface border-b border-line px-5 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-sm bg-accent text-paper flex items-center justify-center shadow-xs">
-              <Mail className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-md bg-primary text-paper flex items-center justify-center shadow-xs">
+              <Mail className="w-5 h-5 text-primary-soft" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-accent-subtle text-accent border border-accent/30 px-2 py-0.5 rounded-sm">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-primary-soft text-primary border border-primary/20 px-2 py-0.5 rounded-xs">
                   CORPORATE MNC FORMAT
                 </span>
                 <span className="font-mono text-xs text-muted flex items-center space-x-1">
-                  <Users className="w-3 h-3 text-accent" />
+                  <Users className="w-3.5 h-3.5 text-primary" />
                   <span>
                     {recipients.length} {recipients.length === 1 ? 'Recipient' : 'Recipients'}
                   </span>
@@ -427,7 +427,7 @@ ${generatedBody}`;
 
           <button
             onClick={onClose}
-            className="p-2 rounded-sm hover:bg-paper-dark text-muted hover:text-ink transition-colors cursor-pointer"
+            className="p-2 rounded-md hover:bg-surface-soft text-muted hover:text-ink transition-colors cursor-pointer"
             title="Close (Esc)"
           >
             <X className="w-5 h-5" />
@@ -435,13 +435,13 @@ ${generatedBody}`;
         </div>
 
         {/* 2. Sub-Header Navigation Tabs */}
-        <div className="flex items-center space-x-2 bg-paper-dark/60 px-5 py-2.5 border-b border-line shrink-0">
+        <div className="flex items-center space-x-2 bg-surface-soft px-5 py-2.5 border-b border-line shrink-0">
           <button
             onClick={() => setActiveTab('generator')}
-            className={`px-3.5 py-1.5 font-mono text-xs font-medium rounded-sm transition-all flex items-center space-x-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 font-mono text-xs font-semibold rounded-md transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeTab === 'generator'
-                ? 'bg-accent text-paper font-semibold shadow-xs'
-                : 'bg-paper text-muted hover:text-ink border border-line'
+                ? 'bg-primary-soft text-primary font-bold border border-primary/25 shadow-2xs'
+                : 'bg-surface-raised text-muted hover:text-ink hover:bg-surface-soft border border-line'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -450,10 +450,10 @@ ${generatedBody}`;
 
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-3.5 py-1.5 font-mono text-xs font-medium rounded-sm transition-all flex items-center space-x-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 font-mono text-xs font-semibold rounded-md transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-accent text-paper font-semibold shadow-xs'
-                : 'bg-paper text-muted hover:text-ink border border-line'
+                ? 'bg-primary-soft text-primary font-bold border border-primary/25 shadow-2xs'
+                : 'bg-surface-raised text-muted hover:text-ink hover:bg-surface-soft border border-line'
             }`}
           >
             <History className="w-3.5 h-3.5" />
@@ -873,7 +873,7 @@ ${generatedBody}`;
           <div className="flex items-center space-x-2.5 w-full sm:w-auto">
             <button
               onClick={handleCopy}
-              className="flex-1 sm:flex-none px-4 py-2 bg-paper border border-line hover:border-ink text-ink text-xs font-mono font-medium rounded-sm transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
+              className="flex-1 sm:flex-none px-4 py-2 bg-surface-raised border border-line hover:border-primary/40 text-ink text-xs font-mono font-medium rounded-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
             >
               {copied ? (
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -885,15 +885,15 @@ ${generatedBody}`;
 
             <button
               onClick={handleOpenMailClient}
-              className="flex-1 sm:flex-none px-5 py-2 bg-accent text-paper hover:bg-accent/90 text-xs font-mono font-semibold rounded-sm transition-all shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer"
+              className="flex-1 sm:flex-none px-5 py-2 bg-primary text-paper hover:bg-primary-hover active:scale-[0.99] text-xs font-mono font-semibold rounded-md transition-all shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer hover-lift"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-3.5 h-3.5 text-primary-soft" />
               <span>Send Leave Request</span>
             </button>
 
             <button
               onClick={onClose}
-              className="px-3.5 py-2 bg-paper border border-line hover:border-ink text-muted hover:text-ink font-mono text-xs font-medium rounded-sm transition-colors cursor-pointer"
+              className="px-3.5 py-2 bg-surface-raised border border-line hover:border-ink text-muted hover:text-ink font-mono text-xs font-medium rounded-md transition-colors cursor-pointer"
             >
               Close
             </button>

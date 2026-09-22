@@ -1,6 +1,10 @@
 server:
   port: ${PORT:8080}
   address: ${SERVER_ADDRESS:0.0.0.0}
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: application/json,text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/xml
 
 spring:
   application:
@@ -12,8 +16,8 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: JvmCrewHikariPool
-      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
-      minimum-idle: ${HIKARI_MIN_IDLE:1}
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:15}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
       connection-timeout: 8000
       validation-timeout: 2500
       idle-timeout: 120000
@@ -31,8 +35,13 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 30
+        jdbc:
+          batch_size: 30
+        order_inserts: true
+        order_updates: true
   sql:
     init:
       mode: ${SPRING_SQL_INIT_MODE:never}

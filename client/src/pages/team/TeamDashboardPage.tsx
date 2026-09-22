@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { api, cacheStore, getLocalTodayDateString } from '../../services/api';
 import {
   LeadDashboard,
   MemberRosterItem,
@@ -39,9 +39,11 @@ type SortField = 'name' | 'overallProgressPct' | 'taskCompletionPct' | 'standupS
 
 export const TeamDashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const localToday = getLocalTodayDateString();
+  const cachedDash = cacheStore.get<LeadDashboard>(`lead_dash_${localToday}`);
 
-  const [dashboard, setDashboard] = useState<LeadDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [dashboard, setDashboard] = useState<LeadDashboard | null>(() => cachedDash || null);
+  const [loading, setLoading] = useState(!cachedDash);
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
 
   // Individual Member Detail State
@@ -67,7 +69,9 @@ export const TeamDashboardPage: React.FC = () => {
 
   const fetchDashboard = async () => {
     try {
-      setLoading(true);
+      if (!dashboard && !cacheStore.get<LeadDashboard>(`lead_dash_${localToday}`)) {
+        setLoading(true);
+      }
       const data = await api.getLeadDashboard();
       setDashboard(data);
     } catch (err) {
@@ -243,19 +247,19 @@ export const TeamDashboardPage: React.FC = () => {
   });
 
   return (
-    <PageContainer width="wide" className="space-y-6">
+    <PageContainer width="wide" className="space-y-6 font-sans">
       {/* 1. TOP HEADER */}
-      <div className="border border-line bg-paper p-4 sm:p-5 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="border border-line bg-paper-light p-4 sm:p-6 rounded-md flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-2xs">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-lg sm:text-xl font-bold text-ink">
+            <h1 className="font-display text-lg sm:text-xl font-bold text-ink uppercase tracking-tight">
               Team Cockpit — Team Progress
             </h1>
-            <span className="font-mono text-xs px-2 py-0.5 bg-paper-dark border border-line rounded-sm text-muted">
+            <span className="font-mono text-xs px-2 py-0.5 bg-paper-dark border border-line rounded-xs text-muted">
               {dashboard.teamName}
             </span>
           </div>
-          <p className="text-xs text-muted mt-1">
+          <p className="text-xs text-muted mt-1 font-normal">
             Monitor individual progress, activity, and pending work across the team.
           </p>
         </div>
@@ -263,31 +267,31 @@ export const TeamDashboardPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={fetchDashboard}
-            className="p-2 bg-paper border border-line hover:border-ink rounded-sm text-muted hover:text-ink transition-colors flex items-center space-x-1.5 text-xs font-mono"
+            className="p-2 bg-paper-light border border-line hover:border-ink rounded-sm text-muted hover:text-ink transition-colors flex items-center space-x-1.5 text-xs font-mono shadow-2xs"
             title="Refresh Telemetry"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          <span className="font-mono text-xs px-3 py-1.5 bg-accent-subtle text-accent border border-accent/30 rounded-sm font-semibold flex items-center space-x-1.5">
-            <ShieldCheck className="w-4 h-4" />
+          <span className="font-mono text-xs px-3 py-1.5 bg-primary-soft text-primary border border-primary/20 rounded-sm font-semibold flex items-center space-x-1.5 shadow-2xs">
+            <ShieldCheck className="w-4 h-4 text-primary" />
             <span>{dashboard.totalMembers} Enrolled Members</span>
           </span>
         </div>
       </div>
 
       {/* 2. INDIVIDUAL MEMBER SELECTOR DROPDOWN (PRIMARY CONTROL) */}
-      <div className="border border-line bg-paper p-4 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+      <div className="border border-line bg-paper-light p-4 rounded-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:space-x-3 w-full sm:w-auto">
           <label className="font-mono text-xs font-bold text-ink shrink-0 flex items-center space-x-1.5">
-            <User className="w-4 h-4 text-accent" />
+            <User className="w-4 h-4 text-primary" />
             <span>Select Member:</span>
           </label>
           <select
             value={selectedMemberId || 'ALL'}
             onChange={(e) => setSelectedMemberId(e.target.value === 'ALL' ? null : Number(e.target.value))}
-            className="p-2 bg-paper-dark border border-line rounded-sm text-xs font-mono font-semibold text-ink focus:outline-none focus:border-accent w-full sm:w-auto sm:min-w-[220px]"
+            className="p-2.5 bg-paper-dark border border-line rounded-sm text-xs font-mono font-semibold text-ink focus-ring w-full sm:w-auto sm:min-w-[240px] cursor-pointer"
           >
             <option value="ALL">All Members ({dashboard.totalMembers})</option>
             {dashboard.memberRoster.map((m) => (

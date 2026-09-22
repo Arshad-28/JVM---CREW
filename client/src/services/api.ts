@@ -33,6 +33,11 @@ import {
   WorkspaceNotification,
   NotificationPreferences,
   PushConfig,
+  TeamMeeting,
+  CreateTeamMeetingPayload,
+  UpdateTeamMeetingPayload,
+  TeamPerformanceReport,
+  MemberPerformanceReport,
 } from '../types';
 
 const rawEnvUrl = import.meta.env.VITE_API_BASE_URL;
@@ -83,10 +88,78 @@ export class ApiError extends Error {
   }
 }
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttlMs: number;
+}
+
+const memoryCache = new Map<string, CacheEntry<any>>();
+
+export const cacheStore = {
+  get<T>(key: string): T | null {
+    const mem = memoryCache.get(key);
+    const now = Date.now();
+    if (mem && now - mem.timestamp < mem.ttlMs) {
+      return mem.data as T;
+    }
+    try {
+      const stored = localStorage.getItem(`jvm_cache_${key}`);
+      if (stored) {
+        const parsed: CacheEntry<T> = JSON.parse(stored);
+        if (parsed && parsed.data && now - parsed.timestamp < parsed.ttlMs) {
+          memoryCache.set(key, parsed);
+          return parsed.data;
+        }
+      }
+    } catch {}
+    return null;
+  },
+
+  set<T>(key: string, data: T, ttlMs = 5 * 60 * 1000): void {
+    if (data === undefined || data === null) return;
+    const entry: CacheEntry<T> = {
+      data,
+      timestamp: Date.now(),
+      ttlMs,
+    };
+    memoryCache.set(key, entry);
+    try {
+      localStorage.setItem(`jvm_cache_${key}`, JSON.stringify(entry));
+    } catch {}
+  },
+
+  invalidate(keyPrefix?: string): void {
+    if (!keyPrefix) {
+      memoryCache.clear();
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('jvm_cache_')) keysToRemove.push(k);
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch {}
+      return;
+    }
+    for (const k of Array.from(memoryCache.keys())) {
+      if (k.startsWith(keyPrefix)) memoryCache.delete(k);
+    }
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(`jvm_cache_${keyPrefix}`)) keysToRemove.push(k);
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+  },
+};
+
 async function fetchWithAdaptiveTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs: number = 35000,
+  timeoutMs: number = 25000,
   onStatusUpdate?: AuthStatusCallback
 ): Promise<Response> {
   const controller = new AbortController();
@@ -95,18 +168,13 @@ async function fetchWithAdaptiveTimeout(
   if (onStatusUpdate) {
     timers.push(
       setTimeout(() => {
-        onStatusUpdate('Still signing you in...');
-      }, 3500)
+        onStatusUpdate('Signing in...');
+      }, 1500)
     );
     timers.push(
       setTimeout(() => {
         onStatusUpdate('Connecting to workspace...');
-      }, 12000)
-    );
-    timers.push(
-      setTimeout(() => {
-        onStatusUpdate('Establishing secure connection...');
-      }, 25000)
+      }, 5000)
     );
   }
 
@@ -190,7 +258,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 async function executeAuthWithRetry<T>(
   action: (onStatus?: AuthStatusCallback) => Promise<T>,
   onStatus?: AuthStatusCallback,
-  maxAttempts: number = 3
+  maxAttempts: number = 2
 ): Promise<T> {
   let lastError: any = null;
 
@@ -200,8 +268,6 @@ async function executeAuthWithRetry<T>(
     } catch (err: any) {
       lastError = err;
 
-      // Definitive authentication failure (401 invalid creds, 400 bad request, 409 conflict, 429 rate limit)
-      // DO NOT RETRY - fail immediately!
       const status = err?.status ?? (err instanceof ApiError ? err.status : 0);
       const isTransient = err?.isTransient ?? (status === 0 || status === 408 || status === 502 || status === 503 || status === 504);
 
@@ -209,16 +275,11 @@ async function executeAuthWithRetry<T>(
         throw err;
       }
 
-      // If transient cold start delay, smoothly update status and wait before retry
       if (onStatus) {
-        if (attempt === 1) {
-          onStatus('Still signing you in...');
-        } else {
-          onStatus('Connecting to workspace...');
-        }
+        onStatus('Connecting to workspace...');
       }
 
-      const delayMs = attempt === 1 ? 1200 : 2000;
+      const delayMs = attempt === 1 ? 800 : 1500;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
@@ -238,13 +299,17 @@ export const api = {
   // Non-blocking proactive warmup ping for server / DB pool pre-initialization
   warmup(): void {
     try {
-      const endpoints = [
-        'https://jvm-crew.onrender.com/health',
-        'https://jvm-crew.onrender.com/api/health',
-        'https://jvm-crew.onrender.com/api/readiness',
-        '/health',
-        '/api/health',
-      ];
+      const host = BASE_URL.replace(/\/api\/?$/, '');
+      const endpoints = Array.from(
+        new Set([
+          `${host}/health`,
+          `${host}/api/health`,
+          `${host}/api/readiness`,
+          'https://jvm-crew.onrender.com/health',
+          '/health',
+          '/api/health',
+        ])
+      );
       endpoints.forEach((ep) => {
         fetch(ep, { method: 'GET', mode: 'cors', keepalive: true }).catch(() => {});
       });
@@ -262,13 +327,13 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
           },
-          35000,
+          25000,
           statusCb
         );
         return handleResponse<AuthUser>(res);
       },
       onStatus,
-      3
+      2
     );
   },
 
@@ -282,13 +347,13 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
           },
-          35000,
+          25000,
           statusCb
         );
         return handleResponse<AuthUser>(res);
       },
       onStatus,
-      3
+      2
     );
   },
 
@@ -298,7 +363,7 @@ export const api = {
       {
         headers: getHeaders(),
       },
-      25000
+      20000
     );
     return handleResponse<AuthUser>(res);
   },
@@ -335,26 +400,41 @@ export const api = {
   // Dashboards & Daily Briefs
   async getMemberDashboard(date?: string): Promise<MemberDashboard> {
     const queryDate = date || getLocalTodayDateString();
+    const cacheKey = `member_dash_${queryDate}`;
     const res = await fetch(`${BASE_URL}/dashboard/member?date=${queryDate}`, {
       headers: getHeaders(),
     });
-    return handleResponse<MemberDashboard>(res);
+    const data = await handleResponse<MemberDashboard>(res);
+    if (data) {
+      cacheStore.set(cacheKey, data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getLeadDailyBrief(date?: string): Promise<LeadDailyBrief> {
     const queryDate = date || getLocalTodayDateString();
+    const cacheKey = `lead_brief_${queryDate}`;
     const res = await fetch(`${BASE_URL}/dashboard/lead-daily-brief?date=${queryDate}`, {
       headers: getHeaders(),
     });
-    return handleResponse<LeadDailyBrief>(res);
+    const data = await handleResponse<LeadDailyBrief>(res);
+    if (data) {
+      cacheStore.set(cacheKey, data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getLeadDashboard(date?: string): Promise<LeadDashboard> {
     const queryDate = date || getLocalTodayDateString();
+    const cacheKey = `lead_dash_${queryDate}`;
     const res = await fetch(`${BASE_URL}/dashboard/lead?date=${queryDate}`, {
       headers: getHeaders(),
     });
-    return handleResponse<LeadDashboard>(res);
+    const data = await handleResponse<LeadDashboard>(res);
+    if (data) {
+      cacheStore.set(cacheKey, data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getMemberDetailProgress(memberId: number): Promise<MemberDetailProgress> {
@@ -428,7 +508,12 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(payload),
     });
-    return handleResponse<Standup>(res);
+    const result = await handleResponse<Standup>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    cacheStore.invalidate('standup_history');
+    cacheStore.invalidate('my_team');
+    return result;
   },
 
   async answerQuestion(standupId: number, answer: string): Promise<Standup> {
@@ -437,7 +522,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ answer }),
     });
-    return handleResponse<Standup>(res);
+    const result = await handleResponse<Standup>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async createFollowUp(userId: number, note: string, dueDate?: string): Promise<FollowUp> {
@@ -446,7 +534,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ userId, note, dueDate }),
     });
-    return handleResponse<FollowUp>(res);
+    const result = await handleResponse<FollowUp>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async completeFollowUp(id: number): Promise<FollowUp> {
@@ -454,7 +545,10 @@ export const api = {
       method: 'PATCH',
       headers: getHeaders(),
     });
-    return handleResponse<FollowUp>(res);
+    const result = await handleResponse<FollowUp>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async submitVoiceStandup(formData: FormData): Promise<Standup> {
@@ -463,7 +557,12 @@ export const api = {
       headers: getAuthHeaders(),
       body: formData,
     }, 60000);
-    return handleResponse<Standup>(res);
+    const result = await handleResponse<Standup>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    cacheStore.invalidate('standup_history');
+    cacheStore.invalidate('my_team');
+    return result;
   },
 
   async getVoiceRecordingBlobUrl(standupId: number): Promise<string> {
@@ -585,7 +684,11 @@ export const api = {
     const res = await fetch(url, {
       headers: getHeaders(),
     });
-    return handleResponse<Standup[]>(res);
+    const data = await handleResponse<Standup[]>(res);
+    if (!memberId && data) {
+      cacheStore.set('standup_history', data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getTeamStandupsToday(date?: string): Promise<Standup[]> {
@@ -608,7 +711,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<LeadMessage>(res);
+    const result = await handleResponse<LeadMessage>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async getMyLeadMessages(): Promise<LeadMessage[]> {
@@ -631,7 +737,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ response }),
     });
-    return handleResponse<LeadMessage>(res);
+    const result = await handleResponse<LeadMessage>(res);
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   // Tasks
@@ -643,7 +752,11 @@ export const api = {
     const res = await fetch(`${BASE_URL}/tasks?${query.toString()}`, {
       headers: getHeaders(),
     });
-    return handleResponse<Task[]>(res);
+    const data = await handleResponse<Task[]>(res);
+    if (data && !params?.assigneeId && !params?.status) {
+      cacheStore.set('tasks_list', data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getTask(id: number): Promise<Task> {
@@ -659,7 +772,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(task),
     });
-    return handleResponse<Task>(res);
+    const result = await handleResponse<Task>(res);
+    cacheStore.invalidate('tasks_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async updateTask(id: number, task: Partial<Task>): Promise<Task> {
@@ -668,7 +785,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(task),
     });
-    return handleResponse<Task>(res);
+    const result = await handleResponse<Task>(res);
+    cacheStore.invalidate('tasks_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async deleteTask(id: number): Promise<void> {
@@ -680,6 +801,9 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to delete task' }));
       throw new Error(err.message || 'Failed to delete task');
     }
+    cacheStore.invalidate('tasks_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
   },
 
   async updateTaskStatus(
@@ -691,7 +815,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<Task>(res);
+    const result = await handleResponse<Task>(res);
+    cacheStore.invalidate('tasks_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async getTaskComments(taskId: number): Promise<TaskComment[]> {
@@ -729,7 +857,11 @@ export const api = {
     const res = await fetch(`${BASE_URL}/learning/tree`, {
       headers: getHeaders(),
     });
-    return handleResponse<SubjectProgress[]>(res);
+    const data = await handleResponse<SubjectProgress[]>(res);
+    if (data) {
+      cacheStore.set('curriculum_tree', data, 5 * 60 * 1000);
+    }
+    return data;
   },
 
   async updateLearningProgress(topicId: number, status: string): Promise<LearningTopic> {
@@ -738,7 +870,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ topicId, status }),
     });
-    return handleResponse<LearningTopic>(res);
+    const result = await handleResponse<LearningTopic>(res);
+    cacheStore.invalidate('curriculum_tree');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async createCurriculumTopic(data: { subject: string; title: string; orderIndex?: number }): Promise<LearningTopic> {
@@ -747,7 +883,9 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<LearningTopic>(res);
+    const result = await handleResponse<LearningTopic>(res);
+    cacheStore.invalidate('curriculum_tree');
+    return result;
   },
 
   async updateCurriculumTopic(id: number, data: { subject?: string; title?: string; orderIndex?: number }): Promise<LearningTopic> {
@@ -756,7 +894,9 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<LearningTopic>(res);
+    const result = await handleResponse<LearningTopic>(res);
+    cacheStore.invalidate('curriculum_tree');
+    return result;
   },
 
   async deleteCurriculumTopic(id: number): Promise<void> {
@@ -768,6 +908,7 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to delete topic' }));
       throw new Error(err.message || 'Failed to delete topic');
     }
+    cacheStore.invalidate('curriculum_tree');
   },
 
   async createCurriculumSubject(data: { subject: string; initialTopicTitle?: string }): Promise<LearningTopic> {
@@ -776,7 +917,9 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<LearningTopic>(res);
+    const result = await handleResponse<LearningTopic>(res);
+    cacheStore.invalidate('curriculum_tree');
+    return result;
   },
 
   // DSA
@@ -825,7 +968,11 @@ export const api = {
     const res = await fetch(`${BASE_URL}/homework?date=${targetDate}`, {
       headers: getHeaders(),
     });
-    return handleResponse<Homework[]>(res);
+    const data = await handleResponse<Homework[]>(res);
+    if (data) {
+      cacheStore.set('homework_list', data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getHomework(id: number, date?: string): Promise<Homework> {
@@ -842,7 +989,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<Homework>(res);
+    const result = await handleResponse<Homework>(res);
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async updateHomework(id: number, data: Partial<Homework> & { publishNow?: boolean }): Promise<Homework> {
@@ -851,7 +1002,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<Homework>(res);
+    const result = await handleResponse<Homework>(res);
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async publishHomework(id: number): Promise<Homework> {
@@ -859,7 +1014,11 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
     });
-    return handleResponse<Homework>(res);
+    const result = await handleResponse<Homework>(res);
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async publishHomeworkSolution(id: number, data?: { solutionText?: string; solutionAttachmentName?: string; solutionAttachmentData?: string; solutionAttachmentType?: string }): Promise<Homework> {
@@ -868,7 +1027,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data || {}),
     });
-    return handleResponse<Homework>(res);
+    const result = await handleResponse<Homework>(res);
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async submitHomework(id: number, data: { answerText?: string; attachmentName?: string; attachmentData?: string; attachmentType?: string; notes?: string }): Promise<HomeworkSubmission> {
@@ -877,7 +1040,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<HomeworkSubmission>(res);
+    const result = await handleResponse<HomeworkSubmission>(res);
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async reviewHomeworkSubmission(submissionId: number, feedback?: string): Promise<HomeworkSubmission> {
@@ -886,7 +1053,11 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ feedback: feedback || '' }),
     });
-    return handleResponse<HomeworkSubmission>(res);
+    const result = await handleResponse<HomeworkSubmission>(res);
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async remindHomeworkMember(homeworkId: number, userId: number): Promise<void> {
@@ -909,6 +1080,9 @@ export const api = {
       const err = await res.json().catch(() => ({ message: 'Failed to delete homework' }));
       throw new Error(err.message || 'Failed to delete homework');
     }
+    cacheStore.invalidate('homework_list');
+    cacheStore.invalidate('member_dash_');
+    cacheStore.invalidate('lead_brief_');
   },
 
   // ==========================================
@@ -932,7 +1106,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<any>(res);
+    const result = await handleResponse<any>(res);
+    cacheStore.invalidate('my_team');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async getMonthlyEvaluation(month?: string): Promise<any> {
@@ -979,7 +1156,11 @@ export const api = {
 
   async getMyTeam(): Promise<any> {
     const res = await fetch(`${BASE_URL}/teams/me`, { headers: getHeaders() });
-    return handleResponse<any>(res);
+    const data = await handleResponse<any>(res);
+    if (data) {
+      cacheStore.set('my_team', data, 5 * 60 * 1000);
+    }
+    return data;
   },
 
   async updateTeamName(customName: string): Promise<any> {
@@ -988,7 +1169,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ customName }),
     });
-    return handleResponse<any>(res);
+    const result = await handleResponse<any>(res);
+    cacheStore.invalidate('my_team');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async addTeamMember(data: {
@@ -1013,7 +1197,10 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse<any>(res);
+    const result = await handleResponse<any>(res);
+    cacheStore.invalidate('my_team');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async removeTeamMember(userId: number): Promise<any> {
@@ -1021,7 +1208,10 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return handleResponse<any>(res);
+    const result = await handleResponse<any>(res);
+    cacheStore.invalidate('my_team');
+    cacheStore.invalidate('lead_brief_');
+    return result;
   },
 
   async changeTeamLead(data: { newLeadUserId: number; startDate?: string; endDate?: string; notes?: string }): Promise<any> {
@@ -1195,6 +1385,56 @@ export const api = {
   },
 
   // ==========================================
+  // TEAM MEETINGS & COMMUNICATION API
+  // ==========================================
+
+  async getTeamMeetings(): Promise<TeamMeeting[]> {
+    const res = await fetch(`${BASE_URL}/meetings`, { headers: getHeaders() });
+    const data = await handleResponse<TeamMeeting[]>(res);
+    if (data) {
+      cacheStore.set('team_meetings', data, 60 * 1000);
+    }
+    return data || [];
+  },
+
+  async getUpcomingMeeting(): Promise<TeamMeeting | null> {
+    const res = await fetch(`${BASE_URL}/meetings/upcoming`, { headers: getHeaders() });
+    if (res.status === 204) return null;
+    return handleResponse<TeamMeeting>(res);
+  },
+
+  async createMeeting(data: CreateTeamMeetingPayload): Promise<TeamMeeting> {
+    const res = await fetch(`${BASE_URL}/meetings`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    const result = await handleResponse<TeamMeeting>(res);
+    cacheStore.invalidate('team_meetings');
+    return result;
+  },
+
+  async updateMeeting(id: number, data: UpdateTeamMeetingPayload): Promise<TeamMeeting> {
+    const res = await fetch(`${BASE_URL}/meetings/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    const result = await handleResponse<TeamMeeting>(res);
+    cacheStore.invalidate('team_meetings');
+    return result;
+  },
+
+  async deleteMeeting(id: number): Promise<void> {
+    const res = await fetch(`${BASE_URL}/meetings/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse<any>(res);
+    cacheStore.invalidate('team_meetings');
+  },
+
+  // ==========================================
   // NOTIFICATIONS & PUSH NOTIFICATIONS
   // ==========================================
 
@@ -1274,5 +1514,126 @@ export const api = {
     });
     return handleResponse<NotificationPreferences>(res);
   },
+
+  // ==========================================
+  // TEAM PERFORMANCE INTELLIGENCE REPORT APIS
+  // ==========================================
+  async getTeamPerformanceReport(
+    period: string = 'THIS_MONTH',
+    startDate?: string,
+    endDate?: string
+  ): Promise<TeamPerformanceReport> {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const res = await fetch(`${BASE_URL}/team/performance?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<TeamPerformanceReport>(res);
+  },
+
+  async getMemberPerformanceReport(
+    userId: number,
+    period: string = 'THIS_MONTH',
+    startDate?: string,
+    endDate?: string
+  ): Promise<MemberPerformanceReport> {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const res = await fetch(`${BASE_URL}/team/performance/member/${userId}?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<MemberPerformanceReport>(res);
+  },
+
+  async downloadTeamPerformanceReportPdf(
+    period: string = 'THIS_MONTH',
+    startDate?: string,
+    endDate?: string
+  ): Promise<void> {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const res = await fetch(`${BASE_URL}/team/performance/pdf?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to download report PDF' }));
+      throw new Error(err.message || 'Failed to download report PDF');
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EngineerSpace_Team_Performance_Report_${period}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  async exportTeamPerformanceReportCsv(
+    period: string = 'THIS_MONTH',
+    startDate?: string,
+    endDate?: string
+  ): Promise<void> {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const res = await fetch(`${BASE_URL}/team/performance/csv?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed to export report CSV' }));
+      throw new Error(err.message || 'Failed to export report CSV');
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EngineerSpace_Team_Performance_Report_${period}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
+
+// Continuous background keepalive to prevent backend container from sleeping during active sessions
+if (typeof window !== 'undefined') {
+  // Proactively ping on initial script evaluation
+  api.warmup();
+
+  // Periodic heartbeat every 3.5 minutes while tab is open
+  setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      api.warmup();
+    }
+  }, 3.5 * 60 * 1000);
+
+  // Warmup immediately when user switches back to tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      api.warmup();
+    }
+  });
+
+  // Warmup on window focus
+  window.addEventListener('focus', () => {
+    api.warmup();
+  });
+}
 

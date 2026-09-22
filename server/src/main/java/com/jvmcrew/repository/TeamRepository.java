@@ -13,4 +13,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findByIsActiveTrueOrderByIdAsc();
     List<Team> findByCohortAndIsActiveTrue(String cohort);
     Optional<Team> findByCustomNameIgnoreCaseAndCohortAndIsActiveTrue(String customName, String cohort);
+    boolean existsByNameIgnoreCaseAndIsActiveTrue(String name);
+    boolean existsByCustomNameIgnoreCaseAndIsActiveTrue(String customName);
 }

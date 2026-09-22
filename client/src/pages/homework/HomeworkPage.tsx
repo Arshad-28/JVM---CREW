@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { api, cacheStore } from '../../services/api';
 import { Homework, MemberHomeworkStatus } from '../../types';
 import {
   Plus,
@@ -29,8 +29,9 @@ export const HomeworkPage: React.FC = () => {
   const { user } = useAuth();
   const isLead = user?.role === 'LEAD' || user?.role === 'ADMIN';
 
-  const [homeworkList, setHomeworkList] = useState<Homework[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedHw = cacheStore.get<Homework[]>('homework_list');
+  const [homeworkList, setHomeworkList] = useState<Homework[]>(() => cachedHw || []);
+  const [loading, setLoading] = useState(!cachedHw);
   const [error, setError] = useState<string | null>(null);
 
   // Modals & Active State
@@ -107,7 +108,9 @@ export const HomeworkPage: React.FC = () => {
 
   const loadHomework = async () => {
     try {
-      setLoading(true);
+      if (!homeworkList.length && !cacheStore.get<Homework[]>('homework_list')) {
+        setLoading(true);
+      }
       setError(null);
       const data = await api.getHomeworkList();
       setHomeworkList(data);

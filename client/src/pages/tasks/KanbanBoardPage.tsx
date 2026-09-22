@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { api, cacheStore } from '../../services/api';
 import { mapTeamMemberToCrewProfile, CrewMemberProfile } from '../../services/crewService';
 import { Task, TaskComment, TaskHistoryItem, TaskPriority, TaskStatus } from '../../types';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -66,9 +66,17 @@ type AssignmentMode = 'INDIVIDUAL' | 'MULTIPLE' | 'ENTIRE_CREW';
 
 export const KanbanBoardPage: React.FC = () => {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [crewMembers, setCrewMembers] = useState<CrewMemberProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedTasks = cacheStore.get<Task[]>('tasks_list');
+  const cachedTeam = cacheStore.get<any>('my_team');
+
+  const [tasks, setTasks] = useState<Task[]>(() => cachedTasks || []);
+  const [crewMembers, setCrewMembers] = useState<CrewMemberProfile[]>(() => {
+    if (cachedTeam && cachedTeam.members && cachedTeam.members.length > 0) {
+      return cachedTeam.members.map(mapTeamMemberToCrewProfile);
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(!cachedTasks);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskComments, setTaskComments] = useState<TaskComment[]>([]);
   const [taskHistory, setTaskHistory] = useState<TaskHistoryItem[]>([]);
@@ -123,7 +131,9 @@ export const KanbanBoardPage: React.FC = () => {
 
   const fetchTasks = async () => {
     try {
-      setLoading(true);
+      if (!tasks.length && !cacheStore.get<Task[]>('tasks_list')) {
+        setLoading(true);
+      }
       const [tasksData, teamData] = await Promise.all([
         api.getTasks(),
         api.getMyTeam().catch(() => null),
@@ -842,7 +852,7 @@ export const KanbanBoardPage: React.FC = () => {
                 onClick={() => setAssigneeFilter('ALL')}
                 className={`px-2.5 sm:px-3 py-1 rounded-xs border transition-colors ${
                   assigneeFilter === 'ALL'
-                    ? 'bg-ink text-paper border-ink font-bold'
+                    ? 'bg-primary-soft text-primary border-primary/30 font-bold shadow-2xs'
                     : 'bg-paper text-muted border-line hover:border-ink'
                 }`}
               >
@@ -854,7 +864,7 @@ export const KanbanBoardPage: React.FC = () => {
                   onClick={() => setAssigneeFilter(String(m.userId))}
                   className={`px-2 py-1 rounded-xs border transition-colors ${
                     assigneeFilter === String(m.userId)
-                      ? 'bg-amber-500 text-paper border-amber-500 font-bold'
+                      ? 'bg-primary-soft text-primary border-primary/30 font-bold shadow-2xs'
                       : 'bg-paper text-muted border-line hover:border-ink'
                   }`}
                 >
@@ -871,7 +881,7 @@ export const KanbanBoardPage: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search crew tasks..."
-                  className="pl-8 pr-3 py-1.5 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none w-full sm:w-48 font-sans"
+                  className="pl-8 pr-3 py-1.5 bg-paper border border-line focus-ring rounded-sm text-xs outline-none w-full sm:w-48 font-sans"
                 />
               </div>
 
@@ -882,7 +892,7 @@ export const KanbanBoardPage: React.FC = () => {
                     onClick={() => setPriorityFilter(p)}
                     className={`px-2 py-1 rounded-xs border text-[10px] transition-colors ${
                       priorityFilter === p
-                        ? 'bg-paper-dark text-ink border-line-dark font-bold'
+                        ? 'bg-primary-soft text-primary border-primary/30 font-bold shadow-2xs'
                         : 'bg-paper text-muted border-line'
                     }`}
                   >
@@ -900,7 +910,7 @@ export const KanbanBoardPage: React.FC = () => {
               onClick={() => setMobileColumnTab('ALL')}
               className={`px-3 py-1.5 rounded-xs font-bold whitespace-nowrap transition-colors ${
                 mobileColumnTab === 'ALL'
-                  ? 'bg-ink text-paper shadow-2xs'
+                  ? 'bg-primary-soft text-primary border border-primary/30 shadow-2xs'
                   : 'bg-paper border border-line text-muted hover:text-ink'
               }`}
             >
@@ -918,7 +928,7 @@ export const KanbanBoardPage: React.FC = () => {
                   onClick={() => setMobileColumnTab(c.id)}
                   className={`px-2.5 py-1.5 rounded-xs font-bold whitespace-nowrap transition-colors flex items-center space-x-1 ${
                     mobileColumnTab === c.id
-                      ? 'bg-amber-500 text-paper border border-amber-500 shadow-2xs'
+                      ? 'bg-primary-soft text-primary border border-primary/30 shadow-2xs'
                       : 'bg-paper border border-line text-muted hover:text-ink'
                   }`}
                 >

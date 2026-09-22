@@ -447,18 +447,18 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
   };
 
   return (
-    <PageContainer width="default" className="space-y-6 font-sans">
+    <PageContainer width="wide" className="space-y-6 font-sans">
       {/* 1. TOP HEADER & BRANDING */}
-      <div className="border border-line bg-paper p-4 sm:p-5 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-2xs">
+      <div className="border border-line bg-paper-light p-4 sm:p-5 rounded-md flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-2xs">
         <div>
           <div className="flex items-center space-x-2">
-            <div className="w-7 h-7 bg-ink text-paper rounded-xs flex items-center justify-center font-mono font-bold text-xs shadow-xs">
-              <GraduationCap className="w-4 h-4 text-accent" />
+            <div className="w-7 h-7 bg-primary text-white rounded-xs flex items-center justify-center font-mono font-bold text-xs shadow-xs">
+              <GraduationCap className="w-4 h-4 text-white" />
             </div>
             <h1 className="font-display text-lg font-black tracking-tight text-ink uppercase">
               INTERVIEW LAB
             </h1>
-            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 bg-accent-subtle text-accent border border-accent/30 rounded-xs uppercase">
+            <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-primary-soft text-primary border border-primary/20 rounded-xs uppercase">
               AI Learning Coach
             </span>
           </div>
@@ -473,7 +473,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
               setActiveSession(null);
               setActiveMock(null);
             }}
-            className="px-3 py-2 sm:py-1.5 bg-paper border border-line hover:border-ink rounded-sm font-mono text-xs font-semibold text-ink flex items-center space-x-1.5 transition-colors self-start md:self-auto shadow-2xs"
+            className="px-3 py-2 sm:py-1.5 bg-paper-light border border-line hover:border-ink rounded-sm font-mono text-xs font-semibold text-ink flex items-center space-x-1.5 transition-colors self-start md:self-auto shadow-2xs"
           >
             <RotateCcw className="w-3.5 h-3.5 text-muted" />
             <span>← Back to Home / New Topic</span>
@@ -483,7 +483,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-4 bg-attention-subtle/40 border border-attention/30 rounded-sm flex items-start space-x-3 text-attention">
+        <div className="p-4 bg-warning-soft/60 border border-warning/30 rounded-sm flex items-start space-x-3 text-warning">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <div className="text-xs">
             <p className="font-bold">Notice</p>
@@ -496,10 +496,10 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
       {activeSession ? (
         <div className="space-y-5 animate-in fade-in duration-200">
           {/* Active Session Header Banner */}
-          <div className="border border-line bg-paper p-3 sm:p-4 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-paper-dark/30">
+          <div className="border border-line bg-paper-light p-3.5 sm:p-4 rounded-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
             <div>
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="font-mono text-xs font-black uppercase px-2 py-0.5 bg-paper border border-line text-accent rounded-xs shadow-2xs">
+                <span className="font-mono text-xs font-black uppercase px-2 py-0.5 bg-paper-dark border border-line text-primary rounded-xs shadow-2xs">
                   {activeSession.technology} | {activeSession.difficulty}
                 </span>
                 <span className="text-muted text-xs font-mono hidden sm:inline">—</span>
@@ -510,13 +510,13 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
             </div>
 
             {/* Mode Switcher Tabs (Intent-Aware: Only show relevant tabs) */}
-            <div className="flex items-center space-x-1 font-mono text-xs border border-line bg-paper p-1 rounded-sm shrink-0 overflow-x-auto no-scrollbar max-w-full">
+            <div className="flex items-center space-x-1 font-mono text-xs border border-line bg-paper-dark p-1 rounded-sm shrink-0 overflow-x-auto no-scrollbar max-w-full">
               <button
                 onClick={() => setActiveTab('learn')}
                 className={`px-3 py-1.5 rounded-xs transition-colors flex items-center space-x-1.5 ${
                   activeTab === 'learn'
-                    ? 'bg-ink text-paper font-semibold shadow-2xs'
-                    : 'text-muted hover:text-ink'
+                    ? 'bg-paper-light text-primary font-bold border border-primary/20 shadow-2xs'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/60'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
@@ -528,8 +528,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   onClick={() => setActiveTab('practice')}
                   className={`px-3 py-1.5 rounded-xs transition-colors flex items-center space-x-1.5 ${
                     activeTab === 'practice'
-                      ? 'bg-ink text-paper font-semibold shadow-2xs'
-                      : 'text-muted hover:text-ink'
+                      ? 'bg-paper-light text-primary font-bold border border-primary/20 shadow-2xs'
+                      : 'text-muted hover:text-ink hover:bg-paper-light/60'
                   }`}
                 >
                   <CheckSquare className="w-3.5 h-3.5" />
@@ -542,8 +542,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   onClick={() => setActiveTab('coding')}
                   className={`px-3 py-1.5 rounded-xs transition-colors flex items-center space-x-1.5 ${
                     activeTab === 'coding'
-                      ? 'bg-ink text-paper font-semibold shadow-2xs'
-                      : 'text-muted hover:text-ink'
+                      ? 'bg-paper-light text-primary font-bold border border-primary/20 shadow-2xs'
+                      : 'text-muted hover:text-ink hover:bg-paper-light/60'
                   }`}
                 >
                   <Code className="w-3.5 h-3.5" />
@@ -556,8 +556,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   onClick={() => setActiveTab('mock')}
                   className={`px-3 py-1.5 rounded-xs transition-colors flex items-center space-x-1.5 ${
                     activeTab === 'mock'
-                      ? 'bg-ink text-paper font-semibold shadow-2xs'
-                      : 'text-muted hover:text-ink'
+                      ? 'bg-paper-light text-primary font-bold border border-primary/20 shadow-2xs'
+                      : 'text-muted hover:text-ink hover:bg-paper-light/60'
                   }`}
                 >
                   <Mic className="w-3.5 h-3.5" />
@@ -569,8 +569,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                 onClick={() => setActiveTab('coach')}
                 className={`px-3 py-1.5 rounded-xs transition-colors flex items-center space-x-1.5 ${
                   activeTab === 'coach'
-                    ? 'bg-ink text-paper font-semibold shadow-2xs'
-                    : 'text-muted hover:text-ink'
+                    ? 'bg-paper-light text-primary font-bold border border-primary/20 shadow-2xs'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/60'
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5" />

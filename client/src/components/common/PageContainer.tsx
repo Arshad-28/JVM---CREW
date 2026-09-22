@@ -16,13 +16,13 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   noPadding = false,
 }) => {
   const widthClasses = {
-    default: 'max-w-7xl',        // 1280px standard (My Day, Homework, Curriculum, Profile)
-    wide: 'max-w-[1440px]',     // 1440px high-density (Kanban, Team Cockpit, Coding Arena)
-    narrow: 'max-w-4xl',         // 896px focused (Account Settings, Submission Forms)
+    narrow: 'max-w-[960px]',     // 960px focused (Account Settings, Profile Forms)
+    default: 'max-w-[1200px]',    // 1200px standard (My Day, Homework, Team Meetings, Profile, Meet the Crew)
+    wide: 'max-w-[1440px]',       // 1440px high-density (Kanban Tasks, Team Cockpit, Performance Reports, Interview Lab)
     full: 'w-full max-w-full',
   }[width];
 
-  const paddingClasses = noPadding ? '' : 'px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8';
+  const paddingClasses = noPadding ? '' : 'px-4 sm:px-6 lg:px-8 py-5 sm:py-7 lg:py-8';
 
   return (
     <div className={`w-full mx-auto ${widthClasses} ${paddingClasses} min-w-0 ${className}`}>

@@ -22,11 +22,19 @@
       (function() {
         try {
           var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-          var backendHost = isLocal ? '' : 'https://jvm-crew.onrender.com';
+          var envUrl = '';
+          var endpoints = [
+            'https://jvm-crew.onrender.com/health',
+            'https://jvm-crew.onrender.com/api/health',
+            '/health',
+            '/api/health'
+          ];
           // Pre-warm backend TCP connection, DNS, and container immediately on page load
-          fetch(backendHost + '/health', { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
-          fetch(backendHost + '/api/health', { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
-          fetch(backendHost + '/api/readiness', { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
+          endpoints.forEach(function(url) {
+            try {
+              fetch(url, { method: 'GET', mode: 'cors', keepalive: true }).catch(function() {});
+            } catch(e) {}
+          });
         } catch(e) {}
       })();
     </script>

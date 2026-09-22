@@ -15,6 +15,7 @@ import java.util.Optional;
 @Repository
 public interface ProblemAttemptRepository extends JpaRepository<ProblemAttempt, Long> {
     List<ProblemAttempt> findByUser(User user);
+    List<ProblemAttempt> findByUserIn(java.util.Collection<User> users);
     List<ProblemAttempt> findByUserId(Long userId);
     Optional<ProblemAttempt> findByUserAndProblem(User user, Problem problem);
     Optional<ProblemAttempt> findByUserIdAndProblemId(Long userId, Long problemId);

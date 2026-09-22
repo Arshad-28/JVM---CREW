@@ -7,6 +7,8 @@ import {
   Award,
   Users,
   Shield,
+  BarChart3,
+  ArrowRight,
 } from 'lucide-react';
 
 export const MonthlyLecturerReportSection: React.FC = () => {
@@ -14,6 +16,11 @@ export const MonthlyLecturerReportSection: React.FC = () => {
   const [evaluation, setEvaluation] = useState<MonthlyEvaluation | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleOpenIntelligenceReport = () => {
+    window.history.pushState({ tab: 'reports' }, '', '/reports');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
 
   const fetchEvaluation = async (month: string) => {
     try {
@@ -79,6 +86,16 @@ export const MonthlyLecturerReportSection: React.FC = () => {
           >
             <FileDown className="w-3.5 h-3.5" />
             <span>{downloadingPdf ? 'GENERATING PDF...' : 'DOWNLOAD OFFICIAL PDF'}</span>
+          </button>
+
+          <button
+            onClick={handleOpenIntelligenceReport}
+            className="px-3.5 py-1.5 bg-ink hover:bg-accent text-paper font-mono text-xs font-bold rounded-xs flex items-center space-x-1.5 shadow-xs transition-colors"
+            title="Open Team Performance Intelligence Dashboard"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>FULL INTELLIGENCE REPORT</span>
+            <ArrowRight className="w-3 h-3 ml-0.5" />
           </button>
         </div>
       </div>

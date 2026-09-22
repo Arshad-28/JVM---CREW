@@ -401,9 +401,14 @@ public class TeamManagementService {
 
         List<TeamMember> activeMembers = teamMemberRepository.findByTeamAndIsActiveTrueOrderByJoinedAtAsc(team);
 
+        List<User> memberUsers = activeMembers.stream().map(TeamMember::getUser).collect(Collectors.toList());
+        Map<Long, UserStreakDto> memberStreakMap = streakService.getBatchUserStreaks(memberUsers, today);
+
         List<TeamMemberSummaryDto> memberDtos = activeMembers.stream().map(m -> {
             boolean isLead = currentLeadDto != null && m.getUser().getId().equals(currentLeadDto.getUserId());
-            int streak = streakService.getUserStreak(m.getUser(), today).getCurrentStreak();
+            int streak = memberStreakMap.containsKey(m.getUser().getId())
+                    ? memberStreakMap.get(m.getUser().getId()).getCurrentStreak()
+                    : 0;
 
             return TeamMemberSummaryDto.builder()
                     .membershipId(m.getId())

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { api, cacheStore } from '../../services/api';
 import {
   CrewMemberProfile,
   mapTeamMemberToCrewProfile,
@@ -13,14 +13,23 @@ import { PageContainer } from '../../components/common/PageContainer';
 
 export const MeetTheCrewPage: React.FC = () => {
   const { user, updateAccount } = useAuth();
-  const [crewMembers, setCrewMembers] = useState<CrewMemberProfile[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const cachedTeam = cacheStore.get<any>('my_team');
+
+  const [crewMembers, setCrewMembers] = useState<CrewMemberProfile[]>(() => {
+    if (cachedTeam && cachedTeam.members && cachedTeam.members.length > 0) {
+      return cachedTeam.members.map(mapTeamMemberToCrewProfile);
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => !cachedTeam);
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [editingMember, setEditingMember] = useState<CrewMemberProfile | null>(null);
 
   const loadTeamCrew = async () => {
     try {
-      setLoading(true);
+      if (!crewMembers.length && !cacheStore.get<any>('my_team')) {
+        setLoading(true);
+      }
       const teamData = await api.getMyTeam();
       if (teamData && teamData.members && teamData.members.length > 0) {
         const mapped = teamData.members.map(mapTeamMemberToCrewProfile);
@@ -120,10 +129,10 @@ export const MeetTheCrewPage: React.FC = () => {
       <div className="flex items-center justify-center flex-wrap gap-2 pb-2 border-b border-line">
         <button
           onClick={() => setSelectedMemberId(null)}
-          className={`px-4 py-2 font-mono text-xs font-bold rounded-sm border transition-colors flex items-center space-x-1.5 ${
+          className={`px-4 py-2 font-mono text-xs font-bold rounded-md border transition-all flex items-center space-x-1.5 ${
             selectedMemberId === null
-              ? 'bg-ink text-paper border-ink shadow-xs'
-              : 'bg-paper-dark text-muted hover:text-ink border-line'
+              ? 'bg-primary-soft text-primary font-bold border-primary/25 shadow-2xs'
+              : 'bg-surface-raised text-muted hover:text-ink hover:bg-surface-soft border-line'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -138,15 +147,15 @@ export const MeetTheCrewPage: React.FC = () => {
             <button
               key={member.id}
               onClick={() => setSelectedMemberId(member.id)}
-              className={`px-4 py-2 font-mono text-xs font-bold rounded-sm border transition-colors flex items-center space-x-1.5 uppercase ${
+              className={`px-4 py-2 font-mono text-xs font-bold rounded-md border transition-all flex items-center space-x-1.5 uppercase ${
                 isSelected
                   ? isCaptain
-                    ? 'bg-amber-500 text-paper border-amber-500 shadow-xs'
-                    : 'bg-accent text-paper border-accent shadow-xs'
-                  : 'bg-paper-dark text-muted hover:text-ink border-line'
+                    ? 'bg-amber-500/15 text-amber-900 border-amber-500/40 shadow-2xs font-bold'
+                    : 'bg-primary-soft text-primary border-primary/25 shadow-2xs font-bold'
+                  : 'bg-surface-raised text-muted hover:text-ink hover:bg-surface-soft border-line'
               }`}
             >
-              {isCaptain && <Crown className="w-3.5 h-3.5 text-amber-300" />}
+              {isCaptain && <Crown className="w-3.5 h-3.5 text-amber-700" />}
               <span>{member.name}</span>
               <span className="opacity-70 text-[10px]">({member.symbol})</span>
             </button>

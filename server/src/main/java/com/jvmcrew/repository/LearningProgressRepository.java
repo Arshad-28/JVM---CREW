@@ -15,6 +15,7 @@ import java.util.Optional;
 @Repository
 public interface LearningProgressRepository extends JpaRepository<LearningProgress, Long> {
     List<LearningProgress> findByUser(User user);
+    List<LearningProgress> findByUserIn(java.util.Collection<User> users);
     List<LearningProgress> findByUserId(Long userId);
     Optional<LearningProgress> findByUserAndTopic(User user, LearningTopic topic);
     Optional<LearningProgress> findByUserIdAndTopicId(Long userId, Long topicId);

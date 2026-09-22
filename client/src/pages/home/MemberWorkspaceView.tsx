@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api, getLocalTodayDateString } from '../../services/api';
-import { MemberDashboard, Standup } from '../../types';
+import { api, cacheStore, getLocalTodayDateString } from '../../services/api';
+import { MemberDashboard, Standup, TeamMeeting } from '../../types';
 import { DailyStandupModal } from '../standup/DailyStandupModal';
 import { StandupAudioPlayer } from '../../components/common/StandupAudioPlayer';
 import { AskLeadModal } from '../../components/common/AskLeadModal';
 import { LeaveEmailModal } from '../../components/common/LeaveEmailModal';
+import { TeamMeetingCard } from '../../components/team/TeamMeetingCard';
 import {
   getTimeGreeting,
   getPersonalDailyContext,
@@ -28,6 +29,7 @@ import {
   Circle,
   UserCheck,
   GraduationCap,
+  Video,
 } from 'lucide-react';
 
 interface MemberWorkspaceViewProps {
@@ -37,9 +39,13 @@ interface MemberWorkspaceViewProps {
 export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavigateTab }) => {
   const { user } = useAuth();
   const isCurrentLead = Boolean(user?.isCurrentLead || user?.role === 'LEAD' || user?.role === 'ADMIN');
-  const [data, setData] = useState<MemberDashboard | null>(null);
-  const [history, setHistory] = useState<Standup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const localToday = getLocalTodayDateString();
+  const { fullTitle } = getFormattedTodayDate();
+
+  const [data, setData] = useState<MemberDashboard | null>(() => cacheStore.get<MemberDashboard>(`member_dash_${localToday}`));
+  const [history, setHistory] = useState<Standup[]>(() => cacheStore.get<Standup[]>('standup_history') || []);
+  const [upcomingMeeting, setUpcomingMeeting] = useState<TeamMeeting | null>(null);
+  const [loading, setLoading] = useState<boolean>(() => !cacheStore.get<MemberDashboard>(`member_dash_${localToday}`));
   const [error, setError] = useState<string | null>(null);
 
   // Modals
@@ -53,33 +59,36 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
   const [viewStandupTarget, setViewStandupTarget] = useState<Standup | null>(null);
   const [viewStandupTitle, setViewStandupTitle] = useState<string>('Daily Standup');
 
-  const localToday = getLocalTodayDateString();
-  const { fullTitle } = getFormattedTodayDate();
-
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent && !data) {
+        setLoading(true);
+      }
       setError(null);
-      const [dash, hist] = await Promise.all([
+      const [dash, hist, meet] = await Promise.all([
         api.getMemberDashboard(localToday),
         api.getStandupHistory(),
+        api.getUpcomingMeeting().catch(() => null),
       ]);
       setData(dash);
       setHistory(hist || []);
+      setUpcomingMeeting(meet);
       const isStandupDone = Boolean(dash?.todayStandup && (dash.todayStandup.id != null || dash.todayStandup.submittedAt != null));
       window.dispatchEvent(new CustomEvent('jvm_standup_status_synced', { detail: { isDone: isStandupDone } }));
     } catch (err: any) {
-      console.error('Failed to load Member workspace data:', err);
-      setError(err?.message || 'Failed to connect to workspace');
+      if (!data) {
+        console.error('Failed to load Member workspace data:', err);
+        setError(err?.message || 'Failed to connect to workspace');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadData(Boolean(data));
     const handleStandupSubmitted = () => {
-      loadData();
+      loadData(true);
     };
     window.addEventListener('jvm_standup_submitted', handleStandupSubmitted);
     return () => {
@@ -119,7 +128,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
           <p className="mt-1 font-mono text-[11px]">{error}</p>
         </div>
         <button
-          onClick={loadData}
+          onClick={() => loadData()}
           className="px-5 py-2.5 bg-ink text-paper text-xs font-mono font-semibold rounded-sm hover:bg-ink-light transition-all shadow-sm"
         >
           Retry Loading Workspace
@@ -269,7 +278,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                     setStandupModalMode('WRITE');
                     setStandupModalOpen(true);
                   }}
-                  className="flex-1 px-3 py-2 bg-accent text-paper hover:bg-accent-dark rounded-xs font-mono text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-2xs"
+                  className="flex-1 px-3 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-[0.99] rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs hover-lift"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>SUBMIT DAILY STANDUP</span>
@@ -277,9 +286,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               ) : (
                 <button
                   onClick={() => onNavigateTab('tasks')}
-                  className="flex-1 px-3 py-2 bg-ink text-paper hover:bg-ink-light rounded-xs font-mono text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-2xs"
+                  className="flex-1 px-3 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-[0.99] rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs hover-lift"
                 >
-                  <CheckSquare className="w-3.5 h-3.5 text-accent" />
+                  <CheckSquare className="w-3.5 h-3.5 text-primary-soft" />
                   <span>VIEW MY TASKS</span>
                 </button>
               )}
@@ -287,17 +296,17 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               {!isCurrentLead && (
                 <button
                   onClick={() => setAskLeadOpen(true)}
-                  className="px-3 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-ink text-ink rounded-xs font-mono text-xs font-semibold transition-colors flex items-center justify-center space-x-1 shadow-2xs"
+                  className="px-3 py-2.5 bg-surface-raised hover:bg-surface-soft border border-line hover:border-primary/30 text-ink rounded-md font-mono text-xs font-semibold transition-all flex items-center justify-center space-x-1 shadow-2xs"
                   title="Send a direct question to your Team Lead"
                 >
-                  <MessageSquare className="w-3.5 h-3.5 text-accent" />
+                  <MessageSquare className="w-3.5 h-3.5 text-primary" />
                   <span>Ask Lead</span>
                 </button>
               )}
 
               <button
                 onClick={() => setLeaveModalOpen(true)}
-                className="px-2.5 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-ink text-muted hover:text-ink rounded-xs font-mono text-xs font-medium transition-colors flex items-center justify-center shadow-2xs"
+                className="px-3 py-2.5 bg-surface-raised hover:bg-surface-soft border border-line hover:border-primary/30 text-muted hover:text-ink rounded-md font-mono text-xs font-medium transition-all flex items-center justify-center shadow-2xs"
                 title="Generate professional leave email"
               >
                 <Mail className="w-3.5 h-3.5" />
@@ -306,6 +315,27 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* UPCOMING TEAM MEETING (IF SCHEDULED)                                      */}
+      {/* ========================================================================= */}
+      {upcomingMeeting && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[11px] font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
+              <Video className="w-3.5 h-3.5 text-accent" />
+              <span>Upcoming Team Meeting</span>
+            </span>
+            <button
+              onClick={() => onNavigateTab('meetings')}
+              className="text-xs font-mono text-accent hover:underline font-semibold"
+            >
+              All Syncs →
+            </button>
+          </div>
+          <TeamMeetingCard meeting={upcomingMeeting} isHero={true} />
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 2. MY DAILY STANDUP                                                       */}
@@ -344,9 +374,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                     setStandupModalMode('WRITE');
                     setStandupModalOpen(true);
                   }}
-                  className="px-4 py-2.5 bg-paper border border-line hover:border-ink text-ink font-mono text-xs font-bold rounded-xs transition-colors flex items-center space-x-1.5 shadow-xs"
+                  className="px-4 py-2.5 bg-surface-raised border border-line hover:border-primary/40 text-ink font-mono text-xs font-bold rounded-md transition-all flex items-center space-x-1.5 shadow-xs hover-lift"
                 >
-                  <PenTool className="w-3.5 h-3.5 text-accent" />
+                  <PenTool className="w-3.5 h-3.5 text-primary" />
                   <span>Write Standup</span>
                 </button>
 
@@ -357,9 +387,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                     setStandupModalMode('VOICE');
                     setStandupModalOpen(true);
                   }}
-                  className="px-4 py-2.5 bg-ink text-paper hover:bg-ink-light font-mono text-xs font-bold rounded-xs transition-colors flex items-center space-x-1.5 shadow-xs"
+                  className="px-4 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-[0.99] font-mono text-xs font-bold rounded-md transition-all flex items-center space-x-1.5 shadow-xs hover-lift"
                 >
-                  <Mic className="w-3.5 h-3.5 text-accent" />
+                  <Mic className="w-3.5 h-3.5 text-primary-soft" />
                   <span>Record Voice</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -378,7 +408,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                       <span className="font-display text-sm font-bold text-ink">
                         DAILY STANDUP SUBMITTED
                       </span>
-                      <span className="font-mono text-[10px] text-emerald-700 font-bold px-1.5 py-0.2 bg-emerald-500/10 rounded-xs">
+                      <span className="font-mono text-[10px] text-emerald-700 font-bold px-1.5 py-0.5 bg-emerald-500/10 rounded-xs">
                         {todayStandup?.hasVoiceRecording || todayStandup?.submissionType === 'VOICE'
                           ? `Submitted · Voice · ${todayStandup?.audioDurationSeconds || 0}s`
                           : 'Submitted · Written'}
@@ -398,7 +428,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         detail: { topic: `I learned: ${learningText}` }
                       }));
                     }}
-                    className="px-3 py-1.5 bg-accent-subtle text-accent border border-accent/30 hover:bg-accent hover:text-paper rounded-xs font-mono text-xs font-semibold transition-colors flex items-center space-x-1.5 shadow-2xs"
+                    className="px-3 py-1.5 bg-primary-soft text-primary border border-primary/20 hover:bg-primary hover:text-paper rounded-md font-mono text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-2xs hover-lift"
                     title="Practice what you learned today in Interview Lab"
                   >
                     <GraduationCap className="w-3.5 h-3.5" />
@@ -412,7 +442,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                       setStandupModalMode(todayStandup?.hasVoiceRecording || todayStandup?.submissionType === 'VOICE' ? 'VOICE' : 'WRITE');
                       setStandupModalOpen(true);
                     }}
-                    className="px-3 py-1.5 border border-line hover:border-ink rounded-xs font-mono text-xs font-medium text-ink transition-colors"
+                    className="px-3 py-1.5 border border-line hover:border-ink rounded-md font-mono text-xs font-medium text-ink transition-colors bg-surface-raised hover:bg-surface-soft"
                   >
                     Edit Standup
                   </button>
@@ -424,7 +454,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                       setStandupModalMode('VIEW');
                       setStandupModalOpen(true);
                     }}
-                    className="px-3.5 py-1.5 bg-paper-dark border border-line hover:border-ink font-mono text-xs font-semibold text-ink rounded-xs transition-colors flex items-center space-x-1"
+                    className="px-3.5 py-1.5 bg-surface-soft border border-line hover:border-ink font-mono text-xs font-semibold text-ink rounded-md transition-colors flex items-center space-x-1"
                   >
                     <span>View Standup</span>
                     <ChevronRight className="w-3.5 h-3.5" />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { api, cacheStore } from '../../services/api';
 import { SubjectProgress, LearningStatus, LearningTopic } from '../../types';
 import { ProgressBar } from '../../components/common/ProgressBar';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -23,8 +23,9 @@ export const LearningTrackerPage: React.FC = () => {
   const { user } = useAuth();
   const isLead = user?.role === 'LEAD' || user?.role === 'ADMIN';
 
-  const [curriculum, setCurriculum] = useState<SubjectProgress[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedCurriculum = cacheStore.get<SubjectProgress[]>('curriculum_tree');
+  const [curriculum, setCurriculum] = useState<SubjectProgress[]>(() => cachedCurriculum || []);
+  const [loading, setLoading] = useState(!cachedCurriculum);
   const [filter, setFilter] = useState<'ALL' | 'IN_PROGRESS' | 'DONE' | 'NOT_STARTED'>('ALL');
   const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
 
@@ -34,7 +35,7 @@ export const LearningTrackerPage: React.FC = () => {
   const [editingTopic, setEditingTopic] = useState<LearningTopic | null>(null);
 
   // Form states
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState(() => (cachedCurriculum && cachedCurriculum.length > 0 ? cachedCurriculum[0].subject : ''));
   const [newSubjectInput, setNewSubjectInput] = useState('');
   const [topicTitleInput, setTopicTitleInput] = useState('');
   const [orderIndexInput, setOrderIndexInput] = useState<number | ''>('');
@@ -43,7 +44,9 @@ export const LearningTrackerPage: React.FC = () => {
 
   const fetchCurriculum = async () => {
     try {
-      setLoading(true);
+      if (!curriculum.length && !cacheStore.get<SubjectProgress[]>('curriculum_tree')) {
+        setLoading(true);
+      }
       const data = await api.getCurriculumTree();
       setCurriculum(data);
       // Auto-select first subject for add topic form if none selected
