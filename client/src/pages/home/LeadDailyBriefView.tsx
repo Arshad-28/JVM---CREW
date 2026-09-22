@@ -350,16 +350,7 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
                 title="Open Team Performance Intelligence & Progress Reports"
               >
                 <BarChart3 className="w-3.5 h-3.5 text-primary" />
-                <span>TEAM PERFORMANCE INTELLIGENCE</span>
-              </button>
-
-              <button
-                onClick={() => api.downloadTeamStandupPdf(localToday)}
-                className="w-full px-3 py-2.5 bg-surface-raised hover:bg-surface-soft border border-line hover:border-primary/40 text-ink rounded-md font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs"
-                title="Download official PDF report of all team members' standups for today"
-              >
-                <FileDown className="w-3.5 h-3.5 text-muted" />
-                <span>EXPORT TODAY'S TEAM STANDUP (PDF)</span>
+                <span>VIEW PERFORMANCE INTELLIGENCE →</span>
               </button>
             </div>
           </div>

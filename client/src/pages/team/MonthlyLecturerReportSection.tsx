@@ -2,20 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { MonthlyEvaluation } from '../../types';
 import {
-  FileDown,
   Calendar,
   Award,
   Users,
   Shield,
   BarChart3,
-  ArrowRight,
 } from 'lucide-react';
 
 export const MonthlyLecturerReportSection: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState('2026-09');
   const [evaluation, setEvaluation] = useState<MonthlyEvaluation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const handleOpenIntelligenceReport = () => {
     window.history.pushState({ tab: 'reports' }, '', '/reports');
@@ -37,17 +34,6 @@ export const MonthlyLecturerReportSection: React.FC = () => {
   useEffect(() => {
     fetchEvaluation(selectedMonth);
   }, [selectedMonth]);
-
-  const handleDownloadPdf = async () => {
-    try {
-      setDownloadingPdf(true);
-      await api.downloadMonthlyReportPdf(selectedMonth);
-    } catch (err) {
-      console.error('Failed to download lecturer report PDF:', err);
-    } finally {
-      setDownloadingPdf(false);
-    }
-  };
 
   return (
     <div className="border border-line bg-paper rounded-sm p-5 space-y-5 font-sans shadow-2xs">
@@ -80,22 +66,12 @@ export const MonthlyLecturerReportSection: React.FC = () => {
           </div>
 
           <button
-            onClick={handleDownloadPdf}
-            disabled={downloadingPdf || loading}
-            className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-mono text-xs font-bold rounded-xs flex items-center space-x-1.5 shadow-xs transition-colors"
-          >
-            <FileDown className="w-3.5 h-3.5" />
-            <span>{downloadingPdf ? 'GENERATING PDF...' : 'DOWNLOAD OFFICIAL PDF'}</span>
-          </button>
-
-          <button
             onClick={handleOpenIntelligenceReport}
-            className="px-3.5 py-1.5 bg-ink hover:bg-accent text-paper font-mono text-xs font-bold rounded-xs flex items-center space-x-1.5 shadow-xs transition-colors"
+            className="px-4 py-2 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-mono text-xs font-bold rounded-md flex items-center space-x-1.5 shadow-xs transition-all hover-lift"
             title="Open Team Performance Intelligence Dashboard"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>FULL INTELLIGENCE REPORT</span>
-            <ArrowRight className="w-3 h-3 ml-0.5" />
+            <BarChart3 className="w-3.5 h-3.5 text-primary-soft" />
+            <span>OPEN FULL PERFORMANCE REPORT →</span>
           </button>
         </div>
       </div>

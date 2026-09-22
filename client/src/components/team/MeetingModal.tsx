@@ -111,9 +111,9 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
         )}
 
         {/* Title */}
-        <div className="space-y-1">
-          <label className="block font-semibold text-ink">
-            Meeting Title *
+        <div className="space-y-1.5">
+          <label className="block font-bold text-ink">
+            Meeting Title <span className="text-danger">*</span>
           </label>
           <input
             type="text"
@@ -121,14 +121,14 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Daily Standup Sync / Sprint Review"
-            className="w-full px-3 py-2 bg-paper-light border border-line focus:border-ink rounded-sm outline-none text-ink font-medium"
+            className="w-full px-3.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-medium transition-all"
           />
         </div>
 
         {/* Platform Selector */}
-        <div className="space-y-1">
-          <label className="block font-semibold text-ink">
-            Platform *
+        <div className="space-y-1.5">
+          <label className="block font-bold text-ink">
+            Platform <span className="text-danger">*</span>
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
@@ -141,10 +141,10 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
                 key={p.id}
                 type="button"
                 onClick={() => setPlatform(p.id)}
-                className={`px-3 py-2 border rounded-sm font-mono text-xs font-bold transition-all ${
+                className={`px-3 py-2 border rounded-md font-mono text-xs font-bold transition-all ${
                   platform === p.id
-                    ? 'bg-ink text-paper border-ink shadow-xs'
-                    : 'bg-paper hover:bg-paper-dark border-line text-ink'
+                    ? 'bg-primary-soft text-primary border-primary/30 shadow-2xs font-bold'
+                    : 'bg-surface-raised hover:bg-surface-soft border-line text-muted hover:text-ink'
                 }`}
               >
                 {p.label}
@@ -154,89 +154,89 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
         </div>
 
         {/* Meeting URL */}
-        <div className="space-y-1">
-          <label className="block font-semibold text-ink">
-            Meeting URL (HTTPS only) *
+        <div className="space-y-1.5">
+          <label className="block font-bold text-ink">
+            Meeting URL (HTTPS only) <span className="text-danger">*</span>
           </label>
           <div className="relative">
-            <LinkIcon className="w-3.5 h-3.5 text-muted absolute left-3 top-3" />
+            <LinkIcon className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
             <input
               type="url"
               required
               value={meetingUrl}
               onChange={(e) => setMeetingUrl(e.target.value)}
               placeholder="https://meet.google.com/xxx-xxxx-xxx or zoom.us/j/..."
-              className="w-full pl-8 pr-3 py-2 bg-paper-light border border-line focus:border-ink rounded-sm outline-none text-ink font-mono text-xs"
+              className="w-full pl-9 pr-3.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
             />
           </div>
-          <p className="text-[10px] font-mono text-muted">
+          <p className="text-[11px] font-mono text-muted">
             Members can easily click "Join Meeting" to open this link in a new tab.
           </p>
         </div>
 
         {/* Date & Times */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <label className="block font-semibold text-ink">
-              Date *
+          <div className="space-y-1.5">
+            <label className="block font-bold text-ink">
+              Date <span className="text-danger">*</span>
             </label>
             <div className="relative">
-              <Calendar className="w-3.5 h-3.5 text-muted absolute left-3 top-3" />
+              <Calendar className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
               <input
                 type="date"
                 required
                 value={scheduledDate}
                 onChange={(e) => setScheduledDate(e.target.value)}
-                className="w-full pl-8 pr-2 py-2 bg-paper-light border border-line focus:border-ink rounded-sm outline-none text-ink font-mono text-xs"
+                className="w-full pl-9 pr-2.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="block font-semibold text-ink">
-              Start Time *
+          <div className="space-y-1.5">
+            <label className="block font-bold text-ink">
+              Start Time <span className="text-danger">*</span>
             </label>
             <div className="relative">
-              <Clock className="w-3.5 h-3.5 text-muted absolute left-3 top-3" />
+              <Clock className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
               <input
                 type="text"
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 placeholder="5:30 PM / 17:30"
-                className="w-full pl-8 pr-2 py-2 bg-paper-light border border-line focus:border-ink rounded-sm outline-none text-ink font-mono text-xs"
+                className="w-full pl-9 pr-2.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="block font-semibold text-ink">
+          <div className="space-y-1.5">
+            <label className="block font-bold text-ink">
               End Time
             </label>
             <div className="relative">
-              <Clock className="w-3.5 h-3.5 text-muted absolute left-3 top-3" />
+              <Clock className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
               <input
                 type="text"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 placeholder="6:30 PM / 18:30"
-                className="w-full pl-8 pr-2 py-2 bg-paper-light border border-line focus:border-ink rounded-sm outline-none text-ink font-mono text-xs"
+                className="w-full pl-9 pr-2.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* Description */}
-        <div className="space-y-1">
-          <label className="block font-semibold text-ink">
+        <div className="space-y-1.5">
+          <label className="block font-bold text-ink">
             Description / Agenda
           </label>
           <textarea
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Agenda, agenda topics, or notes for the team..."
-            className="w-full p-3 bg-paper-light border border-line focus:border-ink rounded-sm outline-none text-ink font-sans text-xs leading-relaxed"
+            placeholder="Agenda, discussion topics, or notes for the team..."
+            className="w-full p-3 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-sans text-xs leading-relaxed transition-all"
           />
         </div>
 
