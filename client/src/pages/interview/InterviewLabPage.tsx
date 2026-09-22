@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Clock,
   Layers,
+  Bot,
+  User as UserIcon,
 } from 'lucide-react';
 import { PageContainer } from '../../components/common/PageContainer';
 
@@ -436,37 +438,54 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
   return (
     <PageContainer width="wide" className="space-y-6 sm:space-y-8 font-sans pb-16">
       {/* 1. TOP HEADER & BRANDING */}
-      <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-xs">
-        <div className="space-y-1">
+      <div className="bg-paper-light border border-line rounded-2xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-5 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+
+        <div className="space-y-2 relative z-10">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary border border-primary/25 rounded-full text-xs font-semibold shadow-2xs">
               <GraduationCap className="w-3.5 h-3.5" />
               AI Technical Studio & Coach
             </span>
             <span className="text-muted/40">·</span>
-            <span className="text-xs text-muted">Powered by Gemini Engine</span>
+            <span className="text-xs text-muted font-medium">Real-time Code & Concept Intelligence</span>
           </div>
 
-          <h1 className="font-display text-2xl font-bold text-ink tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
             Interview Lab & Learning Coach
           </h1>
 
-          <p className="text-xs text-muted">
-            Master engineering concepts, solve code challenges, practice questions, and simulate live technical interviews.
+          <p className="text-xs sm:text-sm text-muted max-w-2xl leading-relaxed">
+            Master engineering concepts, solve live code challenges with automated reviews, drill practice questions, and simulate technical interviews.
           </p>
         </div>
 
-        {activeSession && (
+        {activeSession ? (
           <button
             onClick={() => {
               setActiveSession(null);
               setActiveMock(null);
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-line-strong rounded-lg text-xs font-semibold text-ink transition-colors self-start md:self-auto shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-paper hover:bg-paper-dark border border-line hover:border-primary/40 rounded-xl text-xs font-semibold text-ink transition-all self-start md:self-auto shadow-2xs hover:shadow-xs cursor-pointer active:scale-95 z-10"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-muted" />
+            <RotateCcw className="w-4 h-4 text-muted" />
             <span>← Exit Session / New Topic</span>
           </button>
+        ) : (
+          <div className="hidden lg:flex items-center gap-3 z-10">
+            <div className="px-3.5 py-2 bg-paper border border-line rounded-xl text-center space-y-0.5 shadow-2xs">
+              <span className="text-xs font-bold text-primary block">Instant AI</span>
+              <span className="text-[10px] font-mono text-muted uppercase">Feedback</span>
+            </div>
+            <div className="px-3.5 py-2 bg-paper border border-line rounded-xl text-center space-y-0.5 shadow-2xs">
+              <span className="text-xs font-bold text-primary block">3 Hints</span>
+              <span className="text-[10px] font-mono text-muted uppercase">Zero Penalty</span>
+            </div>
+            <div className="px-3.5 py-2 bg-paper border border-line rounded-xl text-center space-y-0.5 shadow-2xs">
+              <span className="text-xs font-bold text-primary block">Live IDE</span>
+              <span className="text-[10px] font-mono text-muted uppercase">Code Reviews</span>
+            </div>
+          </div>
         )}
       </div>
 
@@ -484,87 +503,113 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
       {/* 2. ACTIVE SESSION WORKSPACE */}
       {activeSession ? (
         <div className="space-y-6 animate-fade-in">
-          {/* Active Session Header Banner */}
-          <div className="bg-paper border border-line rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md">
-                  {activeSession.technology || 'Java'} · {activeSession.difficulty}
-                </span>
-                <span className="text-muted/40">·</span>
-                <span className="text-xs text-muted">Live Workspace</span>
+          {/* Active Session Header Banner & Always-Visible Tabs */}
+          <div className="bg-paper-light border border-line rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-4">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold px-2.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md">
+                    {activeSession.technology || 'Java'} · {activeSession.difficulty}
+                  </span>
+                  <span className="text-muted/40">·</span>
+                  <span className="text-xs text-muted flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Technical Session
+                  </span>
+                </div>
+                <h2 className="font-display text-lg sm:text-2xl font-bold text-ink">
+                  {activeSession.topic}
+                </h2>
               </div>
-              <h2 className="font-display text-lg sm:text-xl font-bold text-ink">
-                {activeSession.topic}
-              </h2>
             </div>
 
-            {/* Mode Switcher Tabs */}
-            <div className="inline-flex p-1 bg-paper-dark/80 rounded-xl border border-line shrink-0 overflow-x-auto no-scrollbar">
+            {/* Mode Switcher Tabs (ALL 5 ALWAYS VISIBLE) */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-paper p-1.5 rounded-xl border border-line">
               <button
                 onClick={() => setActiveTab('learn')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
                   activeTab === 'learn'
-                    ? 'bg-paper text-primary shadow-xs font-semibold border border-line/60'
-                    : 'text-muted hover:text-ink'
+                    ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/50'
                 }`}
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                <BookOpen className="w-4 h-4 shrink-0" />
                 <span>Concept Learn</span>
               </button>
 
-              {(activeSession.practiceQuestions.length > 0 || activeTab === 'practice') && (
-                <button
-                  onClick={() => setActiveTab('practice')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTab === 'practice'
-                      ? 'bg-paper text-primary shadow-xs font-semibold border border-line/60'
-                      : 'text-muted hover:text-ink'
-                  }`}
-                >
-                  <CheckSquare className="w-3.5 h-3.5" />
-                  <span>Practice Questions</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  if (activeSession.practiceQuestions.length === 0) {
+                    handleGenerateQuestions();
+                  }
+                  setActiveTab('practice');
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                  activeTab === 'practice'
+                    ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/50'
+                }`}
+              >
+                <CheckSquare className="w-4 h-4 shrink-0" />
+                <span>Practice Questions</span>
+                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-paper border border-line text-muted">
+                  {activeSession.practiceQuestions.length > 0 ? activeSession.practiceQuestions.length : 'AI'}
+                </span>
+              </button>
 
-              {(activeSession.codingProblems.length > 0 || activeTab === 'coding') && (
-                <button
-                  onClick={() => setActiveTab('coding')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTab === 'coding'
-                      ? 'bg-paper text-primary shadow-xs font-semibold border border-line/60'
-                      : 'text-muted hover:text-ink'
-                  }`}
-                >
-                  <Code className="w-3.5 h-3.5" />
-                  <span>Code Challenge</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  if (activeSession.codingProblems.length === 0) {
+                    handleGenerateCodingProblem();
+                  }
+                  setActiveTab('coding');
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                  activeTab === 'coding'
+                    ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/50'
+                }`}
+              >
+                <Code className="w-4 h-4 shrink-0" />
+                <span>Code Challenge</span>
+                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-paper border border-line text-muted">
+                  {activeSession.codingProblems.length > 0 ? activeSession.codingProblems.length : 'IDE'}
+                </span>
+              </button>
 
-              {(activeMock != null || activeTab === 'mock') && (
-                <button
-                  onClick={() => setActiveTab('mock')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTab === 'mock'
-                      ? 'bg-paper text-primary shadow-xs font-semibold border border-line/60'
-                      : 'text-muted hover:text-ink'
-                  }`}
-                >
-                  <Mic className="w-3.5 h-3.5" />
-                  <span>Mock Interview</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  if (!activeMock) {
+                    handleStartMock();
+                  }
+                  setActiveTab('mock');
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                  activeTab === 'mock'
+                    ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/50'
+                }`}
+              >
+                <Mic className="w-4 h-4 shrink-0" />
+                <span>Mock Interview</span>
+                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-paper border border-line text-muted">
+                  {activeMock ? 'Active' : 'Sim'}
+                </span>
+              </button>
 
               <button
                 onClick={() => setActiveTab('coach')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`col-span-2 sm:col-span-1 px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
                   activeTab === 'coach'
-                    ? 'bg-paper text-primary shadow-xs font-semibold border border-line/60'
-                    : 'text-muted hover:text-ink'
+                    ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
+                    : 'text-muted hover:text-ink hover:bg-paper-light/50'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
+                <MessageSquare className="w-4 h-4 shrink-0" />
                 <span>Ask Coach</span>
+                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 font-bold">
+                  24/7
+                </span>
               </button>
             </div>
           </div>
@@ -662,59 +707,119 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                 </div>
               )}
 
-              {/* 6. NEXT ACTIONS BAR */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <button
+              {/* 6. NEXT STEPS MASTERY HUB */}
+              <div className="pt-4 border-t border-line space-y-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <h3 className="font-display text-sm font-bold text-ink uppercase tracking-wider">
+                    Ready for Next Step? Choose How to Practice:
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Practice Questions Card */}
+                  <div
                     onClick={() => {
                       if (activeSession.practiceQuestions.length === 0) {
                         handleGenerateQuestions();
                       }
                       setActiveTab('practice');
                     }}
-                    disabled={generatingQuestions}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-paper hover:bg-paper-dark border border-line rounded-lg text-xs font-semibold text-ink transition-colors shadow-2xs cursor-pointer"
+                    className="p-5 bg-paper border border-line hover:border-primary/50 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover space-y-3 group flex flex-col justify-between"
                   >
-                    <CheckSquare className="w-3.5 h-3.5 text-primary" />
-                    <span>{generatingQuestions ? 'Preparing Questions...' : 'Practice Questions'}</span>
-                  </button>
+                    <div className="space-y-2">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <CheckSquare className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                        Practice Questions
+                      </h4>
+                      <p className="text-xs text-muted leading-relaxed">
+                        Test conceptual clarity, output prediction, and code debugging with instant AI grading.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-line/60 flex items-center justify-between text-xs font-semibold text-primary">
+                      <span>{generatingQuestions ? 'Preparing Questions...' : activeSession.practiceQuestions.length > 0 ? 'Resume Practice' : 'Start Practice'}</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
 
-                  <button
+                  {/* Coding Challenge Card */}
+                  <div
                     onClick={() => {
                       if (activeSession.codingProblems.length === 0) {
                         handleGenerateCodingProblem();
                       }
                       setActiveTab('coding');
                     }}
-                    disabled={generatingProblem}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-paper hover:bg-paper-dark border border-line rounded-lg text-xs font-semibold text-ink transition-colors shadow-2xs cursor-pointer"
+                    className="p-5 bg-paper border border-line hover:border-primary/50 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover space-y-3 group flex flex-col justify-between"
                   >
-                    <Code className="w-3.5 h-3.5 text-primary" />
-                    <span>{generatingProblem ? 'Preparing Challenge...' : 'Coding Challenge'}</span>
-                  </button>
+                    <div className="space-y-2">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <Code className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                        Live Code Challenge
+                      </h4>
+                      <p className="text-xs text-muted leading-relaxed">
+                        Write code in the live editor with 3 progressive hints and automated code reviews.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-line/60 flex items-center justify-between text-xs font-semibold text-primary">
+                      <span>{generatingProblem ? 'Generating Challenge...' : activeSession.codingProblems.length > 0 ? 'Open Editor' : 'Start Coding'}</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
 
-                  <button
+                  {/* Mock Interview Card */}
+                  <div
                     onClick={() => {
                       if (!activeMock) {
                         handleStartMock();
                       }
                       setActiveTab('mock');
                     }}
-                    disabled={startingMock}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-paper hover:bg-paper-dark border border-line rounded-lg text-xs font-semibold text-ink transition-colors shadow-2xs cursor-pointer"
+                    className="p-5 bg-paper border border-line hover:border-primary/50 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover space-y-3 group flex flex-col justify-between"
                   >
-                    <Mic className="w-3.5 h-3.5 text-primary" />
-                    <span>{startingMock ? 'Starting Mock...' : 'Mock Interview'}</span>
-                  </button>
-                </div>
+                    <div className="space-y-2">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <Mic className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                        Mock Interview
+                      </h4>
+                      <p className="text-xs text-muted leading-relaxed">
+                        Simulate real-world conversational technical interview rounds with scoring.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-line/60 flex items-center justify-between text-xs font-semibold text-primary">
+                      <span>{startingMock ? 'Starting Simulator...' : activeMock ? 'Resume Mock' : 'Begin Mock'}</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
 
-                <button
-                  onClick={() => setActiveTab('coach')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>Ask Coach a Question</span>
-                </button>
+                  {/* Ask Coach Card */}
+                  <div
+                    onClick={() => setActiveTab('coach')}
+                    className="p-5 bg-paper border border-line hover:border-primary/50 rounded-xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover space-y-3 group flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <MessageSquare className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                        Ask AI Coach
+                      </h4>
+                      <p className="text-xs text-muted leading-relaxed">
+                        Ask follow-up questions, request deeper architecture breakdowns, or clarify doubts.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-line/60 flex items-center justify-between text-xs font-semibold text-primary">
+                      <span>Chat with Coach</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1223,63 +1328,131 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
             </div>
           )}
 
-          {/* TAB 5: ASK COACH */}
+          {/* TAB 5: ASK COACH (PREMIUM CHAT INTERFACE) */}
           {activeTab === 'coach' && (
-            <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 space-y-4 shadow-xs">
-              <div className="border-b border-line pb-3">
-                <span className="text-xs font-bold uppercase text-primary">
-                  Technical Interview Coach
-                </span>
-                <h3 className="font-display text-sm sm:text-base font-bold text-ink mt-0.5">
-                  Ask anything about technology, architectures, debugging, or concepts
-                </h3>
+            <div className="bg-paper-light border border-line rounded-2xl p-5 sm:p-7 space-y-5 shadow-xs">
+              {/* Coach Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-line pb-4 gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shadow-2xs">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display text-base font-bold text-ink">
+                        Technical Interview Coach
+                      </h3>
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Online 24/7
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted">
+                      Topic Context: <strong className="text-ink">{activeSession.topic}</strong> ({activeSession.technology || 'Java'})
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-xs font-mono text-muted bg-paper px-3 py-1.5 rounded-lg border border-line self-start sm:self-auto">
+                  Powered by Gemini Engine
+                </div>
               </div>
 
-              {/* Chat Message History */}
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+              {/* Chat Message Stream */}
+              <div className="space-y-4 max-h-[460px] min-h-[260px] overflow-y-auto p-3 sm:p-4 bg-paper rounded-xl border border-line/70">
                 {activeSession.coachMessages.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-muted space-y-3">
-                    <p>Ask anything about software concepts, code examples, interview questions, or architecture.</p>
+                  <div className="py-12 text-center max-w-md mx-auto space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-display text-sm font-bold text-ink">
+                        How can I help you master {activeSession.topic}?
+                      </h4>
+                      <p className="text-xs text-muted leading-relaxed">
+                        Ask about core theory, edge cases, implementation trade-offs, internal JVM architecture, or interview questions.
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   activeSession.coachMessages.map((msg, mIdx) => (
                     <div
                       key={mIdx}
-                      className={`flex flex-col ${msg.role === 'USER' ? 'items-end' : 'items-start'}`}
+                      className={`flex gap-3 ${msg.role === 'USER' ? 'justify-end' : 'justify-start'} animate-fade-in`}
                     >
-                      <span className="text-[10px] text-muted mb-1 font-medium">
-                        {msg.role === 'USER' ? 'You' : 'AI Coach'}
-                      </span>
-                      <div
-                        className={`p-3.5 rounded-xl text-xs max-w-xl leading-relaxed whitespace-pre-wrap ${
-                          msg.role === 'USER'
-                            ? 'bg-primary text-white'
-                            : 'bg-paper-light border border-line text-ink'
-                        }`}
-                      >
-                        {msg.content}
+                      {msg.role !== 'USER' && (
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-1">
+                          <Bot className="w-4 h-4" />
+                        </div>
+                      )}
+
+                      <div className={`space-y-1 max-w-xl ${msg.role === 'USER' ? 'items-end' : 'items-start'}`}>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted px-1">
+                          <span>{msg.role === 'USER' ? 'You' : 'AI Technical Coach'}</span>
+                          {msg.createdAt && <span>· {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                        </div>
+                        <div
+                          className={`p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap shadow-2xs ${
+                            msg.role === 'USER'
+                              ? 'bg-primary text-white font-medium rounded-tr-xs'
+                              : 'bg-paper-light border border-line text-ink font-normal rounded-tl-xs'
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
                       </div>
+
+                      {msg.role === 'USER' && (
+                        <div className="w-7 h-7 rounded-lg bg-paper-dark border border-line flex items-center justify-center text-ink shrink-0 mt-1">
+                          <UserIcon className="w-4 h-4" />
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
               </div>
 
+              {/* Quick Suggestion Prompt Chips */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[11px] font-semibold text-muted flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-primary" />
+                  <span>Suggested Questions to Ask Coach:</span>
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    `Can you give a real-world production example of ${activeSession.topic}?`,
+                    `What are the most common interview pitfalls on this topic?`,
+                    `How would an interviewer evaluate my depth on ${activeSession.topic}?`,
+                    `What are the time and memory trade-offs for this concept?`,
+                  ].map((chipPrompt, chipIdx) => (
+                    <button
+                      key={chipIdx}
+                      type="button"
+                      onClick={() => setCoachInput(chipPrompt)}
+                      className="text-[11px] px-3 py-1.5 bg-paper hover:bg-paper-dark border border-line hover:border-primary/40 rounded-lg text-ink transition-all cursor-pointer active:scale-95 text-left"
+                    >
+                      {chipPrompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Coach Input Bar */}
-              <form onSubmit={handleSendCoachMessage} className="pt-3 border-t border-line flex items-center gap-2">
+              <form onSubmit={handleSendCoachMessage} className="pt-2 flex items-center gap-2.5">
                 <input
                   type="text"
                   value={coachInput}
                   onChange={(e) => setCoachInput(e.target.value)}
-                  placeholder="Ask a follow-up question or explore a concept..."
-                  className="flex-1 p-3 bg-paper-light border border-line rounded-xl text-xs text-ink focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+                  placeholder={`Ask a question about ${activeSession.topic}...`}
+                  className="flex-1 p-3.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs sm:text-sm text-ink outline-none transition-all placeholder:text-muted/60"
                 />
                 <button
                   type="submit"
                   disabled={sendingCoach || !coachInput.trim()}
-                  className="px-5 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="px-6 py-3.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 shadow-xs cursor-pointer shrink-0"
                 >
-                  <Send className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>{sendingCoach ? 'Thinking...' : 'Ask AI'}</span>
+                  <Send className="w-4 h-4 text-emerald-200" />
+                  <span>{sendingCoach ? 'Analyzing...' : 'Ask Coach'}</span>
                 </button>
               </form>
             </div>
@@ -1289,39 +1462,42 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
         /* 3. LAB HOME & GENERATION DASHBOARD */
         <div className="space-y-6 sm:space-y-8 animate-fade-in">
           {/* Main Natural Language Topic Input Box */}
-          <div className="bg-paper border border-line p-6 sm:p-7 rounded-xl space-y-5 shadow-xs">
-            <div className="space-y-1">
-              <label className="font-display text-sm font-bold text-ink uppercase tracking-wider block">
-                What would you like to master today?
-              </label>
-              <p className="text-xs text-muted">
-                Enter any engineering concept, ask for a coding problem, or start a mock technical interview.
+          <div className="bg-paper-light border border-line p-6 sm:p-8 rounded-2xl space-y-6 shadow-xs relative overflow-hidden">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <label className="font-display text-base sm:text-lg font-bold text-ink">
+                  What technical topic would you like to master today?
+                </label>
+              </div>
+              <p className="text-xs sm:text-sm text-muted">
+                Type any engineering concept, ask for a coding problem, or request an adaptive mock interview session.
               </p>
             </div>
 
             <textarea
               value={topicInput}
               onChange={(e) => setTopicInput(e.target.value)}
-              placeholder="e.g. Explain Java loops | I learned variables and data types | Give me a coding problem on if-else | Take a mock interview on Spring Boot"
+              placeholder="e.g. Explain Java Polymorphism & Dynamic Dispatch | I learned Spring Boot Dependency Injection | Give me a Two Sum coding challenge | Conduct a mock interview on Java Concurrency"
               rows={3}
-              className="w-full p-4 bg-paper-light border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs sm:text-sm text-ink outline-none transition-all leading-relaxed placeholder:text-muted/60"
+              className="w-full p-4 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs sm:text-sm text-ink outline-none transition-all leading-relaxed placeholder:text-muted/60 shadow-inner"
             />
 
             {/* Curated Topic Suggestions */}
-            <div className="space-y-2 pt-1">
+            <div className="space-y-2.5 pt-1">
               <span className="text-xs font-semibold text-muted flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-primary" />
-                <span>Quick Practice Prompts:</span>
+                <span>Quick Prompt Templates (One-Click Start):</span>
               </span>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 {promptSuggestions.map((item, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setTopicInput(item.title)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-paper-light hover:bg-paper-dark border border-line hover:border-primary/40 text-xs font-medium text-ink rounded-lg transition-all shadow-2xs hover:-translate-y-[1px] cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-primary/40 text-xs font-medium text-ink rounded-xl transition-all shadow-2xs hover:-translate-y-0.5 cursor-pointer active:scale-95"
                   >
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 bg-paper text-primary border border-primary/20 rounded-md">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md">
                       {item.category}
                     </span>
                     <span>{item.title}</span>
@@ -1338,11 +1514,11 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as InterviewDifficulty)}
-                    className="px-3 py-1.5 bg-paper border border-line rounded-lg text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="px-3.5 py-2 bg-paper border border-line rounded-xl text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
                   >
-                    <option value="BEGINNER">Beginner (Default)</option>
-                    <option value="INTERMEDIATE">Intermediate</option>
-                    <option value="ADVANCED">Advanced</option>
+                    <option value="BEGINNER">Beginner (Foundational)</option>
+                    <option value="INTERMEDIATE">Intermediate (Core)</option>
+                    <option value="ADVANCED">Advanced (Senior / Deep)</option>
                   </select>
                 </div>
 
@@ -1351,16 +1527,16 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   <select
                     value={technology}
                     onChange={(e) => setTechnology(e.target.value)}
-                    className="px-3 py-1.5 bg-paper border border-line rounded-lg text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="px-3.5 py-2 bg-paper border border-line rounded-xl text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
                   >
-                    <option value="Auto Detect">Auto Detect (Default)</option>
-                    <option value="Java">Java</option>
-                    <option value="Spring Boot">Spring Boot</option>
-                    <option value="SQL">SQL</option>
-                    <option value="DSA">DSA</option>
-                    <option value="React">React</option>
-                    <option value="Docker">Docker</option>
-                    <option value="Git">Git</option>
+                    <option value="Auto Detect">Auto Detect from Prompt</option>
+                    <option value="Java">Core Java (JVM)</option>
+                    <option value="Spring Boot">Spring Boot & Microservices</option>
+                    <option value="SQL">SQL & Database Systems</option>
+                    <option value="DSA">Data Structures & Algorithms</option>
+                    <option value="React">React & Frontend</option>
+                    <option value="Docker">Docker & DevOps</option>
+                    <option value="Git">Git & Architecture</option>
                   </select>
                 </div>
               </div>
@@ -1369,7 +1545,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                 type="button"
                 disabled={generating || !topicInput.trim()}
                 onClick={() => handleGenerateSession()}
-                className="w-full sm:w-auto px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                className="w-full sm:w-auto px-7 py-3 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
                 <span>{generating ? 'Preparing your session with AI...' : 'Start Practice Session'}</span>
                 <ArrowRight className="w-4 h-4 text-emerald-200" />
