@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import {
+  Terminal,
+  Lock,
+  Mail,
+  ArrowRight,
   Eye,
   EyeOff,
+  User,
+  Users,
   Loader2,
-  AlertCircle,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -39,7 +44,7 @@ export const LoginPage: React.FC = () => {
         return;
       }
       if (!teamName.trim()) {
-        setError('Please enter your team or organization name.');
+        setError('Please enter your team name (e.g. Phoenix, Code Titans).');
         return;
       }
       if (password.length < 6) {
@@ -50,7 +55,7 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
-    setStatusMessage(isRegister ? 'Creating account...' : 'Signing in...');
+    setStatusMessage(isRegister ? 'Creating Account...' : 'Signing in...');
 
     const handleStatusUpdate = (msg: string) => {
       setStatusMessage(msg);
@@ -74,7 +79,7 @@ export const LoginPage: React.FC = () => {
       }
       window.dispatchEvent(new CustomEvent('jvm_fresh_login'));
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password. Please try again.');
+      setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
       setStatusMessage(null);
@@ -82,116 +87,145 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-      {/* Centered Brand Header */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-700 text-white font-bold text-lg shadow-sm mb-4">
-          ES
+    <div className="min-h-screen bg-paper flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans selection:bg-accent-subtle selection:text-accent relative overflow-hidden bg-grid-pattern">
+      {/* Top minimal bar */}
+      <div className="w-full max-w-5xl flex items-center justify-between py-2">
+        <div className="flex items-center space-x-2">
+          <div className="w-7 h-7 bg-ink text-paper flex items-center justify-center rounded-sm">
+            <Terminal className="w-4 h-4 text-paper" />
+          </div>
+          <span className="font-display font-bold text-sm tracking-tight text-ink">
+            EngineerSpace
+          </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
-          {isRegister ? 'Create your account' : 'Sign in to your account'}
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          {isRegister
-            ? 'Get started with your engineering workspace'
-            : 'Welcome back! Please enter your credentials'}
-        </p>
+        <span className="font-mono text-[11px] text-muted">Engineering Team Platform</span>
       </div>
 
-      {/* Main Form Card */}
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-sm border border-gray-200 rounded-2xl sm:px-10">
+      {/* Centered Modern Card */}
+      <div className="w-full max-w-[440px] my-auto animate-fade-in">
+        <div className="bg-paper border border-line p-5 sm:p-10 rounded-sm shadow-sm space-y-6">
+          {/* Card Brand & Heading */}
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-ink text-paper mx-auto flex items-center justify-center rounded-sm shadow-sm transition-transform hover:scale-105">
+              <Terminal className="w-6 h-6 text-paper" />
+            </div>
+            <h1 className="font-display text-xl font-bold text-ink tracking-tight">
+              {isRegister ? 'Register Team & Lead Account' : 'Sign In to Workspace'}
+            </h1>
+            <p className="text-xs text-muted">
+              {isRegister
+                ? 'Create a new team and register as Team Lead'
+                : 'Enter your credentials to access your workspace'}
+            </p>
+          </div>
+
           {/* Error Banner */}
           {error && (
-            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5 text-sm text-red-700">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div className="p-3 bg-attention-subtle border border-attention/30 text-attention text-xs rounded-sm animate-fade-in flex items-center space-x-2">
+              <span className="font-mono text-xs font-bold">!</span>
               <span>{error}</span>
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
+                  <label className="block text-xs font-medium text-ink mb-1.5">
+                    Full Name (Team Lead) *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={loading}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. John Doe"
-                    className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
-                  />
+                  <div className="relative">
+                    <User className="w-4 h-4 text-muted absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      required
+                      disabled={loading}
+                      value={name}
+                      onFocus={api.warmup}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Rahul Kumar"
+                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Team or Company Name
+                  <label className="block text-xs font-medium text-ink mb-1.5">
+                    Team Name *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={loading}
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    placeholder="e.g. Engineering Team"
-                    className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
-                  />
+                  <div className="relative">
+                    <Users className="w-4 h-4 text-muted absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      required
+                      disabled={loading}
+                      value={teamName}
+                      onFocus={api.warmup}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      placeholder="e.g. STACK, PHOENIX, NOVA"
+                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                    />
+                  </div>
+                  <p className="text-[10px] font-mono text-muted mt-1">
+                    Your team identity will be <span className="font-bold text-ink">{teamName.trim() || '[Team Name]'}</span>
+                  </p>
                 </div>
               </>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
+              <label className="block text-xs font-medium text-ink mb-1.5">
+                {isRegister ? 'Email / Gmail *' : 'Email Address'}
               </label>
-              <input
-                type="email"
-                required
-                disabled={loading}
-                value={email}
-                onMouseEnter={api.warmup}
-                onFocus={api.warmup}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                autoFocus={!isRegister}
-                className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
-              />
+              <div className="relative">
+                <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
+                <input
+                  type="email"
+                  required
+                  disabled={loading}
+                  value={email}
+                  onFocus={api.warmup}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@gmail.com"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                  autoFocus={!isRegister}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-ink">
+                  Password *
+                </label>
+              </div>
               <div className="relative">
+                <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   disabled={loading}
                   value={password}
-                  onMouseEnter={api.warmup}
                   onFocus={api.warmup}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isRegister ? 'Minimum 6 characters' : 'Enter your password'}
-                  className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
+                  placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
+                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
                 />
                 <button
                   type="button"
                   disabled={loading}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
-                  tabIndex={-1}
+                  className="absolute right-3 top-3 text-muted hover:text-ink p-0.5 disabled:opacity-50"
+                  aria-label="Toggle password visibility"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
+                    <EyeOff className="w-3.5 h-3.5" />
                   ) : (
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-3.5 h-3.5" />
                   )}
                 </button>
               </div>
@@ -201,59 +235,43 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                onMouseEnter={api.warmup}
-                className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-700 hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-colors disabled:opacity-60 cursor-pointer"
+                className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm disabled:opacity-60 font-mono cursor-pointer disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2 text-white" />
-                    <span>{statusMessage || (isRegister ? 'Creating account...' : 'Signing in...')}</span>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                    <span>{statusMessage || (isRegister ? 'Creating Account...' : 'Signing in...')}</span>
                   </>
                 ) : (
-                  <span>{isRegister ? 'Create account' : 'Sign in'}</span>
+                  <>
+                    <span>{isRegister ? 'Create Team & Lead Account' : 'Continue'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
                 )}
               </button>
             </div>
           </form>
 
-          {/* Toggle between Sign in & Sign up */}
-          <div className="mt-6 pt-5 border-t border-gray-100 text-center text-sm text-gray-600">
-            {isRegister ? (
-              <span>
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRegister(false);
-                    setError(null);
-                  }}
-                  className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
-                >
-                  Sign in
-                </button>
-              </span>
-            ) : (
-              <span>
-                Don't have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRegister(true);
-                    setError(null);
-                  }}
-                  className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
-                >
-                  Sign up
-                </button>
-              </span>
-            )}
+          {/* Footer toggle */}
+          <div className="pt-4 border-t border-line flex items-center justify-center text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setError(null);
+              }}
+              className="text-accent hover:underline font-medium"
+            >
+              {isRegister ? 'Already registered? Sign in' : 'Register New Team & Lead Account'}
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Simple Minimal Footer */}
-        <p className="mt-6 text-center text-xs text-gray-500">
-          &copy; {new Date().getFullYear()} EngineerSpace. All rights reserved.
-        </p>
+      {/* Footer */}
+      <div className="w-full max-w-5xl py-3 border-t border-line flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-muted gap-2 mt-auto">
+        <span className="text-ink font-medium tracking-tight">EngineerSpace · Built by Mohammed Arshad</span>
+        <span className="text-[10px] text-muted">Engineering Platform · Secure Authentication</span>
       </div>
     </div>
   );
