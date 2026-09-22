@@ -182,13 +182,13 @@ export const Header: React.FC<HeaderProps> = ({
                 <div key={item.id} className="relative">
                   <button
                     onClick={() => handleNavClick(item.id)}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs rounded-sm border transition-all duration-160 whitespace-nowrap shrink-0 ${
+                    className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
                       active
-                        ? 'bg-primary-soft text-primary border-primary/20 font-bold shadow-2xs'
-                        : 'text-muted border-transparent hover:text-ink hover:bg-paper-light/70'
+                        ? 'bg-primary-soft text-primary border-primary/30 font-semibold shadow-xs'
+                        : 'text-muted border-transparent hover:text-ink hover:bg-paper-light hover:-translate-y-[1px]'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-primary' : 'text-muted'}`} />
+                    <Icon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${active ? 'text-primary scale-105' : 'text-muted'}`} />
                     <span>{item.label}</span>
                     {item.hasLeadBadge && (
                       <span className="font-mono text-[9px] font-bold bg-primary text-white px-1.5 py-0.2 rounded-xs ml-1 whitespace-nowrap">
@@ -196,7 +196,7 @@ export const Header: React.FC<HeaderProps> = ({
                       </span>
                     )}
                     {isTeam && (
-                      <ChevronDown className={`w-3 h-3 ml-0.5 ${active ? 'text-primary' : 'text-muted'}`} />
+                      <ChevronDown className={`w-3 h-3 ml-0.5 transition-transform duration-200 ${active ? 'text-primary rotate-180' : 'text-muted'}`} />
                     )}
                   </button>
 
@@ -207,20 +207,20 @@ export const Header: React.FC<HeaderProps> = ({
                         className="fixed inset-0 z-40"
                         onClick={() => setShowTeamMenu(false)}
                       />
-                      <div className="absolute top-full left-0 mt-1.5 w-56 bg-paper-light border border-line rounded-md shadow-md py-1.5 z-50 animate-scale-in font-sans">
+                      <div className="absolute top-full left-0 mt-2 w-60 bg-paper-light/95 backdrop-blur-md border border-line rounded-xl shadow-card-hover py-2 z-50 animate-scale-in font-sans">
                         {isLead && (
                           <button
                             onClick={() => {
                               setActiveTab('team');
                               setShowTeamMenu(false);
                             }}
-                            className={`w-full text-left px-3.5 py-2 text-xs flex items-center space-x-2.5 transition-colors ${
-                              activeTab === 'team' ? 'bg-paper text-ink font-bold' : 'text-ink hover:bg-paper'
+                            className={`w-full text-left px-3.5 py-2.5 text-xs rounded-lg mx-auto flex items-center space-x-2.5 transition-all cursor-pointer active:scale-[0.98] ${
+                              activeTab === 'team' ? 'bg-primary-soft text-primary font-bold' : 'text-ink hover:bg-paper'
                             }`}
                           >
-                            <Users className="w-3.5 h-3.5 text-accent shrink-0" />
+                            <Users className="w-4 h-4 text-primary shrink-0" />
                             <span>Team Cockpit</span>
-                            <span className="font-mono text-[9px] bg-accent text-paper px-1 rounded-xs ml-auto">Lead</span>
+                            <span className="font-mono text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-md ml-auto">Lead</span>
                           </button>
                         )}
 
@@ -229,11 +229,11 @@ export const Header: React.FC<HeaderProps> = ({
                             setActiveTab('crew');
                             setShowTeamMenu(false);
                           }}
-                          className={`w-full text-left px-3.5 py-2 text-xs flex items-center space-x-2.5 transition-colors ${
-                            activeTab === 'crew' ? 'bg-paper text-ink font-bold' : 'text-ink hover:bg-paper'
+                          className={`w-full text-left px-3.5 py-2.5 text-xs rounded-lg flex items-center space-x-2.5 transition-all cursor-pointer active:scale-[0.98] ${
+                            activeTab === 'crew' ? 'bg-primary-soft text-primary font-bold' : 'text-ink hover:bg-paper'
                           }`}
                         >
-                          <UserCheck className="w-3.5 h-3.5 text-accent shrink-0" />
+                          <UserCheck className="w-4 h-4 text-primary shrink-0" />
                           <span>Meet the Crew</span>
                         </button>
 
@@ -242,13 +242,13 @@ export const Header: React.FC<HeaderProps> = ({
                             setActiveTab('meetings');
                             setShowTeamMenu(false);
                           }}
-                          className={`w-full text-left px-3.5 py-2 text-xs flex items-center space-x-2.5 transition-colors ${
-                            activeTab === 'meetings' ? 'bg-paper text-ink font-bold' : 'text-ink hover:bg-paper'
+                          className={`w-full text-left px-3.5 py-2.5 text-xs rounded-lg flex items-center space-x-2.5 transition-all cursor-pointer active:scale-[0.98] ${
+                            activeTab === 'meetings' ? 'bg-primary-soft text-primary font-bold' : 'text-ink hover:bg-paper'
                           }`}
                         >
-                          <Video className="w-3.5 h-3.5 text-accent shrink-0" />
+                          <Video className="w-4 h-4 text-primary shrink-0" />
                           <span>Team Meetings</span>
-                          <span className="font-mono text-[9px] text-accent font-bold ml-auto">Sync</span>
+                          <span className="font-mono text-[9px] text-primary font-bold ml-auto">Sync</span>
                         </button>
 
                         <button
@@ -256,13 +256,13 @@ export const Header: React.FC<HeaderProps> = ({
                             setActiveTab('reports');
                             setShowTeamMenu(false);
                           }}
-                          className={`w-full text-left px-3.5 py-2 text-xs flex items-center space-x-2.5 transition-colors ${
-                            activeTab === 'reports' ? 'bg-paper text-ink font-bold' : 'text-ink hover:bg-paper'
+                          className={`w-full text-left px-3.5 py-2.5 text-xs rounded-lg flex items-center space-x-2.5 transition-all cursor-pointer active:scale-[0.98] ${
+                            activeTab === 'reports' ? 'bg-primary-soft text-primary font-bold' : 'text-ink hover:bg-paper'
                           }`}
                         >
-                          <BarChart3 className="w-3.5 h-3.5 text-accent shrink-0" />
+                          <BarChart3 className="w-4 h-4 text-primary shrink-0" />
                           <span>Performance Reports</span>
-                          <span className="font-mono text-[9px] bg-accent/15 text-accent border border-accent/30 px-1 rounded-xs ml-auto">Intelligence</span>
+                          <span className="font-mono text-[9px] bg-primary-soft text-primary border border-primary/20 px-1.5 py-0.5 rounded-md ml-auto font-semibold">Intelligence</span>
                         </button>
                       </div>
                     </>
@@ -278,10 +278,10 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenStandup && (
               <button
                 onClick={onOpenStandup}
-                className={`px-2.5 sm:px-3 py-1.5 text-xs font-mono font-bold rounded-sm border transition-all duration-150 flex items-center space-x-1 sm:space-x-1.5 whitespace-nowrap shadow-2xs focus-ring ${
+                className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all duration-200 flex items-center space-x-1.5 whitespace-nowrap shadow-2xs cursor-pointer active:scale-95 hover:-translate-y-[1px] ${
                   standupDoneToday
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/20'
-                    : 'bg-attention-subtle border-attention/30 text-attention hover:bg-attention/15'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/20 hover:shadow-xs'
+                    : 'bg-attention-subtle border-attention/30 text-attention hover:bg-attention/15 hover:shadow-xs'
                 }`}
                 title={standupDoneToday ? "Today's standup is submitted. Click to view log." : "Today's standup is pending. Click to submit."}
               >
@@ -302,10 +302,10 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative shrink-0">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`group flex items-center space-x-2 pl-1.5 pr-2 sm:pr-2.5 py-1 rounded-sm border transition-all duration-150 select-none text-left shadow-2xs min-h-[38px] focus-ring ${
+                className={`group flex items-center space-x-2 pl-1.5 pr-2 sm:pr-2.5 py-1 rounded-lg border transition-all duration-200 select-none text-left shadow-2xs min-h-[38px] cursor-pointer active:scale-95 hover:-translate-y-[1px] ${
                   showUserMenu
-                    ? 'bg-paper-light border-ink/40 ring-1 ring-ink/10'
-                    : 'bg-paper-light border-line hover:border-line-dark'
+                    ? 'bg-paper-light border-primary/40 ring-2 ring-primary/15'
+                    : 'bg-paper-light border-line hover:border-line-dark hover:shadow-xs'
                 }`}
                 title="Account Controls"
                 aria-expanded={showUserMenu}

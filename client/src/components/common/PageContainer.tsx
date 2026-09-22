@@ -25,7 +25,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   const paddingClasses = noPadding ? '' : 'px-4 sm:px-6 lg:px-8 py-5 sm:py-7 lg:py-8';
 
   return (
-    <div className={`w-full mx-auto ${widthClasses} ${paddingClasses} min-w-0 ${className}`}>
+    <div className={`w-full mx-auto ${widthClasses} ${paddingClasses} min-w-0 animate-page-enter ${className}`}>
       {children}
     </div>
   );

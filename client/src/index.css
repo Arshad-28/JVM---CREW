@@ -99,8 +99,24 @@
     @apply transition-transform duration-200 ease-out hover:-translate-y-[2px];
   }
 
+  .hover-card-interactive {
+    @apply transition-all duration-200 ease-out hover:-translate-y-[2px] hover:shadow-card-hover hover:border-primary/40;
+  }
+
   .btn-press {
-    @apply transition-transform duration-100 ease-out active:translate-y-[1px];
+    @apply transition-transform duration-100 ease-out active:translate-y-[1px] active:scale-[0.98];
+  }
+
+  .btn-interactive {
+    @apply transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 15px -3px rgba(45, 90, 67, 0.25);
+  }
+
+  .glow-subtle {
+    box-shadow: 0 0 20px -5px rgba(45, 90, 67, 0.12);
   }
 
   /* Shimmer animation for skeleton loaders */

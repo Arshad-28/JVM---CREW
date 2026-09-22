@@ -8,6 +8,7 @@ import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
 import { DailyStandupModal } from './pages/standup/DailyStandupModal';
 import { LeaveEmailModal } from './components/common/LeaveEmailModal';
 import { ToastContainer } from './components/common/Toast';
+import { RouteProgressBar } from './components/common/RouteProgressBar';
 
 const WorkspaceLoadingScreen: React.FC = () => {
   return (
@@ -86,6 +87,7 @@ const getTabFromPath = (): string => {
 const MainLayout: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(getTabFromPath);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [labInitialTopic, setLabInitialTopic] = useState<string>('');
   const [globalStandupOpen, setGlobalStandupOpen] = useState(false);
   const [globalStandupViewOnly, setGlobalStandupViewOnly] = useState(false);
@@ -94,20 +96,26 @@ const MainLayout: React.FC = () => {
 
   // Sync tab with browser URL history
   const handleNavigateTab = (tab: string) => {
-    setActiveTab(tab);
-    const targetPath = tab === 'home' ? '/my-day' : `/${tab}`;
-    if (window.location.pathname !== targetPath) {
-      window.history.pushState({ tab }, '', targetPath);
+    if (tab !== activeTab) {
+      setIsNavigating(true);
+      setActiveTab(tab);
+      const targetPath = tab === 'home' ? '/my-day' : `/${tab}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ tab }, '', targetPath);
+      }
+      setTimeout(() => setIsNavigating(false), 450);
     }
   };
 
   // Fresh login navigation to /my-day
   useEffect(() => {
     const handleFreshLogin = () => {
+      setIsNavigating(true);
       setActiveTab('home');
       if (window.location.pathname !== '/my-day') {
         window.history.replaceState({ tab: 'home' }, '', '/my-day');
       }
+      setTimeout(() => setIsNavigating(false), 450);
     };
     window.addEventListener('jvm_fresh_login', handleFreshLogin);
     return () => window.removeEventListener('jvm_fresh_login', handleFreshLogin);
@@ -152,7 +160,9 @@ const MainLayout: React.FC = () => {
 
   useEffect(() => {
     const onPopState = () => {
+      setIsNavigating(true);
       setActiveTab(getTabFromPath());
+      setTimeout(() => setIsNavigating(false), 450);
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -169,7 +179,10 @@ const MainLayout: React.FC = () => {
   const isLead = Boolean(user.isCurrentLead || user.role === 'LEAD' || user.role === 'ADMIN');
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col font-sans">
+    <div className="min-h-screen bg-paper flex flex-col font-sans relative selection:bg-primary/20 selection:text-ink">
+      {/* Dynamic Top Route Progress Indicator */}
+      <RouteProgressBar isNavigating={isNavigating} />
+
       <Header
         activeTab={activeTab}
         setActiveTab={handleNavigateTab}
@@ -183,21 +196,23 @@ const MainLayout: React.FC = () => {
 
       <main className="flex-1 pb-20 md:pb-12 min-w-0">
         <Suspense fallback={<PageFallback />}>
-          {activeTab === 'home' && <HomeDashboardPage onNavigateTab={handleNavigateTab} />}
-          {activeTab === 'tasks' && <KanbanBoardPage />}
-          {activeTab === 'homework' && <HomeworkPage />}
-          {activeTab === 'interview-lab' && <InterviewLabPage initialTopic={labInitialTopic} />}
-          {activeTab === 'meetings' && <TeamMeetingsSection />}
-          {activeTab === 'reports' && <TeamPerformanceReportPage />}
-          {activeTab === 'profile' && <MyProfilePage />}
-          {activeTab === 'settings' && (
-            <AccountSettingsPage
-              onNavigateTab={handleNavigateTab}
-              onOpenLeaveEmail={() => setGlobalLeaveEmailOpen(true)}
-            />
-          )}
-          {activeTab === 'crew' && <MeetTheCrewPage />}
-          {activeTab === 'team' && (isLead ? <TeamDashboardPage /> : <MeetTheCrewPage />)}
+          <div key={activeTab} className="w-full min-w-0 animate-page-enter">
+            {activeTab === 'home' && <HomeDashboardPage onNavigateTab={handleNavigateTab} />}
+            {activeTab === 'tasks' && <KanbanBoardPage />}
+            {activeTab === 'homework' && <HomeworkPage />}
+            {activeTab === 'interview-lab' && <InterviewLabPage initialTopic={labInitialTopic} />}
+            {activeTab === 'meetings' && <TeamMeetingsSection />}
+            {activeTab === 'reports' && <TeamPerformanceReportPage />}
+            {activeTab === 'profile' && <MyProfilePage />}
+            {activeTab === 'settings' && (
+              <AccountSettingsPage
+                onNavigateTab={handleNavigateTab}
+                onOpenLeaveEmail={() => setGlobalLeaveEmailOpen(true)}
+              />
+            )}
+            {activeTab === 'crew' && <MeetTheCrewPage />}
+            {activeTab === 'team' && (isLead ? <TeamDashboardPage /> : <MeetTheCrewPage />)}
+          </div>
         </Suspense>
       </main>
 

@@ -97,6 +97,14 @@ export default {
         'scale-in': 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'slide-up': 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'slide-down': 'slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'page-enter': 'pageEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'route-progress': 'routeProgress 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'pulse-glow': 'pulseGlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float-subtle': 'floatSubtle 3.5s ease-in-out infinite',
+        'stagger-1': 'staggerFade 0.25s 0.04s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'stagger-2': 'staggerFade 0.25s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'stagger-3': 'staggerFade 0.25s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'stagger-4': 'staggerFade 0.25s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       keyframes: {
         fadeIn: {
@@ -117,6 +125,28 @@ export default {
         },
         slideDown: {
           '0%': { opacity: '0', transform: 'translateY(-8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pageEnter: {
+          '0%': { opacity: '0', transform: 'translateY(10px) scale(0.996)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        routeProgress: {
+          '0%': { width: '0%', opacity: '1' },
+          '50%': { width: '70%', opacity: '1' },
+          '85%': { width: '95%', opacity: '0.9' },
+          '100%': { width: '100%', opacity: '0' },
+        },
+        pulseGlow: {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.6', transform: 'scale(1.08)' },
+        },
+        floatSubtle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-3px)' },
+        },
+        staggerFade: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
