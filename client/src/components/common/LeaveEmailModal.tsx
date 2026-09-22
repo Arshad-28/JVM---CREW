@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LeaveReason,
@@ -389,16 +390,29 @@ ${generatedBody}`;
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-md p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
-      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-x-hidden font-sans outline-none"
     >
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[100] transition-opacity duration-200 animate-fade-in cursor-pointer"
+        style={{
+          backgroundColor: 'rgba(15, 23, 20, 0.38)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
       {/* Modal Container */}
       <div
-        className="bg-paper border border-line-dark w-full max-w-4xl rounded-sm shadow-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto animate-in zoom-in-95 duration-150"
+        className="relative z-[110] bg-paper border border-line-dark w-full max-w-4xl rounded-2xl shadow-modal flex flex-col max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] overflow-hidden my-auto animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. Modal Fixed Header */}
@@ -900,6 +914,7 @@ ${generatedBody}`;
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

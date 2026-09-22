@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../services/api';
 import { MemberDetailProgress } from '../../types';
 import { ProgressBar } from '../common/ProgressBar';
@@ -78,9 +79,30 @@ export const MemberProgressDetailModal: React.FC<MemberProgressDetailModalProps>
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 backdrop-blur-xs p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-paper border border-line max-w-4xl w-full rounded-sm shadow-2xl space-y-0 my-6 max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+  if (!memberId || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-x-hidden font-sans outline-none"
+    >
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[100] transition-opacity duration-200 animate-fade-in cursor-pointer"
+        style={{
+          backgroundColor: 'rgba(15, 23, 20, 0.38)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        className="relative z-[110] bg-paper border border-line max-w-4xl w-full rounded-2xl shadow-modal space-y-0 my-6 max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="p-5 border-b border-line bg-paper flex items-center justify-between">
           <div className="flex items-center space-x-3.5">
@@ -274,6 +296,7 @@ export const MemberProgressDetailModal: React.FC<MemberProgressDetailModalProps>
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

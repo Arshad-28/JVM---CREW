@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CrewMemberProfile } from '../../services/crewService';
 import {
   X,
@@ -195,13 +196,31 @@ export const EditCrewMemberModal: React.FC<EditCrewMemberModalProps> = ({
     github: draftGithub || undefined,
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/60 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200 font-sans">
-      {/* Backdrop overlay click */}
-      <div className="absolute inset-0" onClick={handleCloseAttempt} />
+  if (!isOpen || !member || typeof document === 'undefined') return null;
 
-      {/* Large Centered Modal Container (Matching Website Platinum Theme) */}
-      <div className="relative z-10 w-full sm:max-w-5xl bg-[#FAF9F6] border border-slate-300 rounded-t-lg sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh] my-0 sm:my-auto animate-in zoom-in-95 duration-200 text-slate-900 font-mono">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-x-hidden font-sans outline-none"
+    >
+      {/* Backdrop overlay click */}
+      <div
+        className="fixed inset-0 z-[100] transition-opacity duration-200 animate-fade-in cursor-pointer"
+        style={{
+          backgroundColor: 'rgba(15, 23, 20, 0.38)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+        }}
+        onClick={handleCloseAttempt}
+        aria-hidden="true"
+      />
+
+      {/* Large Centered Modal Container */}
+      <div
+        className="relative z-[110] w-full sm:max-w-5xl bg-[#FAF9F6] border border-slate-300 rounded-2xl shadow-modal overflow-hidden flex flex-col max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] my-0 sm:my-auto animate-scale-in text-slate-900 font-mono"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="p-4 sm:p-5 border-b border-slate-300 bg-[#F5F4EF] flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -616,6 +635,7 @@ export const EditCrewMemberModal: React.FC<EditCrewMemberModalProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };

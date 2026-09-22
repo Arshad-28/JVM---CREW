@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../services/api';
 import { VoiceSpeechControl } from './VoiceSpeechControl';
 import { X, Send, AlertTriangle } from 'lucide-react';
@@ -32,7 +33,7 @@ export const AskLeadModal: React.FC<AskLeadModalProps> = ({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleVoiceTranscript = (text: string, mode: 'replace' | 'append') => {
     setInputMethod('voice');
@@ -71,9 +72,28 @@ export const AskLeadModal: React.FC<AskLeadModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-paper border border-line max-w-lg w-full p-6 rounded-sm shadow-xl space-y-4 my-8">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-x-hidden font-sans outline-none"
+    >
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[100] transition-opacity duration-200 animate-fade-in cursor-pointer"
+        style={{
+          backgroundColor: 'rgba(15, 23, 20, 0.38)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        className="relative z-[110] bg-paper border border-line max-w-lg w-full p-6 rounded-2xl shadow-modal space-y-4 my-8 animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-line pb-3">
           <div>
@@ -210,6 +230,7 @@ export const AskLeadModal: React.FC<AskLeadModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

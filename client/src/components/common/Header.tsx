@@ -204,10 +204,10 @@ export const Header: React.FC<HeaderProps> = ({
                   {isTeam && showTeamMenu && (
                     <>
                       <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-[50]"
                         onClick={() => setShowTeamMenu(false)}
                       />
-                      <div className="absolute top-full left-0 mt-2 w-60 bg-paper-light/95 backdrop-blur-md border border-line rounded-xl shadow-card-hover py-2 z-50 animate-scale-in font-sans">
+                      <div className="absolute top-full left-0 mt-2 w-60 bg-paper-light/95 backdrop-blur-md border border-line rounded-xl shadow-card-hover py-2 z-[60] animate-scale-in font-sans">
                         {isLead && (
                           <button
                             onClick={() => {
@@ -357,11 +357,11 @@ export const Header: React.FC<HeaderProps> = ({
               {showUserMenu && (
                 <>
                   <div
-                    className="fixed inset-0 z-40"
+                    className="fixed inset-0 z-[50]"
                     onClick={() => setShowUserMenu(false)}
                   />
 
-                  <div className="absolute right-0 mt-2 w-64 bg-paper-light border border-line rounded-md shadow-md py-2 z-50 animate-scale-in font-sans">
+                  <div className="absolute right-0 mt-2 w-64 bg-paper-light border border-line rounded-md shadow-md py-2 z-[60] animate-scale-in font-sans">
                     <div className="px-4 py-3 border-b border-line bg-paper/60 flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full border border-line overflow-hidden bg-paper-dark shrink-0 flex items-center justify-center shadow-2xs">
                         {userPhoto ? (

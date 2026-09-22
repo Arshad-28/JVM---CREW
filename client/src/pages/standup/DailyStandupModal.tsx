@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Mic, Square, RotateCcw, Send, CheckCircle2, 
   AlertTriangle, PenTool, FileDown, Loader2 
@@ -345,11 +346,30 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
 
   const confidenceLabels = ['Blocked', 'Low', 'Moderate', 'High', 'Unstoppable'];
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-paper border border-line-dark w-full sm:max-w-2xl rounded-t-lg sm:rounded-sm shadow-2xl flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-x-hidden font-sans outline-none"
+    >
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[100] transition-opacity duration-200 animate-fade-in cursor-pointer"
+        style={{
+          backgroundColor: 'rgba(15, 23, 20, 0.38)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        className="relative z-[110] bg-paper border border-line-dark w-full sm:max-w-2xl rounded-2xl shadow-modal flex flex-col max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] animate-scale-in overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Modal Header */}
         <div className="p-4 border-b border-line flex items-center justify-between bg-paper-light">
@@ -947,6 +967,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

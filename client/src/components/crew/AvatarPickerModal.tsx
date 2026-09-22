@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Check,
@@ -106,22 +107,37 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     return AVATAR_LIBRARY.find((a) => a.url === selectedUrl);
   }, [selectedUrl]);
 
-  if (!isOpen) return null;
-
   const handleApply = () => {
-    if (selectedUrl) {
-      onSelectAvatar(selectedUrl);
-    }
+    if (!selectedUrl) return;
+    onSelectAvatar(selectedUrl);
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/75 backdrop-blur-sm p-3 sm:p-6 animate-fade-in font-sans">
+  if (!isOpen || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-x-hidden font-sans outline-none"
+    >
       {/* Background click backdrop */}
-      <div className="absolute inset-0" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-[100] transition-opacity duration-200 animate-fade-in cursor-pointer"
+        style={{
+          backgroundColor: 'rgba(15, 23, 20, 0.38)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Main Modal Card */}
-      <div className="relative z-10 w-full max-w-5xl bg-paper border border-line rounded-sm shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up text-ink">
+      <div
+        className="relative z-[110] w-full max-w-5xl bg-paper border border-line rounded-2xl shadow-modal overflow-hidden flex flex-col max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] animate-scale-in text-ink"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* ========================================================= */}
         {/* HEADER                                                    */}
         {/* ========================================================= */}
@@ -354,7 +370,8 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
