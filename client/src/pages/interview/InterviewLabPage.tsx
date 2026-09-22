@@ -471,22 +471,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
             <RotateCcw className="w-4 h-4 text-muted" />
             <span>← Exit Session / New Topic</span>
           </button>
-        ) : (
-          <div className="hidden lg:flex items-center gap-3 z-10">
-            <div className="px-3.5 py-2 bg-paper border border-line rounded-xl text-center space-y-0.5 shadow-2xs">
-              <span className="text-xs font-bold text-primary block">Instant AI</span>
-              <span className="text-[10px] font-mono text-muted uppercase">Feedback</span>
-            </div>
-            <div className="px-3.5 py-2 bg-paper border border-line rounded-xl text-center space-y-0.5 shadow-2xs">
-              <span className="text-xs font-bold text-primary block">3 Hints</span>
-              <span className="text-[10px] font-mono text-muted uppercase">Zero Penalty</span>
-            </div>
-            <div className="px-3.5 py-2 bg-paper border border-line rounded-xl text-center space-y-0.5 shadow-2xs">
-              <span className="text-xs font-bold text-primary block">Live IDE</span>
-              <span className="text-[10px] font-mono text-muted uppercase">Code Reviews</span>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* Error Alert */}
@@ -1462,81 +1447,87 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
         /* 3. LAB HOME & GENERATION DASHBOARD */
         <div className="space-y-6 sm:space-y-8 animate-fade-in">
           {/* Main Natural Language Topic Input Box */}
-          <div className="bg-paper-light border border-line p-6 sm:p-8 rounded-2xl space-y-6 shadow-xs relative overflow-hidden">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <label className="font-display text-base sm:text-lg font-bold text-ink">
-                  What technical topic would you like to master today?
-                </label>
+          <div className="bg-paper-light border border-line p-5 sm:p-7 rounded-2xl space-y-5 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="font-display text-base font-bold text-ink">
+                    What technical topic would you like to master today?
+                  </h2>
+                  <p className="text-xs text-muted">
+                    Type any engineering concept, request a coding challenge, or simulate a technical interview.
+                  </p>
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-muted">
-                Type any engineering concept, ask for a coding problem, or request an adaptive mock interview session.
-              </p>
             </div>
 
             <textarea
               value={topicInput}
               onChange={(e) => setTopicInput(e.target.value)}
-              placeholder="e.g. Explain Java Polymorphism & Dynamic Dispatch | I learned Spring Boot Dependency Injection | Give me a Two Sum coding challenge | Conduct a mock interview on Java Concurrency"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (topicInput.trim() && !generating) {
+                    handleGenerateSession();
+                  }
+                }
+              }}
+              placeholder="e.g. Explain Java Polymorphism & Dynamic Dispatch, solve Two Sum coding problem, or conduct a Spring Boot mock interview..."
               rows={3}
-              className="w-full p-4 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs sm:text-sm text-ink outline-none transition-all leading-relaxed placeholder:text-muted/60 shadow-inner"
+              className="w-full p-4 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs sm:text-sm text-ink outline-none transition-all leading-relaxed placeholder:text-muted/50 resize-none shadow-2xs"
             />
 
             {/* Curated Topic Suggestions */}
-            <div className="space-y-2.5 pt-1">
-              <span className="text-xs font-semibold text-muted flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-primary" />
-                <span>Quick Prompt Templates (One-Click Start):</span>
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <span className="text-[11px] font-medium text-muted shrink-0 flex items-center gap-1">
+                <Zap className="w-3 h-3 text-primary" /> Popular:
               </span>
-              <div className="flex flex-wrap items-center gap-2.5">
-                {promptSuggestions.map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setTopicInput(item.title)}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 bg-paper hover:bg-paper-dark border border-line hover:border-primary/40 text-xs font-medium text-ink rounded-xl transition-all shadow-2xs hover:-translate-y-0.5 cursor-pointer active:scale-95"
-                  >
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md">
-                      {item.category}
-                    </span>
-                    <span>{item.title}</span>
-                  </button>
-                ))}
-              </div>
+              {promptSuggestions.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setTopicInput(item.title)}
+                  className="px-2.5 py-1 text-xs bg-paper hover:bg-paper-dark border border-line hover:border-primary/40 text-ink/80 hover:text-ink rounded-lg transition-all cursor-pointer active:scale-95 shadow-2xs"
+                >
+                  {item.title}
+                </button>
+              ))}
             </div>
 
             {/* Controls Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-line">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-semibold text-muted">Difficulty:</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-line">
+              <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                <div className="flex items-center gap-1.5 bg-paper px-3 py-1.5 rounded-xl border border-line">
+                  <span className="text-muted text-[11px] font-medium">Difficulty:</span>
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as InterviewDifficulty)}
-                    className="px-3.5 py-2 bg-paper border border-line rounded-xl text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+                    className="bg-transparent text-xs font-semibold text-ink focus:outline-none cursor-pointer"
                   >
-                    <option value="BEGINNER">Beginner (Foundational)</option>
-                    <option value="INTERMEDIATE">Intermediate (Core)</option>
-                    <option value="ADVANCED">Advanced (Senior / Deep)</option>
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="ADVANCED">Advanced</option>
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-semibold text-muted">Technology:</span>
+                <div className="flex items-center gap-1.5 bg-paper px-3 py-1.5 rounded-xl border border-line">
+                  <span className="text-muted text-[11px] font-medium">Technology:</span>
                   <select
                     value={technology}
                     onChange={(e) => setTechnology(e.target.value)}
-                    className="px-3.5 py-2 bg-paper border border-line rounded-xl text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+                    className="bg-transparent text-xs font-semibold text-ink focus:outline-none cursor-pointer"
                   >
-                    <option value="Auto Detect">Auto Detect from Prompt</option>
-                    <option value="Java">Core Java (JVM)</option>
-                    <option value="Spring Boot">Spring Boot & Microservices</option>
-                    <option value="SQL">SQL & Database Systems</option>
-                    <option value="DSA">Data Structures & Algorithms</option>
-                    <option value="React">React & Frontend</option>
-                    <option value="Docker">Docker & DevOps</option>
-                    <option value="Git">Git & Architecture</option>
+                    <option value="Auto Detect">Auto Detect</option>
+                    <option value="Java">Core Java</option>
+                    <option value="Spring Boot">Spring Boot</option>
+                    <option value="SQL">SQL</option>
+                    <option value="DSA">DSA</option>
+                    <option value="React">React</option>
+                    <option value="Docker">Docker</option>
+                    <option value="Git">Git</option>
                   </select>
                 </div>
               </div>
@@ -1545,11 +1536,86 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                 type="button"
                 disabled={generating || !topicInput.trim()}
                 onClick={() => handleGenerateSession()}
-                className="w-full sm:w-auto px-7 py-3 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
-                <span>{generating ? 'Preparing your session with AI...' : 'Start Practice Session'}</span>
-                <ArrowRight className="w-4 h-4 text-emerald-200" />
+                <span>{generating ? 'Preparing with AI...' : 'Start Session'}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-emerald-200" />
               </button>
+            </div>
+          </div>
+
+          {/* Quick Launch Direct Mode Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+              onClick={() => {
+                setTopicInput('OOP 4 Pillars & Design Patterns');
+                handleGenerateSession('OOP 4 Pillars & Design Patterns');
+              }}
+              className="p-5 bg-paper-light border border-line hover:border-primary/40 rounded-2xl cursor-pointer transition-all space-y-2 group shadow-2xs hover:shadow-xs hover:-translate-y-0.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <h3 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                Concept Learn
+              </h3>
+              <p className="text-xs text-muted leading-relaxed">
+                Deep-dive explanations, architecture diagrams, and syntax breakdowns.
+              </p>
+            </div>
+
+            <div
+              onClick={() => {
+                setTopicInput('Coding Challenge: Two Sum in Java');
+                handleGenerateSession('Coding Challenge: Two Sum in Java');
+              }}
+              className="p-5 bg-paper-light border border-line hover:border-primary/40 rounded-2xl cursor-pointer transition-all space-y-2 group shadow-2xs hover:shadow-xs hover:-translate-y-0.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                <Code className="w-4 h-4" />
+              </div>
+              <h3 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                Coding Challenge
+              </h3>
+              <p className="text-xs text-muted leading-relaxed">
+                In-browser code editor with 3 hints, test runs, and instant AI reviews.
+              </p>
+            </div>
+
+            <div
+              onClick={() => {
+                setTopicInput('Mock Interview on Java Concurrency');
+                handleGenerateSession('Mock Interview on Java Concurrency');
+              }}
+              className="p-5 bg-paper-light border border-line hover:border-primary/40 rounded-2xl cursor-pointer transition-all space-y-2 group shadow-2xs hover:shadow-xs hover:-translate-y-0.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                <Mic className="w-4 h-4" />
+              </div>
+              <h3 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                Mock Interview
+              </h3>
+              <p className="text-xs text-muted leading-relaxed">
+                Adaptive AI interviewer with multi-turn scoring and model answers.
+              </p>
+            </div>
+
+            <div
+              onClick={() => {
+                setTopicInput('Explain Spring Boot Dependency Injection');
+                handleGenerateSession('Explain Spring Boot Dependency Injection');
+              }}
+              className="p-5 bg-paper-light border border-line hover:border-primary/40 rounded-2xl cursor-pointer transition-all space-y-2 group shadow-2xs hover:shadow-xs hover:-translate-y-0.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                <MessageSquare className="w-4 h-4" />
+              </div>
+              <h3 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                Ask AI Coach
+              </h3>
+              <p className="text-xs text-muted leading-relaxed">
+                Ask tricky interview questions, edge cases, and architectural trade-offs.
+              </p>
             </div>
           </div>
 
