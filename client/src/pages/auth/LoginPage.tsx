@@ -13,6 +13,7 @@ import {
   Loader2,
   Shield,
   Activity,
+  Cpu,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -57,7 +58,7 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
-    setStatusMessage(isRegister ? 'Creating Account...' : 'Signing in...');
+    setStatusMessage(isRegister ? 'Creating Workspace...' : 'Authenticating...');
 
     const handleStatusUpdate = (msg: string) => {
       setStatusMessage(msg);
@@ -89,107 +90,114 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans selection:bg-accent-subtle selection:text-accent relative overflow-hidden">
+    <div className="min-h-screen bg-[#070D0A] text-white flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans selection:bg-emerald-500/30 selection:text-emerald-300 relative overflow-hidden">
       {/* ========================================================================= */}
-      {/* DYNAMIC ANIMATED BACKGROUND ORBS & GRID                                   */}
+      {/* 1. UNIQUE DARK AMBIENT GLOW & CYBER GRID                                 */}
       {/* ========================================================================= */}
       
-      {/* Floating Gradient Orb 1 (Top Left Emerald) */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none animate-float-slow" />
+      {/* Top Luminous Neon Orb */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-emerald-500/15 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
 
-      {/* Floating Gradient Orb 2 (Bottom Right Warm Ochre) */}
-      <div className="absolute -bottom-20 -right-20 w-[420px] h-[420px] bg-accent/8 rounded-full blur-3xl pointer-events-none animate-float-reverse" />
+      {/* Floating Emerald Glow Top-Left */}
+      <div className="absolute -top-20 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none animate-float-slow" />
 
-      {/* Pulsing Ambient Core (Center Top) */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[350px] bg-primary/5 rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
+      {/* Floating Cyan/Teal Glow Bottom-Right */}
+      <div className="absolute -bottom-24 -right-24 w-[450px] h-[450px] bg-emerald-600/10 rounded-full blur-[110px] pointer-events-none animate-float-reverse" />
 
-      {/* Dynamic Animated Grid Pattern */}
+      {/* High-Tech Animated Dark Grid */}
       <div
-        className="absolute inset-0 opacity-[0.045] pointer-events-none animate-drift-grid"
+        className="absolute inset-0 opacity-[0.07] pointer-events-none animate-drift-grid"
         style={{
           backgroundImage: `
-            linear-gradient(to right, #17201C 1px, transparent 1px),
-            linear-gradient(to bottom, #17201C 1px, transparent 1px)
+            linear-gradient(to right, #10B981 1px, transparent 1px),
+            linear-gradient(to bottom, #10B981 1px, transparent 1px)
           `,
           backgroundSize: '36px 36px',
         }}
       />
 
-      {/* Radial fade mask for grid edges */}
-      <div className="absolute inset-0 bg-radial from-transparent via-paper/40 to-paper pointer-events-none" />
+      {/* Radial Dark Vignette Falloff */}
+      <div className="absolute inset-0 bg-radial from-transparent via-[#070D0A]/60 to-[#070D0A] pointer-events-none" />
 
-      {/* Floating Subtle Geometric Badges */}
-      <div className="hidden md:flex absolute top-28 left-[12%] items-center gap-2 px-3 py-1.5 rounded-full bg-paper/80 border border-line/60 shadow-2xs backdrop-blur-xs font-mono text-[10px] text-muted animate-float-slow pointer-events-none">
-        <Activity className="w-3 h-3 text-primary animate-pulse" />
-        <span>Live PostgreSQL Telemetry</span>
+      {/* Floating Interactive Live Tech Chips */}
+      <div className="hidden lg:flex absolute top-32 left-[10%] items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0E1812]/90 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] backdrop-blur-md font-mono text-[10px] text-emerald-300 animate-float-slow pointer-events-none">
+        <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+        <span>PostgreSQL Telemetry · 100% Real-Time</span>
       </div>
 
-      <div className="hidden md:flex absolute bottom-28 right-[12%] items-center gap-2 px-3 py-1.5 rounded-full bg-paper/80 border border-line/60 shadow-2xs backdrop-blur-xs font-mono text-[10px] text-muted animate-float-reverse pointer-events-none">
-        <Shield className="w-3 h-3 text-accent" />
-        <span>Role-Based Team Isolation</span>
+      <div className="hidden lg:flex absolute bottom-32 right-[10%] items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0E1812]/90 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] backdrop-blur-md font-mono text-[10px] text-emerald-300 animate-float-reverse pointer-events-none">
+        <Shield className="w-3.5 h-3.5 text-teal-400" />
+        <span>Enterprise JWT & Role Isolation</span>
       </div>
 
       {/* ========================================================================= */}
-      {/* TOP MINIMAL BAR                                                           */}
+      {/* 2. TOP DARK CYBER HEADER                                                  */}
       {/* ========================================================================= */}
       <div className="relative z-10 w-full max-w-5xl flex items-center justify-between py-2">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 bg-ink text-paper flex items-center justify-center rounded-sm shadow-2xs transition-transform hover:scale-105">
-            <Terminal className="w-4 h-4 text-paper" />
+        <div className="flex items-center space-x-3">
+          <div className="w-9 h-9 bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-transform hover:scale-105">
+            <Terminal className="w-4 h-4 text-emerald-300" />
           </div>
-          <span className="font-display font-bold text-sm tracking-tight text-ink">
-            EngineerSpace
-          </span>
+          <div>
+            <span className="font-display font-bold text-base tracking-tight text-white block">
+              EngineerSpace
+            </span>
+            <span className="text-[10px] font-mono text-emerald-400/70 tracking-wider block -mt-0.5">
+              ENTERPRISE PLATFORM
+            </span>
+          </div>
         </div>
+
         <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 font-mono text-[11px] font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span>Workspace Online</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-500/30 font-mono text-[11px] font-semibold shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Workspace Active</span>
           </span>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* CENTERED MODERN CARD                                                      */}
+      {/* 3. CENTERED DARK GLASSMORPHIC CARD                                        */}
       {/* ========================================================================= */}
       <div className="relative z-10 w-full max-w-[440px] my-auto py-6 animate-fade-in">
-        <div className="bg-paper border border-line p-6 sm:p-10 rounded-sm shadow-card hover:shadow-card-hover transition-all duration-300 space-y-6 relative overflow-hidden">
-          {/* Subtle Top Border Highlight */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-80" />
+        <div className="bg-[#0C1510]/85 border border-emerald-500/25 rounded-2xl p-7 sm:p-10 shadow-[0_0_50px_-10px_rgba(16,185,129,0.18)] backdrop-blur-xl space-y-6 relative overflow-hidden transition-all duration-300 hover:border-emerald-500/40">
+          
+          {/* Luminous Neon Gradient Top Accent Beam */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_10px_#10B981]" />
 
-          {/* Card Brand & Heading */}
-          <div className="text-center space-y-2">
-            <div className="w-12 h-12 bg-ink text-paper mx-auto flex items-center justify-center rounded-sm shadow-sm transition-transform duration-200 hover:scale-110 group cursor-default">
-              <Terminal className="w-6 h-6 text-paper group-hover:text-emerald-300 transition-colors" />
+          {/* Card Emblem & Header */}
+          <div className="text-center space-y-2.5">
+            <div className="w-14 h-14 bg-gradient-to-br from-emerald-900/80 to-[#07130C] border border-emerald-500/40 text-emerald-300 mx-auto flex items-center justify-center rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-transform duration-200 hover:scale-110 group cursor-default">
+              <Cpu className="w-7 h-7 text-emerald-400 group-hover:rotate-12 transition-transform duration-300" />
             </div>
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-ink tracking-tight">
-              {isRegister ? 'Register Team & Lead Account' : 'Sign In to Workspace'}
+            <h1 className="font-display text-2xl font-bold text-white tracking-tight">
+              {isRegister ? 'Register Workspace & Lead' : 'Sign In to Workspace'}
             </h1>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-emerald-100/60 font-sans">
               {isRegister
-                ? 'Create a new team and register as Team Lead'
-                : 'Enter your credentials to access your workspace'}
+                ? 'Create your engineering team cohort and lead administrator account'
+                : 'Enter your credentials to access your engineering cockpit'}
             </p>
           </div>
 
           {/* Error Banner */}
           {error && (
-            <div className="p-3 bg-attention-subtle border border-attention/30 text-attention text-xs rounded-sm animate-fade-in flex items-center space-x-2">
-              <span className="font-mono text-xs font-bold shrink-0">!</span>
+            <div className="p-3 bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs rounded-xl animate-fade-in flex items-center space-x-2">
+              <span className="font-mono text-xs font-bold text-rose-400 shrink-0">!</span>
               <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
+          {/* Auth Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
               <>
-                <div>
-                  <label className="block text-xs font-medium text-ink mb-1.5">
-                    Full Name (Team Lead) *
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-emerald-100/90">
+                    Full Name (Team Lead) <span className="text-emerald-400">*</span>
                   </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <div className="relative flex items-center">
+                    <User className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
                     <input
                       type="text"
                       required
@@ -197,18 +205,18 @@ export const LoginPage: React.FC = () => {
                       value={name}
                       onFocus={api.warmup}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Rahul Kumar"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                      placeholder="e.g. Mohammed Arshad"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-ink mb-1.5">
-                    Team Name *
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-emerald-100/90">
+                    Team Name <span className="text-emerald-400">*</span>
                   </label>
-                  <div className="relative">
-                    <Users className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <div className="relative flex items-center">
+                    <Users className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
                     <input
                       type="text"
                       required
@@ -216,23 +224,23 @@ export const LoginPage: React.FC = () => {
                       value={teamName}
                       onFocus={api.warmup}
                       onChange={(e) => setTeamName(e.target.value)}
-                      placeholder="e.g. STACK, PHOENIX, NOVA"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                      placeholder="e.g. JVM CREW, PHOENIX, TITANS"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
                     />
                   </div>
-                  <p className="text-[10px] font-mono text-muted mt-1">
-                    Your team identity will be <span className="font-bold text-ink">{teamName.trim() || '[Team Name]'}</span>
+                  <p className="text-[11px] font-mono text-emerald-400/70">
+                    Team identity: <span className="font-bold text-white">{teamName.trim() || '[Team Name]'}</span>
                   </p>
                 </div>
               </>
             )}
 
-            <div>
-              <label className="block text-xs font-medium text-ink mb-1.5">
-                {isRegister ? 'Email / Gmail *' : 'Email Address'}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-emerald-100/90">
+                {isRegister ? 'Email / Corporate Email *' : 'Email Address'}
               </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
+              <div className="relative flex items-center">
+                <Mail className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
                 <input
                   type="email"
                   required
@@ -241,24 +249,22 @@ export const LoginPage: React.FC = () => {
                   onMouseEnter={api.warmup}
                   onFocus={api.warmup}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@gmail.com"
+                  placeholder="name@company.com"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs font-mono text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
                   autoFocus={!isRegister}
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium text-ink">
-                  Password *
-                </label>
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-emerald-100/90">
+                Password <span className="text-emerald-400">*</span>
+              </label>
+              <div className="relative flex items-center">
+                <Lock className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -267,20 +273,20 @@ export const LoginPage: React.FC = () => {
                   onMouseEnter={api.warmup}
                   onFocus={api.warmup}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
-                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                  placeholder={isRegister ? 'Create secure password (min 6 chars)' : '••••••••••••'}
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs font-mono text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
                 />
                 <button
                   type="button"
                   disabled={loading}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted hover:text-ink p-0.5 disabled:opacity-50 transition-colors cursor-pointer"
+                  className="absolute right-3 text-emerald-400/60 hover:text-emerald-300 p-1 disabled:opacity-50 transition-colors cursor-pointer"
                   aria-label="Toggle password visibility"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-3.5 h-3.5" />
+                    <EyeOff className="w-4 h-4" />
                   ) : (
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye className="w-4 h-4" />
                   )}
                 </button>
               </div>
@@ -291,17 +297,17 @@ export const LoginPage: React.FC = () => {
                 type="submit"
                 disabled={loading}
                 onMouseEnter={api.warmup}
-                className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light active:scale-[0.99] text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm hover-lift disabled:opacity-60 font-mono cursor-pointer disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(16,185,129,0.35)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-                    <span>{statusMessage || (isRegister ? 'Creating Account...' : 'Signing in...')}</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>{statusMessage || (isRegister ? 'Creating Workspace...' : 'Authenticating...')}</span>
                   </>
                 ) : (
                   <>
-                    <span>{isRegister ? 'Create Team & Lead Account' : 'Continue'}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-accent group-hover:translate-x-0.5 transition-transform" />
+                    <span>{isRegister ? 'Create Workspace & Account' : 'Sign In to Workspace'}</span>
+                    <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </button>
@@ -309,27 +315,32 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Footer toggle */}
-          <div className="pt-4 border-t border-line flex items-center justify-center text-xs">
+          <div className="pt-4 border-t border-emerald-500/20 flex items-center justify-center text-xs">
             <button
               type="button"
               onClick={() => {
                 setIsRegister(!isRegister);
                 setError(null);
               }}
-              className="text-accent hover:underline font-medium cursor-pointer transition-colors"
+              className="text-emerald-400 hover:text-emerald-300 hover:underline font-medium cursor-pointer transition-colors"
             >
-              {isRegister ? 'Already registered? Sign in' : 'Register New Team & Lead Account'}
+              {isRegister ? '← Already have an account? Sign In' : 'Register New Team Workspace →'}
             </button>
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* FOOTER                                                                    */}
+      {/* 4. DARK FOOTER                                                            */}
       {/* ========================================================================= */}
-      <div className="relative z-10 w-full max-w-5xl py-3 border-t border-line flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-muted gap-2 mt-auto">
-        <span className="text-ink font-medium tracking-tight">EngineerSpace · Built by Mohammed Arshad</span>
-        <span className="text-[10px] text-muted">Engineering Platform · Secure Authentication</span>
+      <div className="relative z-10 w-full max-w-5xl py-3 border-t border-emerald-500/15 flex flex-col sm:flex-row items-center justify-between text-xs text-emerald-100/50 gap-2 mt-auto">
+        <span className="font-medium text-emerald-200/80 tracking-tight">
+          EngineerSpace · Built by Mohammed Arshad
+        </span>
+        <div className="flex items-center space-x-2 text-[11px] font-mono text-emerald-400/60">
+          <Shield className="w-3.5 h-3.5 text-emerald-400" />
+          <span>PostgreSQL Persistence · 256-bit Encrypted</span>
+        </div>
       </div>
     </div>
   );
