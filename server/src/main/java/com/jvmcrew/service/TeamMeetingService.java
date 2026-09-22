@@ -174,11 +174,14 @@ public class TeamMeetingService {
     private void verifyLeadOrAdmin(User user, Team team) {
         LocalDate today = LocalDate.now();
         boolean isLeadToday = leadershipService.isUserActiveLead(user, team, today);
-        boolean isAdmin = user.getRole() == Role.ADMIN;
+        boolean isAdmin = false;
 
         TeamMember tm = teamMemberRepository.findByTeamAndUserAndIsActiveTrue(team, user).orElse(null);
-        if (tm != null && tm.getRole() == Role.ADMIN) {
-            isAdmin = true;
+        if (tm != null && (tm.getRole() == Role.ADMIN || tm.getRole() == Role.LEAD)) {
+            isAdmin = tm.getRole() == Role.ADMIN;
+            if (tm.getRole() == Role.LEAD) {
+                isLeadToday = true;
+            }
         }
 
         if (!isLeadToday && !isAdmin) {

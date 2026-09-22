@@ -98,7 +98,8 @@ public class TeamPerformanceReportService {
         LocalDate today = LocalDate.now();
 
         // Check Lead or Member authority
-        boolean isLead = leadershipService.isUserActiveLead(user, team, today) || user.getRole() == Role.ADMIN;
+        TeamMember currentTm = teamMemberRepository.findByTeamAndUserAndIsActiveTrue(team, user).orElse(null);
+        boolean isLead = leadershipService.isUserActiveLead(user, team, today) || (currentTm != null && (currentTm.getRole() == Role.LEAD || currentTm.getRole() == Role.ADMIN));
 
         DateRange range = resolveDateRange(periodType, customStartDate, customEndDate, today);
         LocalDate start = range.startDate;
@@ -114,9 +115,9 @@ public class TeamPerformanceReportService {
 
         // 2. Lead Information for this period
         CurrentLeadDto leadInfo = leadershipService.getCurrentLeadInfo(user.getId(), team.getId(), start);
-        String leadName = leadInfo.getCurrentLeadName() != null ? leadInfo.getCurrentLeadName() : "Team Lead";
-        String leadEmail = leadInfo.getCurrentLeadEmail() != null ? leadInfo.getCurrentLeadEmail() : "";
-        String leadSerial = leadInfo.getCurrentLeadSerialNumber() != null ? leadInfo.getCurrentLeadSerialNumber() : "LEAD";
+        String leadName = (leadInfo != null && leadInfo.getName() != null) ? leadInfo.getName() : "Team Lead";
+        String leadEmail = (leadInfo != null && leadInfo.getEmail() != null) ? leadInfo.getEmail() : "";
+        String leadSerial = (leadInfo != null && leadInfo.getSerialNumber() != null) ? leadInfo.getSerialNumber() : "LEAD";
 
         // 3. Raw Deliverables Data Scoped to Team & Period
         List<Task> allTeamTasks = taskRepository.findByTeamOrderByCreatedAtDesc(team);
@@ -187,7 +188,7 @@ public class TeamPerformanceReportService {
         int tasksCompleted = (int) activeTeamTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
         int tasksInProgress = (int) activeTeamTasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count();
         int tasksReview = (int) activeTeamTasks.stream().filter(t -> t.getStatus() == TaskStatus.REVIEW).count();
-        int tasksBlocked = (int) activeTeamTasks.stream().filter(t -> t.getStatus() == TaskStatus.BLOCKED).count();
+        int tasksBlocked = activeBlockers.size();
         int tasksOverdue = (int) activeTeamTasks.stream().filter(t -> t.getStatus() != TaskStatus.DONE && t.getDeadline() != null && t.getDeadline().isBefore(today)).count();
         int taskCompletionPct = tasksAssigned > 0 ? (tasksCompleted * 100) / tasksAssigned : 0;
 
@@ -357,7 +358,7 @@ public class TeamPerformanceReportService {
         int tasksCompleted = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
         int tasksInProgress = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count();
         int tasksReview = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.REVIEW).count();
-        int tasksBlocked = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.BLOCKED).count();
+        int tasksBlocked = (int) blockerRepository.findByTeamAndUserOrderByCreatedAtDesc(team, targetUser).stream().filter(b -> b.getStatus() == BlockerStatus.OPEN).count();
         int tasksOverdue = (int) memberTasks.stream().filter(t -> t.getStatus() != TaskStatus.DONE && t.getDeadline() != null && t.getDeadline().isBefore(today)).count();
         int taskCompletionPct = tasksAssigned > 0 ? (tasksCompleted * 100) / tasksAssigned : 0;
 
@@ -752,7 +753,7 @@ public class TeamPerformanceReportService {
         int backlog = (int) tasks.stream().filter(t -> t.getStatus() == TaskStatus.BACKLOG).count();
         int todo = (int) tasks.stream().filter(t -> t.getStatus() == TaskStatus.TODO).count();
         int inProgress = (int) tasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count();
-        int blocked = (int) tasks.stream().filter(t -> t.getStatus() == TaskStatus.BLOCKED).count();
+        int blocked = 0;
         int review = (int) tasks.stream().filter(t -> t.getStatus() == TaskStatus.REVIEW).count();
         int done = (int) tasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
         int total = tasks.size();
@@ -925,7 +926,7 @@ public class TeamPerformanceReportService {
             int tCompleted = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
             int tInProgress = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count();
             int tReview = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.REVIEW).count();
-            int tBlocked = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.BLOCKED).count();
+            int tBlocked = (int) blockerRepository.findByTeamAndUserOrderByCreatedAtDesc(team, u).stream().filter(b -> b.getStatus() == BlockerStatus.OPEN).count();
             int tOverdue = (int) uTasks.stream().filter(t -> t.getStatus() != TaskStatus.DONE && t.getDeadline() != null && t.getDeadline().isBefore(today)).count();
             int tPct = tAssigned > 0 ? (tCompleted * 100) / tAssigned : 0;
 

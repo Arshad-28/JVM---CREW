@@ -217,27 +217,19 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
   if (!res.ok) {
     let errorMessage = '';
-    if (res.status === 401) {
-      errorMessage = 'Invalid email or password.';
-    } else if (res.status === 429) {
-      errorMessage = 'Too many login attempts. Please wait a moment and try again.';
-    } else if (res.status >= 500) {
-      errorMessage = 'Sign-in is temporarily unavailable. Please try again.';
-    }
-
     let parsedData: any = null;
     try {
       const text = await res.text();
       if (text) {
         try {
           parsedData = JSON.parse(text);
-          if (parsedData.message && res.status !== 401 && res.status < 500) {
+          if (parsedData.message) {
             errorMessage = parsedData.message;
-          } else if (parsedData.error && res.status !== 401 && res.status < 500) {
+          } else if (parsedData.error) {
             errorMessage = parsedData.error;
           }
         } catch {
-          if (!errorMessage && text.length < 200 && res.status < 500) {
+          if (text.length < 200) {
             errorMessage = text;
           }
         }
@@ -247,7 +239,19 @@ async function handleResponse<T>(res: Response): Promise<T> {
     }
 
     if (!errorMessage) {
-      errorMessage = res.statusText || `Request failed with status ${res.status}`;
+      if (res.status === 401) {
+        errorMessage = 'Invalid email or password.';
+      } else if (res.status === 403) {
+        errorMessage = 'Access denied: You do not have permission for this resource.';
+      } else if (res.status === 404) {
+        errorMessage = 'Resource not found.';
+      } else if (res.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (res.status >= 500) {
+        errorMessage = 'Backend service is starting up or temporarily unreachable. Please retry in a moment.';
+      } else {
+        errorMessage = res.statusText || `Request failed with status ${res.status}`;
+      }
     }
     throw new ApiError(errorMessage, res.status, parsedData);
   }
