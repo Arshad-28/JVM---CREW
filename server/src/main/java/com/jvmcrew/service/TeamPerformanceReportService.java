@@ -358,7 +358,7 @@ public class TeamPerformanceReportService {
         int tasksCompleted = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
         int tasksInProgress = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count();
         int tasksReview = (int) memberTasks.stream().filter(t -> t.getStatus() == TaskStatus.REVIEW).count();
-        int tasksBlocked = (int) blockerRepository.findByTeamAndUserOrderByCreatedAtDesc(team, targetUser).stream().filter(b -> b.getStatus() == BlockerStatus.OPEN).count();
+        int tasksBlocked = blockerRepository.findByTeamAndUserAndStatusOrderByCreatedAtDesc(team, targetUser, BlockerStatus.OPEN).size();
         int tasksOverdue = (int) memberTasks.stream().filter(t -> t.getStatus() != TaskStatus.DONE && t.getDeadline() != null && t.getDeadline().isBefore(today)).count();
         int taskCompletionPct = tasksAssigned > 0 ? (tasksCompleted * 100) / tasksAssigned : 0;
 
@@ -926,7 +926,7 @@ public class TeamPerformanceReportService {
             int tCompleted = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
             int tInProgress = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count();
             int tReview = (int) uTasks.stream().filter(t -> t.getStatus() == TaskStatus.REVIEW).count();
-            int tBlocked = (int) blockerRepository.findByTeamAndUserOrderByCreatedAtDesc(team, u).stream().filter(b -> b.getStatus() == BlockerStatus.OPEN).count();
+            int tBlocked = blockerRepository.findByTeamAndUserAndStatusOrderByCreatedAtDesc(team, u, BlockerStatus.OPEN).size();
             int tOverdue = (int) uTasks.stream().filter(t -> t.getStatus() != TaskStatus.DONE && t.getDeadline() != null && t.getDeadline().isBefore(today)).count();
             int tPct = tAssigned > 0 ? (tCompleted * 100) / tAssigned : 0;
 

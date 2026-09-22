@@ -16,7 +16,7 @@ public interface BlockerRepository extends JpaRepository<Blocker, Long> {
     List<Blocker> findByStatusOrderByCreatedAtDesc(BlockerStatus status);
     List<Blocker> findByTeamAndStatusOrderByCreatedAtDesc(Team team, BlockerStatus status);
     List<Blocker> findByTeamIdAndStatusOrderByCreatedAtDesc(Long teamId, BlockerStatus status);
-    List<Blocker> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<Blocker> findByTeamAndUserOrderByCreatedAtDesc(Team team, User user);
     List<Blocker> findByTeamAndUserAndStatusOrderByCreatedAtDesc(Team team, User user, BlockerStatus status);
     List<Blocker> findByUserAndStatusOrderByCreatedAtDesc(User user, BlockerStatus status);
     boolean existsByStandupAndStatus(Standup standup, BlockerStatus status);
