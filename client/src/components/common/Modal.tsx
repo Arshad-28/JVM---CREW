@@ -77,7 +77,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog Box */}
       <div
-        className={`relative w-full ${sizeClasses} bg-paper-light border border-line rounded-t-xl sm:rounded-lg shadow-modal flex flex-col max-h-[92vh] sm:max-h-[90vh] z-10 animate-scale-in pb-safe ${className}`}
+        className={`relative w-full ${sizeClasses} bg-paper-light border border-line rounded-t-2xl sm:rounded-2xl shadow-modal flex flex-col max-h-[92vh] sm:max-h-[90vh] z-10 animate-scale-in pb-safe overflow-hidden ${className}`}
       >
         {/* Header */}
         {(title || kicker) && (

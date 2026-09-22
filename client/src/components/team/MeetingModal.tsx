@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { TeamMeeting, MeetingPlatform, CreateTeamMeetingPayload } from '../../types';
-import { Calendar, Clock, Link as LinkIcon, AlertCircle } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Link as LinkIcon,
+  AlertCircle,
+  Video,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 
 interface MeetingModalProps {
   isOpen: boolean;
@@ -50,6 +58,18 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
     setError(null);
   }, [initialMeeting, isOpen]);
 
+  const handleApplyTemplate = (tpl: {
+    title: string;
+    startTime: string;
+    endTime: string;
+    description: string;
+  }) => {
+    setTitle(tpl.title);
+    setStartTime(tpl.startTime);
+    setEndTime(tpl.endTime);
+    setDescription(tpl.description);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -94,26 +114,75 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
     }
   };
 
+  const templates = [
+    {
+      title: 'Daily Morning Standup',
+      startTime: '09:30',
+      endTime: '10:00',
+      description: 'Daily standup to review progress, today priorities, and unblock team members.',
+    },
+    {
+      title: 'Daily Evening Sync & Blockers',
+      startTime: '17:30',
+      endTime: '18:15',
+      description: 'Review completed tasks, discuss technical hurdles, and align on tomorrow goals.',
+    },
+    {
+      title: 'Architecture & Code Review Sync',
+      startTime: '16:00',
+      endTime: '17:00',
+      description: 'Deep dive into pull requests, system architecture designs, and code standards.',
+    },
+    {
+      title: 'Sprint Review & Demo',
+      startTime: '15:00',
+      endTime: '16:00',
+      description: 'Team demo of completed sprint features and milestone review.',
+    },
+  ];
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={initialMeeting ? 'Edit Team Meeting' : 'Schedule Team Meeting'}
       kicker="TEAM COMMUNICATION & SYNC"
-      size="md"
+      size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-700 rounded-sm flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 text-rose-800 rounded-xl flex items-center gap-2.5 animate-fade-in">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span className="font-medium">{error}</span>
+          </div>
+        )}
+
+        {/* Quick Template Chips (Only for new meetings) */}
+        {!initialMeeting && (
+          <div className="space-y-2 p-3 bg-paper rounded-xl border border-line">
+            <span className="text-[11px] font-semibold text-muted flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span>Quick Meeting Templates (1-Click Fill):</span>
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {templates.map((tpl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleApplyTemplate(tpl)}
+                  className="px-2.5 py-1.5 bg-paper-light hover:bg-primary-soft/50 border border-line hover:border-primary/40 rounded-lg text-ink text-[11px] font-medium transition-all shadow-2xs hover:-translate-y-0.5 cursor-pointer active:scale-95 text-left"
+                >
+                  {tpl.title}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Title */}
         <div className="space-y-1.5">
           <label className="block font-bold text-ink">
-            Meeting Title <span className="text-danger">*</span>
+            Meeting Title <span className="text-primary">*</span>
           </label>
           <input
             type="text"
@@ -121,33 +190,56 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Daily Standup Sync / Sprint Review"
-            className="w-full px-3.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-medium transition-all"
+            className="w-full px-4 py-2.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none text-ink font-semibold transition-all placeholder:text-muted/60 shadow-2xs"
           />
         </div>
 
         {/* Platform Selector */}
         <div className="space-y-1.5">
           <label className="block font-bold text-ink">
-            Platform <span className="text-danger">*</span>
+            Video Platform <span className="text-primary">*</span>
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {[
-              { id: 'GOOGLE_MEET' as MeetingPlatform, label: 'Google Meet' },
-              { id: 'ZOOM' as MeetingPlatform, label: 'Zoom' },
-              { id: 'MS_TEAMS' as MeetingPlatform, label: 'MS Teams' },
-              { id: 'OTHER' as MeetingPlatform, label: 'Other / Link' },
+              {
+                id: 'GOOGLE_MEET' as MeetingPlatform,
+                label: 'Google Meet',
+                activeClass: 'bg-emerald-500/10 text-emerald-900 border-emerald-500/40 ring-2 ring-emerald-500/20 font-bold',
+                badge: 'Meet',
+              },
+              {
+                id: 'ZOOM' as MeetingPlatform,
+                label: 'Zoom',
+                activeClass: 'bg-blue-500/10 text-blue-900 border-blue-500/40 ring-2 ring-blue-500/20 font-bold',
+                badge: 'Zoom',
+              },
+              {
+                id: 'MS_TEAMS' as MeetingPlatform,
+                label: 'MS Teams',
+                activeClass: 'bg-purple-500/10 text-purple-900 border-purple-500/40 ring-2 ring-purple-500/20 font-bold',
+                badge: 'Teams',
+              },
+              {
+                id: 'OTHER' as MeetingPlatform,
+                label: 'Web Link',
+                activeClass: 'bg-primary-soft text-primary border-primary/40 ring-2 ring-primary/20 font-bold',
+                badge: 'Custom',
+              },
             ].map((p) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => setPlatform(p.id)}
-                className={`px-3 py-2 border rounded-md font-mono text-xs font-bold transition-all ${
+                className={`p-3 border rounded-xl flex items-center justify-between transition-all cursor-pointer active:scale-95 shadow-2xs ${
                   platform === p.id
-                    ? 'bg-primary-soft text-primary border-primary/30 shadow-2xs font-bold'
-                    : 'bg-surface-raised hover:bg-surface-soft border-line text-muted hover:text-ink'
+                    ? p.activeClass
+                    : 'bg-paper hover:bg-paper-dark/60 border-line text-muted hover:text-ink'
                 }`}
               >
-                {p.label}
+                <div className="flex items-center gap-2">
+                  <Video className="w-4 h-4 shrink-0" />
+                  <span className="text-xs">{p.label}</span>
+                </div>
               </button>
             ))}
           </div>
@@ -156,21 +248,22 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
         {/* Meeting URL */}
         <div className="space-y-1.5">
           <label className="block font-bold text-ink">
-            Meeting URL (HTTPS only) <span className="text-danger">*</span>
+            Meeting URL (HTTPS only) <span className="text-primary">*</span>
           </label>
           <div className="relative">
-            <LinkIcon className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
+            <LinkIcon className="w-4 h-4 text-muted absolute left-3.5 top-3" />
             <input
               type="url"
               required
               value={meetingUrl}
               onChange={(e) => setMeetingUrl(e.target.value)}
-              placeholder="https://meet.google.com/xxx-xxxx-xxx or zoom.us/j/..."
-              className="w-full pl-9 pr-3.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
+              placeholder="https://meet.google.com/xxx-xxxx-xxx or https://zoom.us/j/..."
+              className="w-full pl-10 pr-4 py-2.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none text-ink font-mono text-xs transition-all shadow-2xs placeholder:text-muted/60"
             />
           </div>
-          <p className="text-[11px] font-mono text-muted">
-            Members can easily click "Join Meeting" to open this link in a new tab.
+          <p className="text-[11px] text-muted flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-primary shrink-0" />
+            <span>Team members can click "Join Live Meeting" directly from their dashboard.</span>
           </p>
         </div>
 
@@ -178,33 +271,33 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <label className="block font-bold text-ink">
-              Date <span className="text-danger">*</span>
+              Date <span className="text-primary">*</span>
             </label>
             <div className="relative">
-              <Calendar className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
+              <Calendar className="w-4 h-4 text-muted absolute left-3.5 top-3" />
               <input
                 type="date"
                 required
                 value={scheduledDate}
                 onChange={(e) => setScheduledDate(e.target.value)}
-                className="w-full pl-9 pr-2.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
+                className="w-full pl-10 pr-3 py-2.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none text-ink font-mono text-xs transition-all shadow-2xs"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="block font-bold text-ink">
-              Start Time <span className="text-danger">*</span>
+              Start Time <span className="text-primary">*</span>
             </label>
             <div className="relative">
-              <Clock className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
+              <Clock className="w-4 h-4 text-muted absolute left-3.5 top-3" />
               <input
                 type="text"
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 placeholder="5:30 PM / 17:30"
-                className="w-full pl-9 pr-2.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
+                className="w-full pl-10 pr-3 py-2.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none text-ink font-mono text-xs transition-all shadow-2xs"
               />
             </div>
           </div>
@@ -214,13 +307,13 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
               End Time
             </label>
             <div className="relative">
-              <Clock className="w-3.5 h-3.5 text-muted absolute left-3.5 top-3.5" />
+              <Clock className="w-4 h-4 text-muted absolute left-3.5 top-3" />
               <input
                 type="text"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 placeholder="6:30 PM / 18:30"
-                className="w-full pl-9 pr-2.5 py-2.5 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-mono text-xs transition-all"
+                className="w-full pl-10 pr-3 py-2.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none text-ink font-mono text-xs transition-all shadow-2xs"
               />
             </div>
           </div>
@@ -235,13 +328,13 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Agenda, discussion topics, or notes for the team..."
-            className="w-full p-3 bg-surface border border-line focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-md outline-none text-ink font-sans text-xs leading-relaxed transition-all"
+            placeholder="Agenda, discussion points, sprint goals, or blockers check-in..."
+            className="w-full p-3.5 bg-paper border border-line hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none text-ink font-sans text-xs leading-relaxed transition-all shadow-2xs placeholder:text-muted/60"
           />
         </div>
 
         {/* Modal Actions */}
-        <div className="pt-3 border-t border-line flex items-center justify-end space-x-2.5">
+        <div className="pt-3 border-t border-line flex items-center justify-end gap-3">
           <Button
             type="button"
             variant="ghost"
@@ -257,8 +350,9 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
             variant="primary"
             size="md"
             loading={loading}
+            className="px-6 shadow-xs"
           >
-            {initialMeeting ? 'Save Changes' : 'Schedule Meeting'}
+            {initialMeeting ? 'Save Changes' : 'Schedule Team Meeting'}
           </Button>
         </div>
       </form>

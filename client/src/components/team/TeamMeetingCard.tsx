@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TeamMeeting, MeetingPlatform } from '../../types';
 import {
   Video,
@@ -8,6 +8,9 @@ import {
   Edit2,
   Trash2,
   UserCheck,
+  Copy,
+  Check,
+  Sparkles,
 } from 'lucide-react';
 
 interface TeamMeetingCardProps {
@@ -24,27 +27,31 @@ export const getPlatformDetails = (platform: MeetingPlatform) => {
     case 'GOOGLE_MEET':
       return {
         label: 'Google Meet',
-        badgeBg: 'bg-success-soft border-success/30 text-success',
-        iconBg: 'bg-success text-white',
+        badgeBg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800',
+        iconBg: 'bg-emerald-600 text-white',
+        borderHover: 'hover:border-emerald-500/50',
       };
     case 'ZOOM':
       return {
-        label: 'Zoom',
+        label: 'Zoom Video',
         badgeBg: 'bg-blue-500/10 border-blue-500/30 text-blue-800',
         iconBg: 'bg-blue-600 text-white',
+        borderHover: 'hover:border-blue-500/50',
       };
     case 'MS_TEAMS':
       return {
         label: 'Microsoft Teams',
-        badgeBg: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-800',
-        iconBg: 'bg-indigo-600 text-white',
+        badgeBg: 'bg-purple-500/10 border-purple-500/30 text-purple-800',
+        iconBg: 'bg-purple-600 text-white',
+        borderHover: 'hover:border-purple-500/50',
       };
     case 'OTHER':
     default:
       return {
-        label: 'Web Meeting',
+        label: 'Live Web Sync',
         badgeBg: 'bg-paper-dark border-line text-ink',
         iconBg: 'bg-primary text-white',
+        borderHover: 'hover:border-primary/50',
       };
   }
 };
@@ -71,64 +78,100 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
   isHero = false,
   className = '',
 }) => {
+  const [copied, setCopied] = useState(false);
   const platformInfo = getPlatformDetails(meeting.platform);
   const formattedDate = formatMeetingDate(meeting.scheduledDate);
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(meeting.meetingUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link', err);
+    }
+  };
 
   if (isHero) {
     return (
       <div
-        className={`border border-primary/30 bg-paper-light rounded-lg p-5 sm:p-7 shadow-card space-y-5 transition-all duration-200 relative overflow-hidden ${className}`}
+        className={`border border-primary/30 bg-paper-light rounded-2xl p-6 sm:p-8 shadow-card space-y-6 transition-all duration-200 relative overflow-hidden ${className}`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-4">
-          <div className="flex items-center space-x-2.5">
-            <div className={`w-8 h-8 rounded-sm flex items-center justify-center shadow-xs ${platformInfo.iconBg}`}>
-              <Video className="w-4 h-4" />
+        {/* Ambient decorative glow */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-4 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${platformInfo.iconBg}`}>
+              <Video className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-primary-soft border border-primary/20 text-primary px-2 py-0.5 rounded-xs">
-                  UPCOMING MEETING
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider bg-primary/10 border border-primary/25 text-primary px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Next Upcoming Sync
                 </span>
-                <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs border ${platformInfo.badgeBg}`}>
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${platformInfo.badgeBg}`}>
                   {platformInfo.label}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 font-mono text-xs text-muted">
-            <Calendar className="w-3.5 h-3.5 text-primary" />
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-muted bg-paper px-3.5 py-1.5 rounded-xl border border-line">
+            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="font-semibold text-ink">{formattedDate}</span>
             <span>·</span>
-            <Clock className="w-3.5 h-3.5 text-primary" />
+            <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="font-bold text-ink">{meeting.startTime}</span>
             {meeting.endTime && <span>– {meeting.endTime}</span>}
           </div>
         </div>
 
-        <div className="space-y-2">
-          <h2 className="font-display text-xl sm:text-2xl font-black text-ink tracking-tight uppercase">
+        <div className="space-y-2 relative z-10">
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-ink tracking-tight">
             {meeting.title}
           </h2>
           {meeting.description && (
-            <p className="text-xs sm:text-sm text-muted leading-relaxed font-normal max-w-2xl">
+            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-3xl">
               {meeting.description}
             </p>
           )}
         </div>
 
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-line">
-          <div className="flex items-center space-x-2 font-mono text-xs text-muted">
+        <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-line relative z-10">
+          <div className="flex items-center gap-2 text-xs text-muted">
             <UserCheck className="w-4 h-4 text-primary shrink-0" />
-            <span>Created by: <strong className="text-ink font-semibold">{meeting.createdByName || 'Team Lead'}</strong></span>
+            <span>Host / Lead: <strong className="text-ink font-semibold">{meeting.createdByName || 'Team Lead'}</strong></span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="px-3.5 py-2.5 bg-paper hover:bg-paper-dark border border-line hover:border-primary/40 rounded-xl text-xs font-semibold text-ink transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+              title="Copy meeting link"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span className="text-emerald-700">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-muted" />
+                  <span>Copy Link</span>
+                </>
+              )}
+            </button>
+
             {isLead && onEdit && (
               <button
                 type="button"
                 onClick={() => onEdit(meeting)}
-                className="px-3.5 py-2 bg-paper-light hover:bg-paper-dark border border-line hover:border-ink rounded-sm font-mono text-xs font-semibold text-ink transition-colors flex items-center space-x-1.5 shadow-2xs"
+                className="px-3.5 py-2.5 bg-paper hover:bg-paper-dark border border-line hover:border-ink rounded-xl text-xs font-semibold text-ink transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
               >
                 <Edit2 className="w-3.5 h-3.5 text-muted" />
                 <span>Edit Sync</span>
@@ -139,10 +182,10 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
               <button
                 type="button"
                 onClick={() => onDelete(meeting)}
-                className="px-3 py-2 bg-paper-light hover:bg-danger-soft border border-line hover:border-danger/30 rounded-sm font-mono text-xs font-semibold text-danger transition-colors flex items-center space-x-1 shadow-2xs"
+                className="p-2.5 bg-paper hover:bg-rose-500/10 border border-line hover:border-rose-500/30 rounded-xl text-rose-700 transition-all flex items-center shadow-2xs cursor-pointer active:scale-95"
                 title="Delete Meeting"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             )}
 
@@ -150,10 +193,10 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
               href={meeting.meetingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-bold rounded-sm transition-all shadow-xs flex items-center space-x-2 hover:-translate-y-[1px] active:translate-y-0 shrink-0"
+              className="px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer shrink-0"
             >
-              <Video className="w-4 h-4 text-white" />
-              <span>JOIN MEETING</span>
+              <Video className="w-4 h-4 text-emerald-200" />
+              <span>JOIN LIVE MEETING</span>
               <ExternalLink className="w-3.5 h-3.5 text-white/80" />
             </a>
           </div>
@@ -165,73 +208,85 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
   // Standard Meeting Card
   return (
     <div
-      className={`border border-line bg-paper-light hover:border-line-dark rounded-md p-4 sm:p-5 transition-all duration-150 shadow-2xs space-y-3.5 hover:-translate-y-[1px] ${className}`}
+      className={`border border-line bg-paper-light hover:border-primary/40 rounded-2xl p-5 transition-all duration-200 shadow-2xs hover:shadow-card-hover space-y-4 hover:-translate-y-1 group flex flex-col justify-between ${className}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded-xs border ${platformInfo.badgeBg}`}>
-              {platformInfo.label}
-            </span>
-            {meeting.isUpcoming && (
-              <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded-xs bg-primary-soft text-primary border border-primary/20">
-                UPCOMING
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${platformInfo.badgeBg}`}>
+                {platformInfo.label}
               </span>
+              {meeting.isUpcoming && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                  Upcoming
+                </span>
+              )}
+            </div>
+            <h3 className="font-display text-base font-bold text-ink truncate leading-snug group-hover:text-primary transition-colors">
+              {meeting.title}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            {isLead && onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(meeting)}
+                className="p-1.5 text-muted hover:text-ink hover:bg-paper rounded-lg transition-colors cursor-pointer active:scale-95"
+                title="Edit Meeting"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {isLead && onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(meeting)}
+                className="p-1.5 text-muted hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer active:scale-95"
+                title="Delete Meeting"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
-          <h3 className="font-display text-base font-bold text-ink truncate leading-snug">
-            {meeting.title}
-          </h3>
         </div>
 
-        <div className="flex items-center space-x-1 shrink-0">
-          {isLead && onEdit && (
-            <button
-              type="button"
-              onClick={() => onEdit(meeting)}
-              className="p-1.5 text-muted hover:text-ink hover:bg-paper-dark/60 rounded-sm transition-colors"
-              title="Edit Meeting"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-          {isLead && onDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(meeting)}
-              className="p-1.5 text-muted hover:text-danger hover:bg-danger-soft rounded-sm transition-colors"
-              title="Delete Meeting"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+        {meeting.description && (
+          <p className="text-xs text-muted line-clamp-2 leading-relaxed">
+            {meeting.description}
+          </p>
+        )}
       </div>
 
-      {meeting.description && (
-        <p className="text-xs text-muted line-clamp-2 leading-relaxed">
-          {meeting.description}
-        </p>
-      )}
-
-      <div className="pt-2 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs font-mono">
-        <div className="flex items-center space-x-2 text-muted">
+      <div className="pt-3 border-t border-line flex items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-1.5 text-muted font-mono text-[11px] truncate">
           <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span>{formattedDate}</span>
+          <span className="truncate">{formattedDate}</span>
           <span>·</span>
-          <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span className="font-bold text-ink">{meeting.startTime}</span>
+          <span className="font-semibold text-ink">{meeting.startTime}</span>
         </div>
 
-        <a
-          href={meeting.meetingUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-3.5 py-1.5 bg-primary-soft hover:bg-primary text-primary hover:text-white border border-primary/20 rounded-sm font-mono text-xs font-bold transition-all inline-flex items-center justify-center space-x-1.5 shadow-2xs self-start sm:self-auto hover:-translate-y-[1px] active:translate-y-0"
-        >
-          <span>Join</span>
-          <ExternalLink className="w-3 h-3" />
-        </a>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="p-2 text-muted hover:text-ink hover:bg-paper rounded-lg transition-colors cursor-pointer active:scale-95"
+            title="Copy link"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+
+          <a
+            href={meeting.meetingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 shadow-2xs active:scale-95"
+          >
+            <span>Join</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
       </div>
     </div>
   );

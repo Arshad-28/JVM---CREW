@@ -4,12 +4,13 @@ import { api, cacheStore } from '../../services/api';
 import { TeamMeeting, CreateTeamMeetingPayload } from '../../types';
 import { TeamMeetingCard } from '../../components/team/TeamMeetingCard';
 import { MeetingModal } from '../../components/team/MeetingModal';
-import { EmptyState } from '../../components/common/EmptyState';
 import { PageContainer } from '../../components/common/PageContainer';
 import {
   Video,
   Plus,
   AlertCircle,
+  Sparkles,
+  Users,
 } from 'lucide-react';
 
 export const TeamMeetingsSection: React.FC = () => {
@@ -20,6 +21,9 @@ export const TeamMeetingsSection: React.FC = () => {
   const [meetings, setMeetings] = useState<TeamMeeting[]>(() => cachedMeetings || []);
   const [loading, setLoading] = useState<boolean>(!cachedMeetings);
   const [error, setError] = useState<string | null>(null);
+
+  // Tab Filter State
+  const [viewFilter, setViewFilter] = useState<'ALL' | 'UPCOMING' | 'PAST'>('UPCOMING');
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,52 +96,67 @@ export const TeamMeetingsSection: React.FC = () => {
   );
 
   const heroMeeting = activeUpcomingMeetings[0] || null;
-  const otherUpcomingMeetings = heroMeeting
-    ? activeUpcomingMeetings.slice(1)
-    : [];
+
+  const displayedMeetings = viewFilter === 'UPCOMING'
+    ? activeUpcomingMeetings
+    : viewFilter === 'PAST'
+    ? pastMeetings
+    : meetings;
 
   return (
-    <PageContainer width="default" className="space-y-6 font-sans">
-      {/* Header Banner */}
-      <div className="border border-line bg-paper-light p-5 sm:p-6 rounded-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-2xs">
-        <div className="space-y-1 min-w-0">
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-accent/10 border border-accent/30 text-accent px-2 py-0.5 rounded-xs">
-              TEAM COMMUNICATION & MEETINGS
+    <PageContainer width="default" className="space-y-6 sm:space-y-8 font-sans pb-16">
+      {/* 1. ATMOSPHERIC HEADER BANNER */}
+      <div className="bg-paper-light border border-line rounded-2xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-5 shadow-sm relative overflow-hidden">
+        {/* Subtle decorative background glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+
+        <div className="space-y-2 relative z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary border border-primary/25 rounded-full text-xs font-semibold shadow-2xs">
+              <Video className="w-3.5 h-3.5" />
+              Team Video & Sync Studio
             </span>
-            <span className="font-mono text-xs text-muted">
-              · Stay connected with your crew
-            </span>
+            <span className="text-muted/40">·</span>
+            <span className="text-xs text-muted font-medium">Google Meet, Zoom & Microsoft Teams</span>
           </div>
-          <h1 className="font-display text-xl sm:text-2xl font-black text-ink uppercase tracking-tight">
-            TEAM MEETINGS
+
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
+            Team Meetings & Syncs
           </h1>
-          <p className="text-xs text-muted leading-relaxed font-normal max-w-xl">
-            One central place for the team to find current sync links, join live meetings, and keep aligned.
+
+          <p className="text-xs sm:text-sm text-muted max-w-xl leading-relaxed">
+            One central hub for the engineering crew to discover upcoming syncs, join live video rooms in 1-click, and review meeting agendas.
           </p>
         </div>
 
-        {isLead && (
-          <button
-            type="button"
-            onClick={handleOpenCreateModal}
-            className="px-4 py-2.5 bg-ink hover:bg-ink-light text-paper font-mono text-xs font-bold rounded-sm transition-all shadow-xs flex items-center space-x-2 self-start sm:self-auto shrink-0 cursor-pointer active:scale-95"
-          >
-            <Plus className="w-4 h-4 text-accent" />
-            <span>Schedule Meeting</span>
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-3 relative z-10">
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 bg-paper border border-line rounded-xl text-xs font-mono text-muted shadow-2xs">
+            <Users className="w-3.5 h-3.5 text-primary" />
+            <span><strong className="text-ink font-bold">{activeUpcomingMeetings.length}</strong> Upcoming</span>
+          </div>
+
+          {isLead && (
+            <button
+              type="button"
+              onClick={handleOpenCreateModal}
+              className="px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 text-emerald-200" />
+              <span>Schedule Sync</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-attention-subtle border border-attention/30 text-attention text-xs rounded-md flex items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-800 text-xs rounded-xl flex items-center justify-between gap-3 animate-fade-in">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span className="font-medium">{error}</span>
           </div>
           <button
             onClick={fetchMeetings}
-            className="underline font-mono text-xs font-semibold hover:text-ink"
+            className="underline font-mono text-xs font-semibold hover:text-ink cursor-pointer"
           >
             Retry
           </button>
@@ -145,39 +164,47 @@ export const TeamMeetingsSection: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="py-16 text-center font-mono text-xs text-muted flex items-center justify-center space-x-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
-          <span>Loading team meetings...</span>
+        <div className="py-20 text-center font-mono text-xs text-muted flex items-center justify-center space-x-2">
+          <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+          <span>Connecting to Team Sync Hub...</span>
         </div>
       ) : meetings.length === 0 ? (
-        <EmptyState
-          icon={<Video className="w-5 h-5 text-accent" />}
-          title="No Team Meetings Scheduled"
-          description={
-            isLead
-              ? "You haven't scheduled any team syncs yet. Click 'Schedule Meeting' to create a Google Meet, Zoom, or Teams link for your crew."
-              : "Your Team Lead hasn't scheduled any upcoming team meetings yet. Check back soon or message your Lead."
-          }
-          action={
-            isLead ? (
+        <div className="bg-paper-light border border-line rounded-2xl p-8 sm:p-12 text-center space-y-5 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-2xs">
+            <Video className="w-7 h-7" />
+          </div>
+          <div className="space-y-1.5 max-w-md mx-auto">
+            <h3 className="font-display text-base sm:text-lg font-bold text-ink">
+              No Team Meetings Scheduled Yet
+            </h3>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              {isLead
+                ? "Schedule your team's next daily standup, sprint review, or architecture spike in 1-click."
+                : "Your Team Lead hasn't scheduled any upcoming team meetings yet. Check back soon or request a sync."}
+            </p>
+          </div>
+
+          {isLead && (
+            <div className="pt-2 flex flex-col items-center gap-3">
               <button
                 type="button"
                 onClick={handleOpenCreateModal}
-                className="px-4 py-2 bg-ink hover:bg-ink-light text-paper font-mono text-xs font-bold rounded-sm transition-all shadow-xs flex items-center space-x-1.5"
+                className="px-6 py-3 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4 text-accent" />
-                <span>Schedule First Meeting</span>
+                <Plus className="w-4 h-4 text-emerald-200" />
+                <span>Schedule First Team Sync</span>
               </button>
-            ) : undefined
-          }
-        />
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="space-y-6">
-          {/* UPCOMING HERO MEETING */}
+        <div className="space-y-6 sm:space-y-8">
+          {/* 2. UPCOMING HERO MEETING SHOWCASE */}
           {heroMeeting && (
-            <div className="space-y-2">
-              <span className="font-mono text-[11px] font-bold text-muted uppercase tracking-wider block">
-                Next Upcoming Team Sync
+            <div className="space-y-3">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Featured Next Meeting
               </span>
               <TeamMeetingCard
                 meeting={heroMeeting}
@@ -189,49 +216,70 @@ export const TeamMeetingsSection: React.FC = () => {
             </div>
           )}
 
-          {/* OTHER UPCOMING MEETINGS */}
-          {otherUpcomingMeetings.length > 0 && (
-            <div className="space-y-3">
-              <span className="font-mono text-[11px] font-bold text-muted uppercase tracking-wider block">
-                Scheduled Upcoming Syncs ({otherUpcomingMeetings.length})
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {otherUpcomingMeetings.map((m) => (
-                  <TeamMeetingCard
-                    key={m.id}
-                    meeting={m}
-                    isLead={isLead}
-                    onEdit={handleOpenEditModal}
-                    onDelete={handleDeleteMeeting}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          {/* 3. INTERACTIVE VIEW FILTER TABS */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-3">
+            <div className="flex items-center gap-1.5 bg-paper p-1 rounded-xl border border-line">
+              <button
+                onClick={() => setViewFilter('UPCOMING')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                  viewFilter === 'UPCOMING'
+                    ? 'bg-paper-light text-primary font-bold shadow-xs border border-primary/20'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                Upcoming Syncs ({activeUpcomingMeetings.length})
+              </button>
 
-          {/* PREVIOUS MEETINGS HISTORY */}
-          {pastMeetings.length > 0 && (
-            <div className="space-y-3 pt-4 border-t border-line">
-              <span className="font-mono text-[11px] font-bold text-muted uppercase tracking-wider block">
-                Past Meetings History ({pastMeetings.length})
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-80 hover:opacity-100 transition-opacity">
-                {pastMeetings.map((m) => (
-                  <TeamMeetingCard
-                    key={m.id}
-                    meeting={m}
-                    isLead={isLead}
-                    onEdit={handleOpenEditModal}
-                    onDelete={handleDeleteMeeting}
-                  />
-                ))}
-              </div>
+              <button
+                onClick={() => setViewFilter('ALL')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                  viewFilter === 'ALL'
+                    ? 'bg-paper-light text-primary font-bold shadow-xs border border-primary/20'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                All Meetings ({meetings.length})
+              </button>
+
+              <button
+                onClick={() => setViewFilter('PAST')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                  viewFilter === 'PAST'
+                    ? 'bg-paper-light text-primary font-bold shadow-xs border border-primary/20'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                Past History ({pastMeetings.length})
+              </button>
+            </div>
+
+            <span className="text-xs text-muted font-mono">
+              Showing {displayedMeetings.length} of {meetings.length} meetings
+            </span>
+          </div>
+
+          {/* 4. MEETINGS GRID */}
+          {displayedMeetings.length === 0 ? (
+            <div className="py-12 text-center text-xs text-muted bg-paper-light rounded-xl border border-line">
+              No meetings found for this filter.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {displayedMeetings.map((m) => (
+                <TeamMeetingCard
+                  key={m.id}
+                  meeting={m}
+                  isLead={isLead}
+                  onEdit={handleOpenEditModal}
+                  onDelete={handleDeleteMeeting}
+                />
+              ))}
             </div>
           )}
         </div>
       )}
 
-      {/* LEAD MEETING MODAL */}
+      {/* LEAD MEETING SCHEDULE MODAL */}
       <MeetingModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
