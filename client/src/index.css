@@ -114,67 +114,6 @@
     background-size: 200% 100%;
     animation: shimmer 1.8s infinite linear;
   }
-
-  /* Animated background utilities */
-  .animate-float-slow {
-    animation: float-slow 16s ease-in-out infinite;
-  }
-
-  .animate-float-reverse {
-    animation: float-reverse 20s ease-in-out infinite;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse-slow 8s ease-in-out infinite;
-  }
-
-  .animate-drift-grid {
-    animation: drift-grid 40s linear infinite;
-  }
-}
-
-@keyframes float-slow {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -40px) scale(1.08);
-  }
-  66% {
-    transform: translate(-25px, 20px) scale(0.95);
-  }
-}
-
-@keyframes float-reverse {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(-35px, 35px) scale(1.05);
-  }
-  66% {
-    transform: translate(25px, -25px) scale(0.92);
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.75;
-    transform: scale(1.12);
-  }
-}
-
-@keyframes drift-grid {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 36px 36px;
-  }
 }
 
 @keyframes shimmer {
