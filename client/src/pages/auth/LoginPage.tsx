@@ -2,20 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import {
-  Lock,
-  Mail,
-  ArrowRight,
   Eye,
   EyeOff,
-  User,
   Loader2,
-  ShieldCheck,
-  CheckCircle2,
-  Building2,
-  Activity,
-  Layers,
-  Sparkles,
-  Database,
+  AlertCircle,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -49,7 +39,7 @@ export const LoginPage: React.FC = () => {
         return;
       }
       if (!teamName.trim()) {
-        setError('Please enter your engineering team name.');
+        setError('Please enter your team or organization name.');
         return;
       }
       if (password.length < 6) {
@@ -60,7 +50,7 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
-    setStatusMessage(isRegister ? 'Setting up workspace...' : 'Authenticating...');
+    setStatusMessage(isRegister ? 'Creating account...' : 'Signing in...');
 
     const handleStatusUpdate = (msg: string) => {
       setStatusMessage(msg);
@@ -84,7 +74,7 @@ export const LoginPage: React.FC = () => {
       }
       window.dispatchEvent(new CustomEvent('jvm_fresh_login'));
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
       setStatusMessage(null);
@@ -92,361 +82,178 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F4EF] flex flex-col lg:flex-row font-sans selection:bg-primary/20 selection:text-primary">
-      {/* ========================================================================= */}
-      {/* LEFT COLUMN: BRANDING & PRODUCT SHOWCASE (DESKTOP)                        */}
-      {/* ========================================================================= */}
-      <div className="hidden lg:flex lg:w-[48%] xl:w-[52%] bg-[#0E1A14] text-white relative overflow-hidden flex-col justify-between p-10 xl:p-14 border-r border-[#1B2F25]">
-        {/* Subtle Ambient Background Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
-        
-        {/* Subtle grid pattern overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
-            backgroundSize: '32px 32px'
-          }}
-        />
-
-        {/* Top Brand Bar */}
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary text-white flex items-center justify-center rounded-lg shadow-sm font-display font-bold text-base tracking-wider border border-emerald-400/20">
-              ES
-            </div>
-            <div>
-              <span className="font-display font-bold text-lg text-white tracking-tight block">
-                EngineerSpace
-              </span>
-              <span className="text-[11px] text-emerald-400/80 font-medium tracking-wide uppercase block -mt-0.5">
-                Enterprise Engineering Workspace
-              </span>
-            </div>
-          </div>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/20 text-emerald-300 text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>v2.4 Enterprise</span>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+      {/* Centered Brand Header */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-700 text-white font-bold text-lg shadow-sm mb-4">
+          ES
         </div>
-
-        {/* Middle Hero Statement & Feature Showcase */}
-        <div className="relative z-10 space-y-8 my-auto py-10">
-          <div className="space-y-3 max-w-xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-900/40 border border-emerald-500/20 text-emerald-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              High-Velocity Engineering Operations
-            </span>
-            <h1 className="font-display text-3xl xl:text-4xl font-bold text-white tracking-tight leading-tight">
-              Engineering velocity, tracked with factual rigor.
-            </h1>
-            <p className="text-emerald-100/70 text-sm xl:text-base leading-relaxed">
-              A unified management cockpit for daily standups, sprint execution, homework verification, and executive team intelligence reports.
-            </p>
-          </div>
-
-          {/* 3 Feature Capability Cards */}
-          <div className="grid grid-cols-1 gap-3 max-w-xl">
-            <div className="flex items-start gap-3.5 p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition-colors">
-              <div className="w-9 h-9 rounded-lg bg-emerald-950 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
-                <Activity className="w-4 h-4" />
-              </div>
-              <div className="space-y-0.5">
-                <h2 className="text-sm font-semibold text-white">Daily Standup & Leadership Cockpit</h2>
-                <p className="text-xs text-emerald-100/60 leading-relaxed">
-                  Real-time attendance compliance, blocker resolution, and automated team lead briefs.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3.5 p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition-colors">
-              <div className="w-9 h-9 rounded-lg bg-emerald-950 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
-                <Layers className="w-4 h-4" />
-              </div>
-              <div className="space-y-0.5">
-                <h2 className="text-sm font-semibold text-white">Team Performance & Intelligence Reports</h2>
-                <p className="text-xs text-emerald-100/60 leading-relaxed">
-                  Audited delivery reports for mentors and stakeholders derived 100% from PostgreSQL transactions.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3.5 p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition-colors">
-              <div className="w-9 h-9 rounded-lg bg-emerald-950 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
-                <Database className="w-4 h-4" />
-              </div>
-              <div className="space-y-0.5">
-                <h2 className="text-sm font-semibold text-white">Curriculum, Homework & Interview Lab</h2>
-                <p className="text-xs text-emerald-100/60 leading-relaxed">
-                  Structured learning pathways, coding challenges, and homework review queues for all cohorts.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Trust & Compliance Bar */}
-        <div className="relative z-10 pt-6 border-t border-white/[0.08] flex items-center justify-between text-xs text-emerald-100/60">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Team Isolation</span>
-            </span>
-            <span>·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>JWT Authenticated</span>
-            </span>
-          </div>
-          <span>PostgreSQL Persistence</span>
-        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+          {isRegister ? 'Create your account' : 'Sign in to your account'}
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          {isRegister
+            ? 'Get started with your engineering workspace'
+            : 'Welcome back! Please enter your credentials'}
+        </p>
       </div>
 
-      {/* ========================================================================= */}
-      {/* RIGHT COLUMN: AUTHENTICATION FORM                                         */}
-      {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-14 overflow-y-auto">
-        {/* Mobile Top Navbar (Hidden on Desktop) */}
-        <div className="lg:hidden flex items-center justify-between pb-6 border-b border-line/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-primary text-white flex items-center justify-center rounded-lg shadow-sm font-display font-bold text-sm">
-              ES
+      {/* Main Form Card */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-sm border border-gray-200 rounded-2xl sm:px-10">
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {isRegister && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={loading}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. John Doe"
+                    className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Team or Company Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={loading}
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="e.g. Engineering Team"
+                    className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
+                  />
+                </div>
+              </>
+            )}
+
             <div>
-              <span className="font-display font-bold text-base text-ink block">
-                EngineerSpace
-              </span>
-              <span className="text-[10px] text-muted block -mt-0.5">
-                Enterprise Workspace
-              </span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email address
+              </label>
+              <input
+                type="email"
+                required
+                disabled={loading}
+                value={email}
+                onMouseEnter={api.warmup}
+                onFocus={api.warmup}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus={!isRegister}
+                className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
+              />
             </div>
-          </div>
 
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span>System Online</span>
-          </span>
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  disabled={loading}
+                  value={password}
+                  onMouseEnter={api.warmup}
+                  onFocus={api.warmup}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isRegister ? 'Minimum 6 characters' : 'Enter your password'}
+                  className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
+                />
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-        {/* Form Container */}
-        <div className="w-full max-w-md mx-auto my-auto py-8 sm:py-12 space-y-7 animate-fade-in">
-          {/* Card Box */}
-          <div className="bg-white border border-line rounded-2xl shadow-card p-6 sm:p-8 space-y-6">
-            {/* Mode Switcher Tabs */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-center p-1 bg-paper-dark rounded-xl border border-line">
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                onMouseEnter={api.warmup}
+                className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-700 hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-colors disabled:opacity-60 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2 text-white" />
+                    <span>{statusMessage || (isRegister ? 'Creating account...' : 'Signing in...')}</span>
+                  </>
+                ) : (
+                  <span>{isRegister ? 'Create account' : 'Sign in'}</span>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Toggle between Sign in & Sign up */}
+          <div className="mt-6 pt-5 border-t border-gray-100 text-center text-sm text-gray-600">
+            {isRegister ? (
+              <span>
+                Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => {
                     setIsRegister(false);
                     setError(null);
                   }}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    !isRegister
-                      ? 'bg-white text-ink shadow-xs border border-line/60'
-                      : 'text-muted hover:text-ink'
-                  }`}
+                  className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
                 >
-                  Sign In
+                  Sign in
                 </button>
+              </span>
+            ) : (
+              <span>
+                Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => {
                     setIsRegister(true);
                     setError(null);
                   }}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    isRegister
-                      ? 'bg-white text-ink shadow-xs border border-line/60'
-                      : 'text-muted hover:text-ink'
-                  }`}
+                  className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
                 >
-                  Create Workspace
+                  Sign up
                 </button>
-              </div>
-
-              <div className="text-center space-y-1.5 pt-1">
-                <h1 className="font-display text-2xl font-bold text-ink tracking-tight">
-                  {isRegister ? 'Create Engineering Workspace' : 'Welcome back'}
-                </h1>
-                <p className="text-xs text-muted">
-                  {isRegister
-                    ? 'Register your team cohort and lead administrator account'
-                    : 'Enter your credentials to access your daily engineering portal'}
-                </p>
-              </div>
-            </div>
-
-            {/* Error Banner */}
-            {error && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl animate-fade-in flex items-start gap-2.5">
-                <span className="w-4 h-4 rounded-full bg-rose-200 text-rose-900 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                  !
-                </span>
-                <span className="leading-relaxed">{error}</span>
-              </div>
+              </span>
             )}
-
-            {/* Auth Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {isRegister && (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-ink">
-                      Team Name <span className="text-rose-600">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <Building2 className="w-4 h-4 text-muted absolute left-3.5 pointer-events-none" />
-                      <input
-                        type="text"
-                        required
-                        disabled={loading}
-                        value={teamName}
-                        onFocus={api.warmup}
-                        onChange={(e) => setTeamName(e.target.value)}
-                        placeholder="e.g. JVM CREW, CLOUD TITANS, DEV OPS"
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-paper-light border border-line hover:border-primary/40 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl text-xs font-sans text-ink transition-all min-h-[44px] outline-none disabled:opacity-60 placeholder:text-muted/60"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-ink">
-                      Team Lead Full Name <span className="text-rose-600">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <User className="w-4 h-4 text-muted absolute left-3.5 pointer-events-none" />
-                      <input
-                        type="text"
-                        required
-                        disabled={loading}
-                        value={name}
-                        onFocus={api.warmup}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Mohammed Arshad"
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-paper-light border border-line hover:border-primary/40 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl text-xs font-sans text-ink transition-all min-h-[44px] outline-none disabled:opacity-60 placeholder:text-muted/60"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-ink">
-                  Corporate Email Address <span className="text-rose-600">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <Mail className="w-4 h-4 text-muted absolute left-3.5 pointer-events-none" />
-                  <input
-                    type="email"
-                    required
-                    disabled={loading}
-                    value={email}
-                    onMouseEnter={api.warmup}
-                    onFocus={api.warmup}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-paper-light border border-line hover:border-primary/40 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl text-xs font-sans text-ink transition-all min-h-[44px] outline-none disabled:opacity-60 placeholder:text-muted/60"
-                    autoFocus={!isRegister}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-ink">
-                  Password <span className="text-rose-600">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <Lock className="w-4 h-4 text-muted absolute left-3.5 pointer-events-none" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    disabled={loading}
-                    value={password}
-                    onMouseEnter={api.warmup}
-                    onFocus={api.warmup}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={isRegister ? 'Minimum 6 characters' : 'Enter your password'}
-                    className="w-full pl-10 pr-10 py-2.5 bg-paper-light border border-line hover:border-primary/40 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl text-xs font-sans text-ink transition-all min-h-[44px] outline-none disabled:opacity-60 placeholder:text-muted/60"
-                  />
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-muted hover:text-ink p-1 disabled:opacity-50 transition-colors cursor-pointer"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  onMouseEnter={api.warmup}
-                  className="w-full py-3 px-4 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-xs hover-lift disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>{statusMessage || (isRegister ? 'Creating Workspace...' : 'Signing in...')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{isRegister ? 'Create Workspace & Account' : 'Sign In to Workspace'}</span>
-                      <ArrowRight className="w-4 h-4 text-emerald-200" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Trust Footer inside Card */}
-            <div className="pt-4 border-t border-line/70 flex items-center justify-center gap-4 text-xs text-muted">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                <span>JWT Secure</span>
-              </span>
-              <span>·</span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                <span>Role Isolation</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Bottom Switcher Note */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError(null);
-              }}
-              className="text-xs font-medium text-muted hover:text-primary transition-colors underline underline-offset-4 cursor-pointer"
-            >
-              {isRegister
-                ? 'Already have an active account? Sign In'
-                : 'Need to register a new engineering cohort? Create Workspace'}
-            </button>
           </div>
         </div>
 
-        {/* Right Column Footer */}
-        <footer className="w-full pt-4 text-center text-xs text-muted">
-          <p>EngineerSpace · Designed & Developed by Mohammed Arshad</p>
-        </footer>
+        {/* Simple Minimal Footer */}
+        <p className="mt-6 text-center text-xs text-gray-500">
+          &copy; {new Date().getFullYear()} EngineerSpace. All rights reserved.
+        </p>
       </div>
     </div>
   );
