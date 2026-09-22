@@ -2,18 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import {
-  Terminal,
-  Lock,
-  Mail,
-  ArrowRight,
   Eye,
   EyeOff,
-  User,
-  Users,
   Loader2,
-  Shield,
-  Activity,
-  Cpu,
+  AlertCircle,
+  Lock,
+  Mail,
+  User,
+  Building2,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -47,7 +43,7 @@ export const LoginPage: React.FC = () => {
         return;
       }
       if (!teamName.trim()) {
-        setError('Please enter your team name.');
+        setError('Please enter your team or company name.');
         return;
       }
       if (password.length < 6) {
@@ -58,7 +54,7 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
-    setStatusMessage(isRegister ? 'Creating Workspace...' : 'Authenticating...');
+    setStatusMessage(isRegister ? 'Creating account...' : 'Signing in...');
 
     const handleStatusUpdate = (msg: string) => {
       setStatusMessage(msg);
@@ -82,7 +78,7 @@ export const LoginPage: React.FC = () => {
       }
       window.dispatchEvent(new CustomEvent('jvm_fresh_login'));
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
       setStatusMessage(null);
@@ -90,157 +86,80 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070D0A] text-white flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans selection:bg-emerald-500/30 selection:text-emerald-300 relative overflow-hidden">
-      {/* ========================================================================= */}
-      {/* 1. UNIQUE DARK AMBIENT GLOW & CYBER GRID                                 */}
-      {/* ========================================================================= */}
-      
-      {/* Top Luminous Neon Orb */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-emerald-500/15 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
-
-      {/* Floating Emerald Glow Top-Left */}
-      <div className="absolute -top-20 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none animate-float-slow" />
-
-      {/* Floating Cyan/Teal Glow Bottom-Right */}
-      <div className="absolute -bottom-24 -right-24 w-[450px] h-[450px] bg-emerald-600/10 rounded-full blur-[110px] pointer-events-none animate-float-reverse" />
-
-      {/* High-Tech Animated Dark Grid */}
-      <div
-        className="absolute inset-0 opacity-[0.07] pointer-events-none animate-drift-grid"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, #10B981 1px, transparent 1px),
-            linear-gradient(to bottom, #10B981 1px, transparent 1px)
-          `,
-          backgroundSize: '36px 36px',
-        }}
-      />
-
-      {/* Radial Dark Vignette Falloff */}
-      <div className="absolute inset-0 bg-radial from-transparent via-[#070D0A]/60 to-[#070D0A] pointer-events-none" />
-
-      {/* Floating Interactive Live Tech Chips */}
-      <div className="hidden lg:flex absolute top-32 left-[10%] items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0E1812]/90 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] backdrop-blur-md font-mono text-[10px] text-emerald-300 animate-float-slow pointer-events-none">
-        <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-        <span>PostgreSQL Telemetry · 100% Real-Time</span>
-      </div>
-
-      <div className="hidden lg:flex absolute bottom-32 right-[10%] items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0E1812]/90 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] backdrop-blur-md font-mono text-[10px] text-emerald-300 animate-float-reverse pointer-events-none">
-        <Shield className="w-3.5 h-3.5 text-teal-400" />
-        <span>Enterprise JWT & Role Isolation</span>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 2. TOP DARK CYBER HEADER                                                  */}
-      {/* ========================================================================= */}
-      <div className="relative z-10 w-full max-w-5xl flex items-center justify-between py-2">
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center justify-center rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-transform hover:scale-105">
-            <Terminal className="w-4 h-4 text-emerald-300" />
-          </div>
-          <div>
-            <span className="font-display font-bold text-base tracking-tight text-white block">
-              EngineerSpace
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400/70 tracking-wider block -mt-0.5">
-              ENTERPRISE PLATFORM
-            </span>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+      {/* Centered Brand Header */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-700 text-white font-bold text-lg shadow-sm mb-4">
+          ES
         </div>
-
-        <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-500/30 font-mono text-[11px] font-semibold shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Workspace Active</span>
-          </span>
-        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+          {isRegister ? 'Create your account' : 'Sign in to EngineerSpace'}
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          {isRegister
+            ? 'Get started with your engineering workspace'
+            : 'Welcome back! Please enter your details to continue'}
+        </p>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 3. CENTERED DARK GLASSMORPHIC CARD                                        */}
-      {/* ========================================================================= */}
-      <div className="relative z-10 w-full max-w-[440px] my-auto py-6 animate-fade-in">
-        <div className="bg-[#0C1510]/85 border border-emerald-500/25 rounded-2xl p-7 sm:p-10 shadow-[0_0_50px_-10px_rgba(16,185,129,0.18)] backdrop-blur-xl space-y-6 relative overflow-hidden transition-all duration-300 hover:border-emerald-500/40">
-          
-          {/* Luminous Neon Gradient Top Accent Beam */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_10px_#10B981]" />
-
-          {/* Card Emblem & Header */}
-          <div className="text-center space-y-2.5">
-            <div className="w-14 h-14 bg-gradient-to-br from-emerald-900/80 to-[#07130C] border border-emerald-500/40 text-emerald-300 mx-auto flex items-center justify-center rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-transform duration-200 hover:scale-110 group cursor-default">
-              <Cpu className="w-7 h-7 text-emerald-400 group-hover:rotate-12 transition-transform duration-300" />
-            </div>
-            <h1 className="font-display text-2xl font-bold text-white tracking-tight">
-              {isRegister ? 'Register Workspace & Lead' : 'Sign In to Workspace'}
-            </h1>
-            <p className="text-xs text-emerald-100/60 font-sans">
-              {isRegister
-                ? 'Create your engineering team cohort and lead administrator account'
-                : 'Enter your credentials to access your engineering cockpit'}
-            </p>
-          </div>
-
+      {/* Main Form Card */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+        <div className="bg-white py-8 px-6 shadow-sm border border-gray-200 rounded-2xl sm:px-10">
           {/* Error Banner */}
           {error && (
-            <div className="p-3 bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs rounded-xl animate-fade-in flex items-center space-x-2">
-              <span className="font-mono text-xs font-bold text-rose-400 shrink-0">!</span>
+            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Auth Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {isRegister && (
               <>
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium text-emerald-100/90">
-                    Full Name (Team Lead) <span className="text-emerald-400">*</span>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
                   </label>
-                  <div className="relative flex items-center">
-                    <User className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
+                  <div className="relative">
+                    <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
                     <input
                       type="text"
                       required
                       disabled={loading}
                       value={name}
-                      onFocus={api.warmup}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Mohammed Arshad"
-                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
+                      placeholder="e.g. John Doe"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium text-emerald-100/90">
-                    Team Name <span className="text-emerald-400">*</span>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Team or Company Name
                   </label>
-                  <div className="relative flex items-center">
-                    <Users className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
+                  <div className="relative">
+                    <Building2 className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
                     <input
                       type="text"
                       required
                       disabled={loading}
                       value={teamName}
-                      onFocus={api.warmup}
                       onChange={(e) => setTeamName(e.target.value)}
-                      placeholder="e.g. JVM CREW, PHOENIX, TITANS"
-                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
+                      placeholder="e.g. Engineering Team"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
                     />
                   </div>
-                  <p className="text-[11px] font-mono text-emerald-400/70">
-                    Team identity: <span className="font-bold text-white">{teamName.trim() || '[Team Name]'}</span>
-                  </p>
                 </div>
               </>
             )}
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-emerald-100/90">
-                {isRegister ? 'Email / Corporate Email *' : 'Email Address'}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email address
               </label>
-              <div className="relative flex items-center">
-                <Mail className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
+              <div className="relative">
+                <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
                 <input
                   type="email"
                   required
@@ -253,18 +172,18 @@ export const LoginPage: React.FC = () => {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs font-mono text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
                   autoFocus={!isRegister}
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-emerald-100/90">
-                Password <span className="text-emerald-400">*</span>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
               </label>
-              <div className="relative flex items-center">
-                <Lock className="w-4 h-4 text-emerald-400/60 absolute left-3.5 pointer-events-none" />
+              <div className="relative">
+                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -273,15 +192,15 @@ export const LoginPage: React.FC = () => {
                   onMouseEnter={api.warmup}
                   onFocus={api.warmup}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isRegister ? 'Create secure password (min 6 chars)' : '••••••••••••'}
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#121E17] border border-emerald-900/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs font-mono text-white placeholder:text-emerald-100/30 outline-none transition-all min-h-[42px] disabled:opacity-60"
+                  placeholder={isRegister ? 'Minimum 6 characters' : 'Enter your password'}
+                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors disabled:bg-gray-50"
                 />
                 <button
                   type="button"
                   disabled={loading}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 text-emerald-400/60 hover:text-emerald-300 p-1 disabled:opacity-50 transition-colors cursor-pointer"
-                  aria-label="Toggle password visibility"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -297,50 +216,58 @@ export const LoginPage: React.FC = () => {
                 type="submit"
                 disabled={loading}
                 onMouseEnter={api.warmup}
-                className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(16,185,129,0.35)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+                className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-700 hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-colors disabled:opacity-60 cursor-pointer min-h-[42px]"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>{statusMessage || (isRegister ? 'Creating Workspace...' : 'Authenticating...')}</span>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2 text-white" />
+                    <span>{statusMessage || (isRegister ? 'Creating account...' : 'Signing in...')}</span>
                   </>
                 ) : (
-                  <>
-                    <span>{isRegister ? 'Create Workspace & Account' : 'Sign In to Workspace'}</span>
-                    <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform" />
-                  </>
+                  <span>{isRegister ? 'Create account' : 'Sign in'}</span>
                 )}
               </button>
             </div>
           </form>
 
-          {/* Footer toggle */}
-          <div className="pt-4 border-t border-emerald-500/20 flex items-center justify-center text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError(null);
-              }}
-              className="text-emerald-400 hover:text-emerald-300 hover:underline font-medium cursor-pointer transition-colors"
-            >
-              {isRegister ? '← Already have an account? Sign In' : 'Register New Team Workspace →'}
-            </button>
+          {/* Toggle between Sign in & Sign up */}
+          <div className="mt-6 pt-5 border-t border-gray-100 text-center text-sm text-gray-600">
+            {isRegister ? (
+              <span>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegister(false);
+                    setError(null);
+                  }}
+                  className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                >
+                  Sign in
+                </button>
+              </span>
+            ) : (
+              <span>
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegister(true);
+                    setError(null);
+                  }}
+                  className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                >
+                  Sign up
+                </button>
+              </span>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* ========================================================================= */}
-      {/* 4. DARK FOOTER                                                            */}
-      {/* ========================================================================= */}
-      <div className="relative z-10 w-full max-w-5xl py-3 border-t border-emerald-500/15 flex flex-col sm:flex-row items-center justify-between text-xs text-emerald-100/50 gap-2 mt-auto">
-        <span className="font-medium text-emerald-200/80 tracking-tight">
-          EngineerSpace · Built by Mohammed Arshad
-        </span>
-        <div className="flex items-center space-x-2 text-[11px] font-mono text-emerald-400/60">
-          <Shield className="w-3.5 h-3.5 text-emerald-400" />
-          <span>PostgreSQL Persistence · 256-bit Encrypted</span>
-        </div>
+        {/* Simple Minimal Footer */}
+        <p className="mt-6 text-center text-xs text-gray-500">
+          &copy; {new Date().getFullYear()} EngineerSpace. All rights reserved.
+        </p>
       </div>
     </div>
   );
