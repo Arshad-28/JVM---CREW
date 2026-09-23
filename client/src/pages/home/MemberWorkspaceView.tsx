@@ -162,23 +162,20 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
   return (
     <div className="space-y-6 max-w-6xl mx-auto font-sans animate-fade-in pb-10">
       {/* ========================================================================= */}
-      {/* 1. EXECUTIVE HERO BAR (Elevated, Vibrant, Premium SaaS Cockpit)            */}
+      {/* 1. EXECUTIVE HERO BAR (Clean, Human-Designed Engineering Cockpit)          */}
       {/* ========================================================================= */}
-      <div className="bg-gradient-to-br from-paper-light via-paper to-paper-light border border-line rounded-2xl p-6 sm:p-7 shadow-xs space-y-4 relative overflow-hidden transition-all duration-300 hover:shadow-card-hover group">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/8 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4 group-hover:scale-110 transition-transform duration-700" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-ochre/5 rounded-full blur-2xl pointer-events-none translate-y-1/2 -translate-x-1/4" />
-        
+      <div className="bg-paper border border-line rounded-xl p-6 sm:p-7 shadow-xs space-y-4 relative overflow-hidden transition-colors duration-150">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           {/* Left: Greeting & Context */}
-          <div className="space-y-2.5 min-w-0">
+          <div className="space-y-2 min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-              <span className="font-bold px-2.5 py-0.5 rounded-full bg-paper border border-line-dark/60 text-ink shadow-2xs">
+              <span className="font-bold px-2.5 py-0.5 rounded-md bg-paper border border-line-dark/60 text-ink shadow-2xs">
                 {user.serialNumber || data.serialNumber || 'MEMBER'}
               </span>
               <span className="text-muted/60">·</span>
               <span className="text-muted font-medium">{user.position || data.position || 'SDE Intern'}</span>
               <span className="text-muted/60">·</span>
-              <span className="text-ink font-semibold px-2.5 py-0.5 rounded-full bg-paper-dark border border-line/70 text-[11px]">
+              <span className="text-ink font-semibold px-2.5 py-0.5 rounded-md bg-paper-dark border border-line/70 text-[11px]">
                 {data.teamName}
               </span>
               <span className="text-muted/60">·</span>
@@ -186,21 +183,17 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             <div className="space-y-1">
-              <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink tracking-tight flex items-center gap-2">
-                <span>{greetingTitle}</span>
-                <span className="inline-block animate-wave origin-[70%_70%]">👋</span>
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+                {greetingTitle}
               </h1>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-              <div className="inline-flex items-center space-x-2 text-xs font-mono text-muted bg-paper-light/95 border border-line/80 px-3 py-1 rounded-full shadow-2xs">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
+              <div className="inline-flex items-center space-x-2 text-xs font-mono text-muted bg-paper-light border border-line/80 px-3 py-1 rounded-md shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <span className="truncate">{dailyContext}</span>
               </div>
-              <span className="text-[11px] font-bold text-primary px-2.5 py-0.5 rounded-full bg-primary-soft border border-primary/20">
+              <span className="text-[11px] font-bold text-primary px-2.5 py-0.5 rounded-md bg-primary-soft border border-primary/20">
                 ACTIVE SPRINT
               </span>
             </div>
@@ -216,9 +209,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   setStandupModalMode('WRITE');
                   setStandupModalOpen(true);
                 }}
-                className="px-5 py-3 bg-gradient-to-r from-primary via-[#244A37] to-[#1C3A2C] text-white hover:from-primary-hover hover:to-[#173225] active:scale-95 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center space-x-2.5 shadow-[0_4px_16px_rgba(45,90,67,0.3)] hover:shadow-[0_6px_22px_rgba(45,90,67,0.4)] hover:-translate-y-0.5 cursor-pointer"
+                className="px-4 py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white rounded-lg font-mono text-xs font-semibold transition-colors duration-150 flex items-center space-x-2 shadow-2xs cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-emerald-300 animate-pulse" />
+                <Calendar className="w-4 h-4 text-white/90" />
                 <span>Submit Daily Standup</span>
               </button>
             ) : (
@@ -229,7 +222,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   setStandupModalMode('VIEW');
                   setStandupModalOpen(true);
                 }}
-                className="px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/35 text-emerald-800 hover:bg-emerald-500/20 active:scale-95 rounded-xl font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-2 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
+                className="px-3.5 py-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/20 active:scale-[0.98] rounded-lg font-mono text-xs font-semibold transition-colors duration-150 flex items-center space-x-2 shadow-2xs cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Standup Recorded ✓</span>
@@ -239,7 +232,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             {!isCurrentLead && (
               <button
                 onClick={() => setAskLeadOpen(true)}
-                className="px-4 py-2.5 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-ink rounded-xl font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-2 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
+                className="px-3.5 py-2.5 bg-paper hover:bg-paper-dark active:scale-[0.98] border border-line hover:border-line-dark text-ink rounded-lg font-mono text-xs font-semibold transition-colors duration-150 flex items-center space-x-2 shadow-2xs cursor-pointer"
                 title="Send a quick question to your Team Lead"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-primary" />
@@ -249,7 +242,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
             <button
               onClick={() => setLeaveModalOpen(true)}
-              className="p-3 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-muted hover:text-ink rounded-xl transition-all duration-150 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
+              className="p-2.5 bg-paper hover:bg-paper-dark active:scale-[0.98] border border-line hover:border-line-dark text-muted hover:text-ink rounded-lg transition-colors duration-150 shadow-2xs cursor-pointer"
               title="Generate Leave Request Email"
               aria-label="Generate Leave Request Email"
             >
@@ -260,9 +253,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. CORE TELEMETRY METRICS (4 balanced, interactive KPI cards)              */}
+      {/* 2. CORE TELEMETRY METRICS (4 clean, human-designed KPI cards)               */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* CARD 1: DAILY STANDUP */}
         <div
           onClick={() => {
@@ -277,18 +270,18 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             }
             setStandupModalOpen(true);
           }}
-          className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group ${
+          className={`p-4 sm:p-5 rounded-xl border transition-colors duration-150 cursor-pointer shadow-xs flex flex-col justify-between ${
             isSubmittedToday
-              ? 'bg-emerald-500/5 border-emerald-500/30 hover:border-emerald-600'
-              : 'bg-paper border-line hover:border-amber-500/50'
+              ? 'bg-paper border-emerald-500/30 hover:border-emerald-500/60'
+              : 'bg-paper border-line hover:border-line-dark'
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Daily Standup</span>
-            <div className={`p-2.5 rounded-xl transition-all duration-200 shadow-2xs ${
+            <div className={`p-2 rounded-lg transition-colors ${
               isSubmittedToday
-                ? 'bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-600 border border-emerald-500/30 group-hover:scale-105'
-                : 'bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-600 border border-amber-500/30 group-hover:scale-105'
+                ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
+                : 'bg-paper-dark text-muted border border-line'
             }`}>
               <Calendar className="w-4 h-4" />
             </div>
@@ -296,11 +289,11 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
           
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-              <span className={`font-mono text-xl sm:text-2xl font-black block leading-none tracking-tight ${
+              <span className={`w-2 h-2 rounded-full shrink-0 ${isSubmittedToday ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className={`font-mono text-xl sm:text-2xl font-bold block leading-none tracking-tight ${
                 isSubmittedToday ? 'text-emerald-700' : 'text-amber-700'
               }`}>
-                {isSubmittedToday ? 'DONE ✓' : 'PENDING'}
+                {isSubmittedToday ? 'COMPLETED' : 'PENDING'}
               </span>
             </div>
           </div>
@@ -310,18 +303,16 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               <span className="truncate">
                 {isSubmittedToday && todayStandup?.submittedAt
                   ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
-                  : 'Action required today'}
+                  : 'Action needed today'}
               </span>
-              <span className={`px-1.5 py-0.2 rounded-xs font-bold text-[9px] uppercase ${
-                isSubmittedToday ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700'
-              }`}>
-                {isSubmittedToday ? 'RECORDED' : '2 MIN'}
+              <span className="text-[10px] font-semibold text-primary">
+                {isSubmittedToday ? 'View →' : 'Submit →'}
               </span>
             </div>
-            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isSubmittedToday ? 'w-full bg-gradient-to-r from-emerald-500 to-teal-400' : 'w-1/4 bg-gradient-to-r from-amber-500 to-orange-400 animate-pulse'
+                className={`h-full rounded-full transition-all duration-300 ${
+                  isSubmittedToday ? 'w-full bg-emerald-500' : 'w-1/4 bg-amber-500'
                 }`}
               />
             </div>
@@ -331,23 +322,23 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         {/* CARD 2: MY TASKS */}
         <div
           onClick={() => onNavigateTab('tasks')}
-          className="p-5 bg-paper border border-line hover:border-blue-500/50 rounded-2xl transition-all duration-200 cursor-pointer shadow-xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
+          className="p-4 sm:p-5 bg-paper border border-line hover:border-line-dark rounded-xl transition-colors duration-150 cursor-pointer shadow-xs flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">My Tasks</span>
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/10 text-blue-600 border border-blue-500/30 shadow-2xs group-hover:scale-105 transition-all duration-200">
+            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-700 border border-blue-500/20">
               <CheckSquare className="w-4 h-4" />
             </div>
           </div>
           
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
+              <span className="font-mono text-2xl sm:text-3xl font-extrabold text-ink block leading-none tracking-tight">
                 {data.openTasksCount}
               </span>
               {data.openTasksCount === 0 && (
                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-mono text-[10px] font-bold">
-                  ALL CLEAR
+                  CLEAR
                 </span>
               )}
             </div>
@@ -358,13 +349,13 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               <span className="truncate">
                 {data.tasksDueTodayCount > 0
                   ? `${data.tasksDueTodayCount} due today`
-                  : `${data.lifetimeCompletedTasks} completed lifetime`}
+                  : `${data.lifetimeCompletedTasks || 0} completed`}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
             </div>
-            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                className="h-full rounded-full bg-primary transition-all duration-300"
                 style={{
                   width: `${data.openTasksCount === 0 ? 100 : Math.min(100, Math.max(15, ((data.lifetimeCompletedTasks || 0) / Math.max(1, (data.lifetimeCompletedTasks || 0) + (data.openTasksCount || 0))) * 100))}%`
                 }}
@@ -376,23 +367,23 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         {/* CARD 3: HOMEWORK */}
         <div
           onClick={() => onNavigateTab('homework')}
-          className="p-5 bg-paper border border-line hover:border-amber-500/50 rounded-2xl transition-all duration-200 cursor-pointer shadow-xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
+          className="p-4 sm:p-5 bg-paper border border-line hover:border-line-dark rounded-xl transition-colors duration-150 cursor-pointer shadow-xs flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Homework & Labs</span>
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-600 border border-amber-500/30 shadow-2xs group-hover:scale-105 transition-all duration-200">
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-500/20">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
 
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
+              <span className="font-mono text-2xl sm:text-3xl font-extrabold text-ink block leading-none tracking-tight">
                 {data.pendingHomeworkCount}
               </span>
               {data.pendingHomeworkCount === 0 && (
                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-mono text-[10px] font-bold">
-                  UP TO DATE
+                  CLEAR
                 </span>
               )}
             </div>
@@ -402,14 +393,14 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             <div className="flex items-center justify-between font-mono text-[10px] text-muted">
               <span className="truncate">
                 {data.totalHomeworkCount > 0
-                  ? `${data.totalHomeworkCount - data.pendingHomeworkCount}/${data.totalHomeworkCount} assignments turned in`
-                  : 'All assignments cleared ✓'}
+                  ? `${data.totalHomeworkCount - data.pendingHomeworkCount}/${data.totalHomeworkCount} submitted`
+                  : 'All coursework done'}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
             </div>
-            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-500"
+                className="h-full rounded-full bg-amber-600 transition-all duration-300"
                 style={{
                   width: `${data.totalHomeworkCount > 0 ? Math.min(100, Math.max(15, ((data.totalHomeworkCount - data.pendingHomeworkCount) / data.totalHomeworkCount) * 100)) : 100}%`
                 }}
@@ -425,18 +416,18 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               setAskLeadOpen(true);
             }
           }}
-          className={`p-5 rounded-2xl border transition-all duration-200 shadow-xs flex flex-col justify-between ${
+          className={`p-4 sm:p-5 rounded-xl border transition-colors duration-150 shadow-xs flex flex-col justify-between ${
             data.openBlockersCount > 0
-              ? 'bg-rose-500/5 border-rose-500/30 hover:border-rose-500 cursor-pointer hover:shadow-card-hover hover:-translate-y-1 group'
-              : 'bg-paper border-line hover:border-emerald-500/50 hover:shadow-card-hover hover:-translate-y-1 group cursor-default'
+              ? 'bg-paper border-rose-500/40 hover:border-rose-500 cursor-pointer'
+              : 'bg-paper border-line hover:border-line-dark cursor-default'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Blockers & Support</span>
-            <div className={`p-2.5 rounded-xl transition-all duration-200 shadow-2xs ${
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Blockers</span>
+            <div className={`p-2 rounded-lg transition-colors ${
               data.openBlockersCount > 0
-                ? 'bg-gradient-to-br from-rose-500/20 to-red-500/10 text-rose-600 border border-rose-500/30 group-hover:scale-105'
-                : 'bg-gradient-to-br from-emerald-500/15 to-teal-500/10 text-emerald-600 border border-emerald-500/25 group-hover:scale-105'
+                ? 'bg-rose-500/10 text-rose-700 border border-rose-500/20'
+                : 'bg-paper-dark text-muted border border-line'
             }`}>
               <Shield className="w-4 h-4" />
             </div>
@@ -444,14 +435,14 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className={`font-mono text-3xl font-black block leading-none tracking-tight ${
+              <span className={`font-mono text-2xl sm:text-3xl font-extrabold block leading-none tracking-tight ${
                 data.openBlockersCount > 0 ? 'text-rose-700' : 'text-ink'
               }`}>
                 {data.openBlockersCount}
               </span>
               {data.openBlockersCount === 0 && (
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-mono text-[10px] font-bold">
-                  ZERO FLAGS
+                <span className="px-2 py-0.5 rounded-md bg-paper-dark border border-line text-muted font-mono text-[10px] font-semibold">
+                  NONE
                 </span>
               )}
             </div>
@@ -459,12 +450,12 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
           <div className="space-y-2 pt-1 border-t border-line/60">
             <span className="font-mono text-[10px] text-muted truncate block">
-              {data.openBlockersCount > 0 ? 'Requires Lead assistance' : 'No blockers flagged · Full velocity'}
+              {data.openBlockersCount > 0 ? 'Lead assistance requested' : 'Full velocity · No blockers'}
             </span>
-            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-gradient-to-r from-emerald-500 to-teal-400'
+                className={`h-full rounded-full transition-all duration-300 ${
+                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-primary/40'
                 }`}
               />
             </div>
@@ -520,23 +511,23 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             {(!data.focusItems || data.focusItems.length === 0) ? (
-              <div className="p-5 sm:p-6 bg-gradient-to-br from-paper-light via-paper to-paper-dark/30 rounded-xl border border-line/80 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-line/60">
+              <div className="p-5 sm:p-6 bg-paper-light rounded-xl border border-line space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-line">
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-600 border border-emerald-500/30 flex items-center justify-center shadow-2xs shrink-0">
-                      <CheckCircle2 className="w-5 h-5" />
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div>
                       <h3 className="font-display text-sm font-bold text-ink">
-                        Sprint Runway is Clear
+                        Daily Priorities Clear
                       </h3>
                       <p className="font-mono text-[11px] text-muted">
-                        No urgent deadlines or bottlenecks today. Accelerate your progression:
+                        No urgent deadlines or pending blockers today. Recommended focus areas:
                       </p>
                     </div>
                   </div>
-                  <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full uppercase self-start sm:self-center shrink-0">
-                    100% OPERATIONAL
+                  <span className="font-mono text-[10px] font-semibold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-md uppercase self-start sm:self-center shrink-0">
+                    CLEAR
                   </span>
                 </div>
 
@@ -544,15 +535,15 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   {/* Quick Action 1: Interview Lab */}
                   <div
                     onClick={() => onNavigateTab('interview')}
-                    className="p-3.5 bg-paper hover:bg-paper-light border border-line hover:border-primary/40 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-0.5 group flex flex-col justify-between"
+                    className="p-3.5 bg-paper hover:bg-paper-dark border border-line hover:border-line-dark rounded-xl transition-colors duration-150 cursor-pointer shadow-xs group flex flex-col justify-between"
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Sparkles className="w-3.5 h-3.5 text-primary" />
                           <span>INTERVIEW LAB</span>
                         </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
                       </div>
                       <h4 className="font-sans text-xs font-bold text-ink group-hover:text-primary transition-colors">
                         Practice Technical Interviews
@@ -572,7 +563,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   {/* Quick Action 2: Kanban Board */}
                   <div
                     onClick={() => onNavigateTab('tasks')}
-                    className="p-3.5 bg-paper hover:bg-paper-light border border-line hover:border-primary/40 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-0.5 group flex flex-col justify-between"
+                    className="p-3.5 bg-paper hover:bg-paper-dark border border-line hover:border-line-dark rounded-xl transition-colors duration-150 cursor-pointer shadow-xs group flex flex-col justify-between"
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -580,7 +571,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                           <CheckSquare className="w-3.5 h-3.5 text-blue-600" />
                           <span>SPRINT BACKLOG</span>
                         </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
                       </div>
                       <h4 className="font-sans text-xs font-bold text-ink group-hover:text-primary transition-colors">
                         Explore Sprint Kanban Board
@@ -625,7 +616,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   return (
                     <div
                       key={item.id || idx}
-                      className={`p-3.5 bg-paper-light border border-line hover:border-line-dark border-l-4 ${borderAccent} rounded-lg transition-all duration-200 flex items-center justify-between gap-3 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 group`}
+                      className={`p-3.5 bg-paper-light border border-line hover:border-line-dark border-l-4 ${borderAccent} rounded-lg transition-colors duration-150 flex items-center justify-between gap-3 shadow-2xs group`}
                     >
                       <div className="min-w-0 space-y-1">
                         <div className="flex items-center space-x-2">
@@ -647,7 +638,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                           else if (isBlocker) setAskLeadOpen(true);
                           else onNavigateTab('tasks');
                         }}
-                        className="shrink-0 px-3 py-1.5 bg-paper hover:bg-paper-dark border border-line font-mono text-xs font-bold text-ink rounded-md transition-all duration-150 flex items-center space-x-1.5 shadow-2xs hover:shadow-xs cursor-pointer"
+                        className="shrink-0 px-3 py-1.5 bg-paper hover:bg-paper-dark border border-line font-mono text-xs font-semibold text-ink rounded-md transition-colors duration-150 flex items-center space-x-1.5 shadow-2xs cursor-pointer"
                       >
                         <span>{item.actionLabel}</span>
                         <ArrowRight className="w-3 h-3 text-muted group-hover:translate-x-0.5 transition-transform" />
@@ -753,12 +744,12 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             {/* PART 1: YOUR STANDUP */}
-            <div className={`p-4.5 rounded-xl border space-y-3.5 transition-all duration-200 ${
-              isSubmittedToday ? 'bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40' : 'bg-gradient-to-br from-paper-light via-paper to-paper-light border-line hover:border-line-dark shadow-2xs'
+            <div className={`p-4.5 rounded-xl border space-y-3.5 transition-colors duration-150 ${
+              isSubmittedToday ? 'bg-paper border-emerald-500/25' : 'bg-paper border-line'
             }`}>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-600' : 'bg-amber-500 animate-pulse'}`} />
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${isSubmittedToday ? 'bg-emerald-600' : 'bg-amber-500'}`} />
                   <span>My Daily Briefing</span>
                 </span>
                 <span className="font-mono text-[10px] text-muted font-semibold">
@@ -781,7 +772,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('WRITE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-2.5 px-3 bg-paper hover:bg-paper-light border border-line hover:border-ink font-mono text-xs font-bold text-ink rounded-xl transition-all duration-150 flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
+                      className="flex-1 py-2.5 px-3 bg-paper hover:bg-paper-dark border border-line hover:border-line-dark font-mono text-xs font-semibold text-ink rounded-lg transition-colors duration-150 flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer"
                     >
                       <PenTool className="w-3.5 h-3.5 text-primary" />
                       <span>Write Standup</span>
@@ -793,9 +784,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('VOICE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-2.5 px-3 bg-gradient-to-r from-primary to-[#1D4030] text-white hover:from-primary-hover hover:to-[#173225] font-mono text-xs font-bold rounded-xl transition-all duration-150 flex items-center justify-center space-x-2 shadow-[0_4px_12px_rgba(45,90,67,0.25)] hover:shadow-[0_6px_18px_rgba(45,90,67,0.35)] hover:-translate-y-0.5 cursor-pointer"
+                      className="flex-1 py-2.5 px-3 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-mono text-xs font-semibold rounded-lg transition-colors duration-150 flex items-center justify-center space-x-2 shadow-2xs cursor-pointer"
                     >
-                      <Mic className="w-3.5 h-3.5 text-emerald-300 animate-pulse" />
+                      <Mic className="w-3.5 h-3.5 text-white/90" />
                       <span>Record Voice</span>
                     </button>
                   </div>

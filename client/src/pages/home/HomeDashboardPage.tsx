@@ -23,10 +23,7 @@ export const HomeDashboardPage: React.FC<HomeDashboardPageProps> = ({ onNavigate
         <div className="bg-gradient-to-r from-paper-light via-paper to-paper-light border border-line rounded-xl p-3 px-4 flex flex-col sm:flex-row items-center justify-between gap-3.5 shadow-xs transition-all duration-200 animate-fade-in">
           <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono">
             <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-primary-soft border border-primary/25 text-primary text-[11px] font-bold shadow-2xs">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
+              <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
               <span>LEAD DESK</span>
             </span>
             <span className="font-bold text-ink text-xs">{user?.name}</span>
