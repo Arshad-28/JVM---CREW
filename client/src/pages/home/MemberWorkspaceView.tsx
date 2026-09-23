@@ -744,8 +744,8 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             {/* PART 1: YOUR STANDUP */}
-            <div className={`p-4.5 rounded-xl border space-y-3.5 transition-colors duration-150 ${
-              isSubmittedToday ? 'bg-paper border-emerald-500/25' : 'bg-paper border-line'
+            <div className={`p-4 sm:p-5 rounded-xl border space-y-3.5 transition-colors duration-150 ${
+              isSubmittedToday ? 'bg-paper-light border-emerald-500/30' : 'bg-paper-light border-line'
             }`}>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-2">
@@ -764,7 +764,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   <p className="text-xs text-muted font-sans leading-relaxed">
                     Share your yesterday progress, today's targets, and any blockers with your team in 2 minutes.
                   </p>
-                  <div className="flex items-center gap-2.5 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                     <button
                       onClick={() => {
                         setStandupModalViewOnly(false);
@@ -772,7 +772,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('WRITE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-2.5 px-3 bg-paper hover:bg-paper-dark border border-line hover:border-line-dark font-mono text-xs font-semibold text-ink rounded-lg transition-colors duration-150 flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer"
+                      className="py-2.5 px-3 bg-paper hover:bg-paper-dark border border-line hover:border-line-dark font-mono text-xs font-semibold text-ink rounded-lg transition-colors duration-150 flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer"
                     >
                       <PenTool className="w-3.5 h-3.5 text-primary" />
                       <span>Write Standup</span>
@@ -784,7 +784,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('VOICE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-2.5 px-3 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-mono text-xs font-semibold rounded-lg transition-colors duration-150 flex items-center justify-center space-x-2 shadow-2xs cursor-pointer"
+                      className="py-2.5 px-3 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-mono text-xs font-semibold rounded-lg transition-colors duration-150 flex items-center justify-center space-x-2 shadow-2xs cursor-pointer"
                     >
                       <Mic className="w-3.5 h-3.5 text-white/90" />
                       <span>Record Voice</span>

@@ -182,7 +182,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
         <button
           type="button"
           onClick={handleClose}
-          className="group flex items-center space-x-2 px-3.5 py-1.5 rounded-full border border-slate-200/80 bg-white/90 hover:bg-white text-slate-700 hover:text-slate-900 transition-all duration-150 shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/20"
+          className="group flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-all duration-150 shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/20"
           title="Return to workspace (Esc)"
           aria-label="Back to Workspace"
         >
@@ -297,10 +297,13 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] h-[48px] sm:h-[50px] rounded-full bg-[#0B4EA2] hover:bg-[#083D82] active:scale-95 text-white font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/30"
+              className="group inline-flex items-center justify-center space-x-3 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#0B4EA2] hover:bg-[#083D82] active:scale-[0.98] text-white font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-md hover:shadow-lg border border-white/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/40"
             >
-              <ArrowLeft className="w-4 h-4 text-white group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-4 h-4 text-white group-hover:-translate-x-1 transition-transform duration-150" />
               <span>RETURN TO WORKSPACE</span>
+              <span className="font-mono text-[10px] font-bold text-white/90 bg-white/20 px-2 py-0.5 rounded-md border border-white/25">
+                ESC
+              </span>
             </button>
           </div>
         </div>
