@@ -341,7 +341,7 @@ export const api = {
     );
   },
 
-  async register(data: { name: string; email: string; password: string; teamName?: string }, onStatus?: AuthStatusCallback): Promise<AuthUser> {
+  async register(data: { name: string; email: string; password: string; teamName?: string; authUserId?: string }, onStatus?: AuthStatusCallback): Promise<AuthUser> {
     return executeAuthWithRetry(
       async (statusCb) => {
         const res = await fetchWithAdaptiveTimeout(

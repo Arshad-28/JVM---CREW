@@ -34,7 +34,7 @@ export const TeamManagementSection: React.FC = () => {
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberPassword, setNewMemberPassword] = useState('password123');
+  const [newMemberPassword, setNewMemberPassword] = useState('');
   const [newMemberPhone, setNewMemberPhone] = useState('');
   const [newMemberCollege, setNewMemberCollege] = useState('');
   const [newMemberOrg, setNewMemberOrg] = useState('Algorithms365');
@@ -122,13 +122,17 @@ export const TeamManagementSection: React.FC = () => {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newMemberPassword || newMemberPassword.length < 6) {
+      setErrorMsg('Please specify an initial password of at least 6 characters for the intern.');
+      return;
+    }
     try {
       setSubmitting(true);
       setErrorMsg(null);
       const updated = await api.addTeamMember({
         email: newMemberEmail,
         name: newMemberName,
-        password: newMemberPassword || 'password123',
+        password: newMemberPassword.trim(),
         phoneNumber: newMemberPhone,
         college: newMemberCollege,
         organization: newMemberOrg,
@@ -142,7 +146,7 @@ export const TeamManagementSection: React.FC = () => {
       setAddMemberModalOpen(false);
       setNewMemberEmail('');
       setNewMemberName('');
-      setNewMemberPassword('password123');
+      setNewMemberPassword('');
       setNewMemberPhone('');
       setNewMemberCollege('');
       setNewMemberOrg('Algorithms365');
@@ -151,7 +155,7 @@ export const TeamManagementSection: React.FC = () => {
       setNewMemberLinkedin('');
       setNewMemberGithub('');
       setNewMemberTransfer(false);
-      setSuccessMsg('Member onboarded to team with social profiles successfully.');
+      setSuccessMsg('Member onboarded to team and Supabase Auth credentials provisioned successfully.');
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to add team member');
@@ -718,12 +722,14 @@ export const TeamManagementSection: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="space-y-1">
-                  <label className="text-muted font-bold block uppercase text-[10px]">Password / Initial Credentials</label>
+                  <label className="text-muted font-bold block uppercase text-[10px]">Initial Password * (Min 6 chars)</label>
                   <input
                     type="text"
                     value={newMemberPassword}
                     onChange={(e) => setNewMemberPassword(e.target.value)}
-                    placeholder="password123"
+                    placeholder="Enter initial password"
+                    minLength={6}
+                    required
                     className="w-full p-2 bg-paper border border-line rounded-xs text-ink font-mono"
                   />
                 </div>

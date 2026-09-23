@@ -1,13 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthUser } from '../types';
 import { api, ApiError } from '../services/api';
+import { supabase } from '../services/supabase';
 
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string, onStatus?: (status: string) => void) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }, onStatus?: (status: string) => void) => Promise<void>;
-  logout: () => void;
+  register: (
+    data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' },
+    onStatus?: (status: string) => void
+  ) => Promise<void>;
+  logout: () => Promise<void>;
   updateAccount: (data: {
     name: string;
     email: string;
@@ -58,17 +62,29 @@ const getCachedUser = (): AuthUser | null => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(getCachedUser);
   const [loading, setLoading] = useState<boolean>(() => {
-    // If we have a stored token but NO cached user, show quick loading while fetching.
-    // If we have a cached user, loading is FALSE (instant render) and we verify in background.
     return hasStoredToken() && !getCachedUser();
   });
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Listen to Supabase Auth state changes (token refresh, signout)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      if (session?.access_token) {
+        localStorage.setItem('jvmcrew_token', session.access_token);
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('jvmcrew_token');
+        localStorage.removeItem('jvmcrew_cached_user');
+        setUser(null);
+      }
+    });
+
     const isValidToken = hasStoredToken();
 
     if (isValidToken) {
-      let isMounted = true;
-
       // Trigger non-blocking backend warmup
       api.warmup();
 
@@ -108,7 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } else {
             console.warn('Backend waking or network delayed; preserving session state:', err?.message || err);
-            // Retain cached user during cold starts or transient drops
           }
         })
         .finally(() => {
@@ -116,33 +131,115 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(false);
           }
         });
-
-      return () => {
-        isMounted = false;
-      };
     } else {
       setLoading(false);
     }
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string, onStatus?: (status: string) => void) => {
-    const authData = await api.login(email, password, onStatus);
-    if (authData && authData.token) {
+    onStatus?.('Authenticating credentials...');
+    const trimmedEmail = email.trim().toLowerCase();
+    let supaToken: string | null = null;
+    let authUser: AuthUser | null = null;
+
+    // 1. Attempt Supabase Auth sign-in
+    try {
+      const { data: supaData, error: supaErr } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: password.trim(),
+      });
+
+      if (!supaErr && supaData?.session?.access_token) {
+        supaToken = supaData.session.access_token;
+      }
+    } catch (err) {
+      console.warn('Supabase signInWithPassword exception:', err);
+    }
+
+    if (supaToken) {
+      localStorage.setItem('jvmcrew_token', supaToken);
+      onStatus?.('Verifying workspace permissions...');
+      authUser = await api.getCurrentUser();
+    } else {
+      // 2. Fallback to existing application authentication endpoint (for existing legacy users)
+      onStatus?.('Checking workspace credentials...');
+      authUser = await api.login(trimmedEmail, password.trim(), onStatus);
+      if (authUser?.token) {
+        localStorage.setItem('jvmcrew_token', authUser.token);
+      }
+    }
+
+    if (authUser) {
       try {
-        localStorage.setItem('jvmcrew_token', authData.token);
-        localStorage.setItem('jvmcrew_cached_user', JSON.stringify(authData));
+        localStorage.setItem('jvmcrew_cached_user', JSON.stringify(authUser));
       } catch (e) {
         console.warn('localStorage setItem error:', e);
       }
+      setUser(authUser);
     }
-    setUser(authData);
   };
 
-  const register = async (data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' }, onStatus?: (status: string) => void) => {
-    const authData = await api.register(data, onStatus);
-    if (authData && authData.token) {
+  const register = async (
+    data: { name: string; email: string; password: string; teamName: string; role?: 'LEAD' | 'MEMBER' },
+    onStatus?: (status: string) => void
+  ) => {
+    onStatus?.('Creating authentication account...');
+    const trimmedEmail = data.email.trim().toLowerCase();
+    let authUserId: string | undefined = undefined;
+    let supaToken: string | null = null;
+
+    // 1. Register with Supabase Auth
+    try {
+      const { data: supaData, error: supaErr } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password: data.password.trim(),
+        options: {
+          data: {
+            name: data.name.trim(),
+          },
+        },
+      });
+
+      if (supaErr) {
+        if (!supaErr.message?.toLowerCase().includes('already registered')) {
+          throw new Error(supaErr.message);
+        }
+      }
+
+      if (supaData?.user?.id) {
+        authUserId = supaData.user.id;
+      }
+      if (supaData?.session?.access_token) {
+        supaToken = supaData.session.access_token;
+      }
+    } catch (err: any) {
+      if (err.message && !err.message.toLowerCase().includes('already registered')) {
+        throw err;
+      }
+    }
+
+    // 2. Register Team & Lead in Spring Boot application database
+    onStatus?.('Setting up team workspace...');
+    const authData = await api.register(
+      {
+        name: data.name.trim(),
+        email: trimmedEmail,
+        password: data.password.trim(),
+        teamName: data.teamName.trim(),
+        authUserId,
+      },
+      onStatus
+    );
+
+    const tokenToStore = supaToken || authData.token;
+    if (tokenToStore) {
       try {
-        localStorage.setItem('jvmcrew_token', authData.token);
+        localStorage.setItem('jvmcrew_token', tokenToStore);
         localStorage.setItem('jvmcrew_cached_user', JSON.stringify(authData));
       } catch (e) {
         console.warn('localStorage setItem error:', e);
@@ -180,14 +277,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Supabase signOut error:', e);
+    }
     try {
       localStorage.removeItem('jvmcrew_token');
       localStorage.removeItem('jvmcrew_cached_user');
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith('jvm') || key.startsWith('crew'))) {
+        if (key && (key.startsWith('jvm') || key.startsWith('crew') || key.startsWith('sb-'))) {
           keysToRemove.push(key);
         }
       }
