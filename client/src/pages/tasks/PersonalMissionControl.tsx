@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Task, TaskStatus } from '../../types';
 import { CrewMemberProfile } from '../../services/crewService';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ProgressBar } from '../../components/common/ProgressBar';
 import {
-  ArrowRight,
   CheckCircle2,
-  Layers,
   Plus,
   Target,
-  Zap,
   Send,
   X,
   FileCheck,
@@ -17,11 +14,12 @@ import {
   Clock,
   Rocket,
   Flame,
-  Check,
   ChevronRight,
-  TrendingUp,
-  Award,
   Calendar,
+  LayoutGrid,
+  List,
+  Sparkles,
+  Search,
 } from 'lucide-react';
 
 interface PersonalMissionControlProps {
@@ -41,8 +39,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
   onStatusChange,
   onCreateTask,
 }) => {
-  const [expandedStage, setExpandedStage] = useState<TaskStatus | null>('IN_PROGRESS');
-  const [taskFilter, setTaskFilter] = useState<'ALL' | 'IN_PROGRESS' | 'REVIEW' | 'DONE'>('ALL');
+  // View mode: 'BOARD' (Kanban columns) | 'LIST' (Clean list) | 'FOCUS' (Spotlight on current task)
+  const [viewMode, setViewMode] = useState<'BOARD' | 'LIST' | 'FOCUS'>('BOARD');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Work Log / Progress Update Modal state
   const [updatingTask, setUpdatingTask] = useState<Task | null>(null);
@@ -51,39 +51,44 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
   const [workingOn, setWorkingOn] = useState<string>('');
   const [blockerNote, setBlockerNote] = useState<string>('');
 
-  // Filter tasks to ONLY those belonging to the currently logged-in member
-  const memberTasks = tasks.filter((t) => t.assigneeId === user.id);
+  // Filter tasks belonging to current logged-in member
+  const memberTasks = useMemo(() => {
+    return tasks.filter((t) => t.assigneeId === user.id);
+  }, [tasks, user.id]);
 
-  // Performance metrics calculated from real data
-  const activeTasks = memberTasks.filter((t) => t.status === 'IN_PROGRESS' || t.status === 'TODO');
-  const reviewTasks = memberTasks.filter((t) => t.status === 'REVIEW');
-  const completedTasks = memberTasks.filter((t) => t.status === 'DONE');
+  // Performance metrics
+  const todoTasks = useMemo(() => memberTasks.filter((t) => t.status === 'TODO' || t.status === 'BACKLOG'), [memberTasks]);
+  const inProgressTasks = useMemo(() => memberTasks.filter((t) => t.status === 'IN_PROGRESS'), [memberTasks]);
+  const reviewTasks = useMemo(() => memberTasks.filter((t) => t.status === 'REVIEW'), [memberTasks]);
+  const completedTasks = useMemo(() => memberTasks.filter((t) => t.status === 'DONE'), [memberTasks]);
+
   const totalCount = memberTasks.length;
-
   const momentumPct = totalCount > 0 ? Math.round((completedTasks.length / totalCount) * 100) : 0;
 
-  // Identify top featured task for "NEXT MOVE"
-  const inProgressTasks = memberTasks.filter((t) => t.status === 'IN_PROGRESS');
-  const todoTasks = memberTasks.filter((t) => t.status === 'TODO');
+  // Next move / Top priority task
   const featuredTask = inProgressTasks[0] || todoTasks[0] || memberTasks[0] || null;
 
-  // Filtered task list based on active filter tab
-  const filteredMemberTasks = memberTasks.filter((t) => {
-    if (taskFilter === 'ALL') return true;
-    if (taskFilter === 'IN_PROGRESS') return t.status === 'IN_PROGRESS' || t.status === 'TODO';
-    if (taskFilter === 'REVIEW') return t.status === 'REVIEW';
-    if (taskFilter === 'DONE') return t.status === 'DONE';
-    return true;
-  });
+  // Filtered task list
+  const filteredTasks = useMemo(() => {
+    return memberTasks.filter((t) => {
+      // Status filter
+      if (statusFilter === 'TODO' && t.status !== 'TODO' && t.status !== 'BACKLOG') return false;
+      if (statusFilter === 'IN_PROGRESS' && t.status !== 'IN_PROGRESS') return false;
+      if (statusFilter === 'REVIEW' && t.status !== 'REVIEW') return false;
+      if (statusFilter === 'DONE' && t.status !== 'DONE') return false;
 
-  // Stages breakdown
-  const stages: { id: TaskStatus; label: string; count: number; color: string; badgeBg: string }[] = [
-    { id: 'BACKLOG', label: 'Backlog', count: memberTasks.filter((t) => t.status === 'BACKLOG').length, color: 'text-stone-600', badgeBg: 'bg-stone-100 text-stone-700' },
-    { id: 'TODO', label: 'Assigned', count: memberTasks.filter((t) => t.status === 'TODO').length, color: 'text-blue-600', badgeBg: 'bg-blue-50 text-blue-700' },
-    { id: 'IN_PROGRESS', label: 'In Progress', count: memberTasks.filter((t) => t.status === 'IN_PROGRESS').length, color: 'text-amber-600', badgeBg: 'bg-amber-50 text-amber-700' },
-    { id: 'REVIEW', label: 'In Review', count: memberTasks.filter((t) => t.status === 'REVIEW').length, color: 'text-purple-600', badgeBg: 'bg-purple-50 text-purple-700' },
-    { id: 'DONE', label: 'Completed', count: memberTasks.filter((t) => t.status === 'DONE').length, color: 'text-emerald-600', badgeBg: 'bg-emerald-50 text-emerald-700' },
-  ];
+      // Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = t.title.toLowerCase().includes(q);
+        const matchDesc = t.description?.toLowerCase().includes(q);
+        const matchTag = t.labels?.some((l) => l.toLowerCase().includes(q));
+        if (!matchTitle && !matchDesc && !matchTag) return false;
+      }
+
+      return true;
+    });
+  }, [memberTasks, statusFilter, searchQuery]);
 
   const handleOpenUpdateModal = (task: Task) => {
     setUpdatingTask(task);
@@ -95,7 +100,6 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
   const handleSaveProgressUpdate = (submitForReview: boolean = false) => {
     if (!updatingTask) return;
-
     const newStatus: TaskStatus = submitForReview
       ? 'REVIEW'
       : progressPct === 100
@@ -107,613 +111,509 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
   };
 
   return (
-    <div className="space-y-7 animate-fade-in font-sans">
-      {/* 1. MODERN HERO WORKSPACE BANNER */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-paper-light via-surface to-paper border border-line/80 rounded-2xl p-6 sm:p-7 shadow-xs">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-44 h-44 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-8 w-36 h-36 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {memberProfile?.serialNumber || user?.serialNumber || 'CREW MEMBER'}
-              </span>
-              <span className="text-muted/40">·</span>
-              <span className="text-xs font-medium text-muted">
-                {memberProfile?.internshipRole || user?.position || 'SDE Intern'}
-              </span>
-              {memberProfile?.characterClass && (
-                <>
-                  <span className="text-muted/40">·</span>
-                  <span className="text-xs text-muted/80 font-mono">
-                    {memberProfile.characterClass}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <div className="flex items-baseline gap-3">
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-                {user.name}
-              </h1>
-              <span className="hidden sm:inline-block text-xs font-medium px-2.5 py-0.5 rounded-full bg-paper-dark border border-line text-muted">
-                Personal Mission Control
-              </span>
-            </div>
-
-            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
-              Track your daily engineering tasks, update work logs, and submit completed features for lead review.
-            </p>
+    <div className="space-y-6 animate-fade-in font-sans pb-12">
+      {/* 1. CLEAN MODERN HEADER BAR */}
+      <div className="bg-paper-light border border-line rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {memberProfile?.serialNumber || user?.serialNumber || 'CREW MEMBER'}
+            </span>
+            <span className="text-muted/40">·</span>
+            <span className="text-xs font-medium text-muted">
+              {memberProfile?.internshipRole || user?.position || 'SDE Intern'}
+            </span>
           </div>
 
+          <div className="flex items-baseline gap-3">
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+              {user.name}’s Missions
+            </h1>
+            <span className="text-xs font-semibold text-muted">
+              ({totalCount} {totalCount === 1 ? 'task' : 'tasks'} assigned)
+            </span>
+          </div>
+          <p className="text-xs text-muted leading-relaxed">
+            Manage your daily tasks, submit work for lead review, and track your sprint velocity.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={onCreateTask}
-            className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer self-start md:self-auto shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-all duration-200 cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-emerald-300 group-hover:rotate-90 transition-transform duration-200" />
+            <Plus className="w-4 h-4 text-emerald-300" />
             <span>New Mission</span>
           </button>
         </div>
       </div>
 
-      {/* 2. PERFORMANCE METRIC STRIP (4 MODERN ROUNDED CARDS) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Active Missions Card */}
-        <div
-          onClick={() => setTaskFilter('IN_PROGRESS')}
-          className={`p-4 sm:p-5 bg-paper-light border rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
-            taskFilter === 'IN_PROGRESS' ? 'border-blue-500/50 ring-2 ring-blue-500/20 bg-blue-50/20' : 'border-line/70'
+      {/* 2. COMPACT INTERACTIVE METRIC STRIP (Non-Messy Filter Pills) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* All Tasks */}
+        <button
+          onClick={() => setStatusFilter('ALL')}
+          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'ALL'
+              ? 'bg-primary/5 border-primary ring-2 ring-primary/20 text-primary'
+              : 'bg-paper-light border-line hover:border-line-dark'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Active Missions</span>
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Target className="w-5 h-5" />
-            </div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">All Missions</span>
+            <Target className="w-4 h-4 text-primary" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-ink">{activeTasks.length}</span>
-            <span className="text-[11px] text-muted font-medium">in progress</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-display text-2xl font-black text-ink">{totalCount}</span>
+            <span className="text-[11px] text-muted font-medium">total</span>
           </div>
-          <div className="mt-2 text-[10px] text-blue-700/80 font-medium flex items-center gap-1">
-            <span>View active</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* In Progress */}
+        <button
+          onClick={() => setStatusFilter('IN_PROGRESS')}
+          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'IN_PROGRESS'
+              ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20 text-amber-700'
+              : 'bg-paper-light border-line hover:border-line-dark'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">In Progress</span>
+            <Flame className="w-4 h-4 text-amber-600" />
           </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-display text-2xl font-black text-amber-600">{inProgressTasks.length}</span>
+            <span className="text-[11px] text-muted font-medium">active now</span>
+          </div>
+        </button>
+
+        {/* In Review */}
+        <button
+          onClick={() => setStatusFilter('REVIEW')}
+          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'REVIEW'
+              ? 'bg-purple-500/10 border-purple-500 ring-2 ring-purple-500/20 text-purple-700'
+              : 'bg-paper-light border-line hover:border-line-dark'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">In Review</span>
+            <FileCheck className="w-4 h-4 text-purple-600" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-display text-2xl font-black text-purple-600">{reviewTasks.length}</span>
+            <span className="text-[11px] text-muted font-medium">awaiting lead</span>
+          </div>
+        </button>
+
+        {/* Completed */}
+        <button
+          onClick={() => setStatusFilter('DONE')}
+          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'DONE'
+              ? 'bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/20 text-emerald-700'
+              : 'bg-paper-light border-line hover:border-line-dark'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Completed</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="font-display text-2xl font-black text-emerald-600">{completedTasks.length}</span>
+            <span className="text-[11px] text-muted font-medium font-mono">{momentumPct}% done</span>
+          </div>
+        </button>
+      </div>
+
+      {/* 3. TOOLBAR (Search, View Toggle, Filter Tag) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-paper-light border border-line p-2.5 rounded-xl">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by mission title or tag..."
+            className="w-full pl-9 pr-3 py-1.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-xs outline-none text-ink placeholder:text-muted/60 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink text-xs"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* In Review Card */}
-        <div
-          onClick={() => setTaskFilter('REVIEW')}
-          className={`p-4 sm:p-5 bg-paper-light border rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
-            taskFilter === 'REVIEW' ? 'border-amber-500/50 ring-2 ring-amber-500/20 bg-amber-50/20' : 'border-line/70'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">In Review</span>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FileCheck className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-amber-700">{reviewTasks.length}</span>
-            <span className="text-[11px] text-muted font-medium">waiting lead</span>
-          </div>
-          <div className="mt-2 text-[10px] text-amber-700/80 font-medium flex items-center gap-1">
-            <span>Awaiting signoff</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </div>
+        {/* Segmented View Switcher */}
+        <div className="flex items-center gap-1 bg-paper border border-line p-1 rounded-lg self-start sm:self-auto">
+          <button
+            onClick={() => setViewMode('BOARD')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === 'BOARD'
+                ? 'bg-primary text-white shadow-xs font-semibold'
+                : 'text-muted hover:text-ink'
+            }`}
+            title="Kanban Board View"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Board</span>
+          </button>
 
-        {/* Approved & Done Card */}
-        <div
-          onClick={() => setTaskFilter('DONE')}
-          className={`p-4 sm:p-5 bg-paper-light border rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
-            taskFilter === 'DONE' ? 'border-emerald-500/50 ring-2 ring-emerald-500/20 bg-emerald-50/20' : 'border-line/70'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Approved & Done</span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-emerald-700">{completedTasks.length}</span>
-            <span className="text-[11px] text-muted font-medium">signed off</span>
-          </div>
-          <div className="mt-2 text-[10px] text-emerald-700/80 font-medium flex items-center gap-1">
-            <span>Completed milestones</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </div>
+          <button
+            onClick={() => setViewMode('LIST')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === 'LIST'
+                ? 'bg-primary text-white shadow-xs font-semibold'
+                : 'text-muted hover:text-ink'
+            }`}
+            title="Clean List View"
+          >
+            <List className="w-3.5 h-3.5" />
+            <span>List</span>
+          </button>
 
-        {/* Momentum Card */}
-        <div
-          onClick={() => setTaskFilter('ALL')}
-          className={`p-4 sm:p-5 bg-paper-light border rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
-            taskFilter === 'ALL' ? 'border-purple-500/50 ring-2 ring-purple-500/20 bg-purple-50/20' : 'border-line/70'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Sprint Momentum</span>
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Zap className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-purple-700">{momentumPct}%</span>
-            <span className="text-[11px] text-muted font-medium">completion rate</span>
-          </div>
-          <div className="mt-2 w-full bg-paper border border-line rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-purple-600 h-full rounded-full transition-all duration-500"
-              style={{ width: `${momentumPct}%` }}
-            />
-          </div>
+          <button
+            onClick={() => setViewMode('FOCUS')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === 'FOCUS'
+                ? 'bg-primary text-white shadow-xs font-semibold'
+                : 'text-muted hover:text-ink'
+            }`}
+            title="Focus Spotlight View"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Focus</span>
+          </button>
         </div>
       </div>
 
-      {/* 3. NEXT MOVE SPOTLIGHT CARD (Featured Task) */}
-      {featuredTask && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/5 via-paper-light to-white border border-emerald-500/30 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center space-x-2 text-xs font-bold text-emerald-800">
-              <span className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700">
-                <Flame className="w-4 h-4 animate-bounce" />
-              </span>
-              <span className="uppercase tracking-wider">Next Move • Priority Engineering Task</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs text-emerald-700 font-semibold px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-md">
-                TASK-{featuredTask.id}
-              </span>
-              <StatusBadge type="priority" value={featuredTask.priority} />
-            </div>
-          </div>
+      {/* 4. MAIN CONTENT AREA BASED ON VIEW MODE */}
 
-          <div className="space-y-1.5">
-            <h3 className="font-display text-lg sm:text-xl font-bold text-ink">
-              {featuredTask.title}
-            </h3>
-            {featuredTask.description && (
-              <p className="text-xs sm:text-sm text-muted line-clamp-2 leading-relaxed">
-                {featuredTask.description}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5 pt-1">
-            <div className="flex justify-between text-xs font-medium">
-              <span className="text-muted">Task Completion Progress</span>
-              <span className="font-bold text-emerald-700">{featuredTask.progressPct}%</span>
-            </div>
-            <ProgressBar progressPct={featuredTask.progressPct} />
-          </div>
-
-          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-emerald-500/20">
-            <div className="flex items-center gap-3 text-xs text-muted">
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-muted/70" />
-                Est: {featuredTask.estHours || 4.0} hrs
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-muted/70" />
-                Due: {featuredTask.deadline || 'Today'}
+      {/* VIEW A: BOARD VIEW (Clean 4-column modern Kanban) */}
+      {viewMode === 'BOARD' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+          {/* Column 1: To Do / Assigned */}
+          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">To Do</h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                {todoTasks.length}
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {featuredTask.status === 'TODO' ? (
-                <button
-                  onClick={() => onStatusChange(featuredTask.id, 'IN_PROGRESS')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md active:scale-95 transition-all duration-200 cursor-pointer"
-                >
-                  <Rocket className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Start Task</span>
-                </button>
-              ) : featuredTask.status === 'IN_PROGRESS' ? (
-                <>
-                  <button
-                    onClick={() => handleOpenUpdateModal(featuredTask)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-paper-light hover:bg-paper border border-line hover:border-primary/50 text-ink text-xs font-semibold rounded-xl shadow-2xs hover:shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-muted" />
-                    <span>Update Work Log</span>
-                  </button>
-
-                  <button
-                    onClick={() => onStatusChange(featuredTask.id, 'REVIEW')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md active:scale-95 transition-all duration-200 cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit for Review</span>
-                  </button>
-                </>
+            <div className="space-y-3">
+              {todoTasks.length === 0 ? (
+                <p className="text-center py-6 text-xs text-muted italic">No tasks to do.</p>
               ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
-                  {featuredTask.status === 'REVIEW' ? 'Waiting for Lead Review' : 'Approved by Lead'}
-                </span>
+                todoTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onOpenTask={onOpenTask}
+                    onStatusChange={onStatusChange}
+                    onOpenUpdateModal={handleOpenUpdateModal}
+                  />
+                ))
               )}
+            </div>
+          </div>
 
-              <button
-                onClick={() => onOpenTask(featuredTask)}
-                className="inline-flex items-center gap-1 px-3 py-2 border border-line hover:border-ink/50 bg-paper-light text-ink text-xs font-semibold rounded-xl hover:shadow-xs active:scale-95 transition-all cursor-pointer"
-              >
-                <span>Details</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+          {/* Column 2: In Progress */}
+          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">In Progress</h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                {inProgressTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {inProgressTasks.length === 0 ? (
+                <p className="text-center py-6 text-xs text-muted italic">No active missions.</p>
+              ) : (
+                inProgressTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onOpenTask={onOpenTask}
+                    onStatusChange={onStatusChange}
+                    onOpenUpdateModal={handleOpenUpdateModal}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Column 3: In Review */}
+          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">In Review</h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                {reviewTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {reviewTasks.length === 0 ? (
+                <p className="text-center py-6 text-xs text-muted italic">No tasks in review.</p>
+              ) : (
+                reviewTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onOpenTask={onOpenTask}
+                    onStatusChange={onStatusChange}
+                    onOpenUpdateModal={handleOpenUpdateModal}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Column 4: Completed */}
+          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">Done</h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {completedTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {completedTasks.length === 0 ? (
+                <p className="text-center py-6 text-xs text-muted italic">No completed tasks yet.</p>
+              ) : (
+                completedTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onOpenTask={onOpenTask}
+                    onStatusChange={onStatusChange}
+                    onOpenUpdateModal={handleOpenUpdateModal}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 4. MY ENGINEERING TASKS SECTION */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-3">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-              <Target className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="font-display text-base font-bold text-ink">
-                My Engineering Tasks
-              </h2>
-              <p className="text-xs text-muted">
-                Showing {filteredMemberTasks.length} of {memberTasks.length} total assigned items
-              </p>
-            </div>
-          </div>
-
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-            {(
-              [
-                { id: 'ALL', label: 'All Tasks', count: memberTasks.length },
-                { id: 'IN_PROGRESS', label: 'In Progress', count: activeTasks.length },
-                { id: 'REVIEW', label: 'In Review', count: reviewTasks.length },
-                { id: 'DONE', label: 'Approved', count: completedTasks.length },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setTaskFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 cursor-pointer active:scale-95 flex items-center gap-1.5 ${
-                  taskFilter === tab.id
-                    ? 'bg-primary text-white shadow-xs font-semibold'
-                    : 'bg-paper-light border border-line text-muted hover:text-ink hover:border-line-dark'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
-                    taskFilter === tab.id ? 'bg-white/20 text-white' : 'bg-paper-dark text-muted font-mono'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Empty State */}
-        {filteredMemberTasks.length === 0 ? (
-          <div className="p-8 sm:p-12 text-center bg-paper-light border border-dashed border-line rounded-2xl space-y-4">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center shadow-xs">
-              <Rocket className="w-7 h-7" />
-            </div>
-            <div className="space-y-1 max-w-sm mx-auto">
-              <h3 className="font-display text-base font-bold text-ink">
-                {taskFilter === 'ALL'
-                  ? 'No tasks assigned yet'
-                  : `No tasks found in ${taskFilter.toLowerCase().replace('_', ' ')}`}
-              </h3>
-              <p className="text-xs text-muted leading-relaxed">
-                {taskFilter === 'ALL'
-                  ? 'You are all caught up! Create a new engineering mission to start building, or sync with your team lead.'
-                  : 'Switch filter tabs or create a new mission to start working.'}
-              </p>
-            </div>
-            <button
-              onClick={onCreateTask}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-emerald-300" />
-              <span>Create Your First Mission</span>
-            </button>
-          </div>
-        ) : (
-          /* Task Cards Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredMemberTasks.map((task) => {
-              const isOverdue = task.status !== 'DONE' && task.deadline && task.deadline < new Date().toISOString().split('T')[0];
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => onOpenTask(task)}
-                  className={`p-5 bg-paper-light border rounded-2xl cursor-pointer space-y-3.5 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
-                    isOverdue
-                      ? 'border-red-300/80 bg-red-50/10'
-                      : task.status === 'REVIEW'
-                      ? 'border-amber-300/80 bg-amber-50/10'
-                      : 'border-line/80 hover:border-primary/50'
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-[11px] font-bold text-muted bg-paper px-2 py-0.5 rounded-md border border-line">
-                          TASK-{task.id}
-                        </span>
-                        {task.status === 'REVIEW' && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/70 border border-amber-300/70 px-2 py-0.5 rounded-md">
-                            <Clock className="w-3 h-3 text-amber-600" />
-                            Waiting Review
-                          </span>
-                        )}
-                        {task.status === 'DONE' && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100/70 border border-emerald-300/70 px-2 py-0.5 rounded-md">
-                            <Check className="w-3 h-3 text-emerald-600" />
-                            Approved
-                          </span>
-                        )}
-                      </div>
-                      <StatusBadge type="priority" value={task.priority} />
-                    </div>
-
-                    <h3 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                      {task.title}
-                    </h3>
-
-                    {task.description && (
-                      <p className="text-xs text-muted line-clamp-2 leading-relaxed">
-                        {task.description}
-                      </p>
-                    )}
-
-                    {task.labels && task.labels.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {task.labels.map((l) => (
-                          <span
-                            key={l}
-                            className="text-[10px] font-medium px-2 py-0.5 bg-paper border border-line text-muted rounded-md"
-                          >
-                            {l}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-3 pt-2 border-t border-line/60">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] font-medium text-muted">
-                        <span>Progress</span>
-                        <span className="font-bold text-ink">{task.progressPct}%</span>
-                      </div>
-                      <ProgressBar progressPct={task.progressPct} />
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-muted">
-                      <span className="text-[11px] flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-muted/70" />
-                        Due: {task.deadline || 'Today'}
-                      </span>
-
-                      <div className="flex items-center space-x-2">
-                        {task.status === 'TODO' ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStatusChange(task.id, 'IN_PROGRESS');
-                            }}
-                            className="px-2.5 py-1 bg-primary hover:bg-primary-hover text-white text-[11px] font-semibold rounded-lg shadow-2xs hover:shadow-xs active:scale-95 transition-all"
-                          >
-                            Start
-                          </button>
-                        ) : task.status === 'IN_PROGRESS' ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenUpdateModal(task);
-                            }}
-                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-semibold rounded-lg active:scale-95 transition-all"
-                          >
-                            Update Log
-                          </button>
-                        ) : null}
-
-                        <span className="text-xs font-semibold text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                          <span>Open</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 5. WORKFLOW PIPELINE STAGES OVERVIEW */}
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2.5 border-b border-line pb-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-            <Layers className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="font-display text-base font-bold text-ink">
-              Workflow Stages Pipeline
-            </h2>
-            <p className="text-xs text-muted">
-              Click a stage to inspect tasks currently moving through the sprint cycle
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {stages.map((st) => {
-            const isSelected = expandedStage === st.id;
-            return (
-              <button
-                key={st.id}
-                onClick={() => setExpandedStage(isSelected ? null : st.id)}
-                className={`p-3.5 sm:p-4 border rounded-2xl text-left transition-all duration-200 cursor-pointer active:scale-95 ${
-                  isSelected
-                    ? 'bg-paper-light border-primary/60 ring-2 ring-primary/20 shadow-xs'
-                    : 'bg-paper-light border-line hover:border-line-dark hover:-translate-y-0.5 hover:shadow-2xs'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-xs font-bold text-ink">{st.label}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${st.badgeBg}`}>
-                    {st.count}
-                  </span>
-                </div>
-                <div className="text-[11px] text-muted">
-                  {st.count === 1 ? '1 task' : `${st.count} tasks`}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Stage Task Detail View */}
-        {expandedStage && (
-          <div className="p-5 border border-line bg-paper-light rounded-2xl space-y-3 animate-fade-in shadow-2xs">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <span className="font-display text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                Stage: {stages.find((s) => s.id === expandedStage)?.label} (
-                {memberTasks.filter((t) => t.status === expandedStage).length} Items)
-              </span>
-              <button
-                onClick={() => setExpandedStage(null)}
-                className="text-xs text-muted hover:text-ink cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-
-            {memberTasks.filter((t) => t.status === expandedStage).length === 0 ? (
-              <p className="text-muted text-xs italic py-2">
-                No tasks currently in this stage.
-              </p>
-            ) : (
-              <div className="divide-y divide-line/60">
-                {memberTasks
-                  .filter((t) => t.status === expandedStage)
-                  .map((t) => (
-                    <div
-                      key={t.id}
-                      onClick={() => onOpenTask(t)}
-                      className="py-3 flex items-center justify-between hover:bg-paper cursor-pointer px-3 rounded-xl transition-colors group"
-                    >
-                      <div className="flex items-center space-x-2.5 truncate">
-                        <span className="font-mono text-xs font-bold text-muted bg-paper px-2 py-0.5 rounded-md border border-line">
-                          TASK-{t.id}
-                        </span>
-                        <span className="text-xs font-medium text-ink group-hover:text-primary transition-colors truncate">
-                          {t.title}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-3 shrink-0">
-                        {t.status === 'IN_PROGRESS' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStatusChange(t.id, 'REVIEW');
-                            }}
-                            className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-[11px] font-semibold transition-all active:scale-95"
-                          >
-                            Submit Review
-                          </button>
-                        )}
-                        <span className="text-xs font-bold text-emerald-700">{t.progressPct}%</span>
-                        <ChevronRight className="w-4 h-4 text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 6. RECENT WINS & MOMENTUM SUMMARY */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="p-5 sm:p-6 bg-paper-light border border-line rounded-2xl space-y-4 shadow-xs">
-          <div className="flex items-center space-x-2.5 pb-2 border-b border-line">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
-              <Award className="w-4 h-4" />
-            </div>
-            <h3 className="font-display text-sm font-bold text-ink">
-              Approved & Completed Missions
-            </h3>
-          </div>
-
-          {completedTasks.length === 0 ? (
-            <div className="p-6 text-center text-muted text-xs space-y-2">
-              <p>No completed missions yet this cycle.</p>
-              <p className="text-[11px]">Finish your active tasks and submit them for lead approval!</p>
+      {/* VIEW B: CLEAN LIST VIEW */}
+      {viewMode === 'LIST' && (
+        <div className="bg-paper-light border border-line rounded-2xl overflow-hidden shadow-xs divide-y divide-line">
+          {filteredTasks.length === 0 ? (
+            <div className="p-10 text-center text-muted text-xs space-y-2">
+              <Rocket className="w-8 h-8 mx-auto text-muted/60" />
+              <p className="font-semibold text-ink">No tasks match your criteria.</p>
+              <p>Adjust your search or filter pills above.</p>
             </div>
           ) : (
-            <div className="space-y-2 text-xs">
-              {completedTasks.slice(0, 5).map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => onOpenTask(t)}
-                  className="flex items-center space-x-2.5 p-2.5 bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-200/60 rounded-xl text-emerald-900 cursor-pointer transition-colors"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="font-mono font-bold text-[11px] shrink-0">TASK-{t.id}</span>
-                  <span className="truncate font-medium">{t.title}</span>
+            filteredTasks.map((task) => (
+              <div
+                key={task.id}
+                onClick={() => onOpenTask(task)}
+                className="p-4 hover:bg-paper cursor-pointer transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+              >
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold text-muted bg-paper px-2 py-0.5 rounded border border-line">
+                      TASK-{task.id}
+                    </span>
+                    <StatusBadge type="status" value={task.status} />
+                    <StatusBadge type="priority" value={task.priority} />
+                    {task.deadline && (
+                      <span className="text-[11px] text-muted flex items-center gap-1 font-mono">
+                        <Calendar className="w-3 h-3 text-muted/70" />
+                        {task.deadline}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors truncate">
+                    {task.title}
+                  </h4>
+                  {task.description && (
+                    <p className="text-xs text-muted line-clamp-1">{task.description}</p>
+                  )}
                 </div>
-              ))}
+
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="w-28 space-y-1">
+                    <div className="flex justify-between text-[10px] font-semibold text-muted">
+                      <span>Progress</span>
+                      <span>{task.progressPct || 0}%</span>
+                    </div>
+                    <ProgressBar progressPct={task.progressPct || 0} />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {task.status === 'TODO' ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStatusChange(task.id, 'IN_PROGRESS');
+                        }}
+                        className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                      >
+                        Start
+                      </button>
+                    ) : task.status === 'IN_PROGRESS' ? (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenUpdateModal(task);
+                          }}
+                          className="px-2.5 py-1.5 bg-paper hover:bg-paper-dark border border-line text-xs font-medium rounded-lg text-ink active:scale-95 transition-all"
+                        >
+                          Log
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange(task.id, 'REVIEW');
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                        >
+                          Review
+                        </button>
+                      </>
+                    ) : null}
+
+                    <ChevronRight className="w-4 h-4 text-muted group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* VIEW C: FOCUS SPOTLIGHT VIEW */}
+      {viewMode === 'FOCUS' && (
+        <div className="space-y-6 max-w-3xl mx-auto">
+          {featuredTask ? (
+            <div className="bg-paper-light border-2 border-primary/30 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                  <Flame className="w-4 h-4 text-amber-600" />
+                  Current Focus Mission
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-muted bg-paper px-2 py-0.5 rounded border border-line">
+                    TASK-{featuredTask.id}
+                  </span>
+                  <StatusBadge type="priority" value={featuredTask.priority} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-ink">
+                  {featuredTask.title}
+                </h2>
+                {featuredTask.description && (
+                  <p className="text-sm text-muted leading-relaxed">
+                    {featuredTask.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-4 bg-paper rounded-xl border border-line space-y-2">
+                <div className="flex justify-between text-xs font-semibold text-ink">
+                  <span>Completion Status</span>
+                  <span className="text-primary font-bold">{featuredTask.progressPct || 0}%</span>
+                </div>
+                <ProgressBar progressPct={featuredTask.progressPct || 0} />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-line">
+                <div className="flex items-center gap-4 text-xs text-muted">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Clock className="w-4 h-4 text-muted/70" />
+                    Est: {featuredTask.estHours || 4.0} hrs
+                  </span>
+                  <span className="flex items-center gap-1 font-mono">
+                    <Calendar className="w-4 h-4 text-muted/70" />
+                    Due: {featuredTask.deadline || 'Today'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  {featuredTask.status === 'TODO' ? (
+                    <button
+                      onClick={() => onStatusChange(featuredTask.id, 'IN_PROGRESS')}
+                      className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
+                    >
+                      <Rocket className="w-3.5 h-3.5" />
+                      <span>Start Working</span>
+                    </button>
+                  ) : featuredTask.status === 'IN_PROGRESS' ? (
+                    <>
+                      <button
+                        onClick={() => handleOpenUpdateModal(featuredTask)}
+                        className="px-3.5 py-2 bg-paper hover:bg-paper-dark border border-line text-ink text-xs font-semibold rounded-xl active:scale-95 transition-all flex items-center gap-1.5"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-muted" />
+                        <span>Update Log</span>
+                      </button>
+                      <button
+                        onClick={() => onStatusChange(featuredTask.id, 'REVIEW')}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Submit for Lead Review</span>
+                      </button>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      {featuredTask.status === 'REVIEW' ? 'Waiting for Lead Approval' : 'Mission Completed'}
+                    </span>
+                  )}
+
+                  <button
+                    onClick={() => onOpenTask(featuredTask)}
+                    className="px-3.5 py-2 border border-line hover:border-ink bg-paper text-ink text-xs font-semibold rounded-xl active:scale-95 transition-all"
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-12 text-center bg-paper-light border border-dashed border-line rounded-2xl space-y-3">
+              <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
+              <h3 className="font-display text-base font-bold text-ink">All Missions Clear</h3>
+              <p className="text-xs text-muted max-w-sm mx-auto">
+                You have no active pending tasks. Create a new engineering mission to start building.
+              </p>
             </div>
           )}
         </div>
-
-        <div className="p-5 sm:p-6 bg-paper-light border border-line rounded-2xl space-y-4 shadow-xs">
-          <div className="flex items-center space-x-2.5 pb-2 border-b border-line">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-            <h3 className="font-display text-sm font-bold text-ink">
-              Engineering Velocity
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="p-4 bg-paper rounded-xl border border-line">
-              <span className="font-display text-2xl font-black text-ink block">{completedTasks.length}</span>
-              <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Missions Done</span>
-            </div>
-
-            <div className="p-4 bg-paper rounded-xl border border-line">
-              <span className="font-display text-2xl font-black text-emerald-700 block">{momentumPct}%</span>
-              <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Completion Rate</span>
-            </div>
-          </div>
-
-          <p className="text-xs text-muted text-center leading-relaxed">
-            Great progress! Keep logging updates daily to maintain your sprint momentum and assist the team in velocity calculations.
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* MEMBER PROGRESS & WORK LOG MODAL */}
       {updatingTask && (
         <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
-          <div className="bg-paper-light border border-line w-full max-w-lg rounded-2xl shadow-elevated p-6 space-y-5 max-h-[92vh] overflow-y-auto">
+          <div className="bg-paper border border-line w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-5 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-line">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
@@ -726,14 +626,14 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
               </div>
               <button
                 onClick={() => setUpdatingTask(null)}
-                className="p-1.5 text-muted hover:text-ink hover:bg-paper rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-muted hover:text-ink hover:bg-paper-dark rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="p-3 bg-paper rounded-xl border border-line space-y-1">
+              <div className="p-3 bg-paper-light rounded-xl border border-line space-y-1">
                 <span className="text-[10px] text-muted font-bold uppercase tracking-wider block">Target Task</span>
                 <span className="font-semibold text-ink text-sm">{updatingTask.title}</span>
               </div>
@@ -751,7 +651,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                   step="5"
                   value={progressPct}
                   onChange={(e) => setProgressPct(Number(e.target.value))}
-                  className="w-full accent-primary cursor-pointer h-2 bg-paper rounded-lg"
+                  className="w-full accent-primary cursor-pointer h-2 bg-paper-dark rounded-lg"
                 />
                 <div className="flex items-center gap-1.5 pt-1">
                   {[25, 50, 75, 100].map((pct) => (
@@ -826,6 +726,129 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Reusable clean Task Card for Board View
+interface TaskCardProps {
+  task: Task;
+  onOpenTask: (task: Task) => void;
+  onStatusChange: (taskId: number, newStatus: TaskStatus) => void;
+  onOpenUpdateModal: (task: Task) => void;
+}
+
+const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  onOpenTask,
+  onStatusChange,
+  onOpenUpdateModal,
+}) => {
+  const isOverdue = task.status !== 'DONE' && task.deadline && task.deadline < new Date().toISOString().split('T')[0];
+
+  return (
+    <div
+      onClick={() => onOpenTask(task)}
+      className={`p-4 bg-paper border rounded-xl cursor-pointer space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm group flex flex-col justify-between ${
+        isOverdue
+          ? 'border-red-300 bg-red-50/10'
+          : task.status === 'REVIEW'
+          ? 'border-purple-300/80 bg-purple-50/10'
+          : 'border-line hover:border-primary/50'
+      }`}
+    >
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-mono text-[10px] font-bold text-muted bg-paper-dark px-1.5 py-0.5 rounded border border-line">
+            TASK-{task.id}
+          </span>
+          <StatusBadge type="priority" value={task.priority} />
+        </div>
+
+        <h4 className="font-display text-xs sm:text-sm font-bold text-ink group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+          {task.title}
+        </h4>
+
+        {task.description && (
+          <p className="text-[11px] text-muted line-clamp-2 leading-relaxed">
+            {task.description}
+          </p>
+        )}
+
+        {task.labels && task.labels.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {task.labels.slice(0, 3).map((l) => (
+              <span
+                key={l}
+                className="text-[9px] font-medium px-1.5 py-0.2 bg-paper-dark border border-line text-muted rounded"
+              >
+                {l}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-line/60">
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] font-semibold text-muted">
+            <span>Progress</span>
+            <span className="text-ink">{task.progressPct || 0}%</span>
+          </div>
+          <ProgressBar progressPct={task.progressPct || 0} />
+        </div>
+
+        <div className="flex items-center justify-between pt-1 text-xs">
+          {task.deadline && (
+            <span className="text-[10px] text-muted flex items-center gap-1 font-mono">
+              <Calendar className="w-3 h-3 text-muted/70" />
+              {task.deadline}
+            </span>
+          )}
+
+          <div className="flex items-center gap-1 ml-auto">
+            {task.status === 'TODO' && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(task.id, 'IN_PROGRESS');
+                }}
+                className="px-2.5 py-1 bg-primary hover:bg-primary-hover text-white text-[11px] font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+              >
+                Start
+              </button>
+            )}
+
+            {task.status === 'IN_PROGRESS' && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenUpdateModal(task);
+                  }}
+                  className="px-2 py-1 bg-paper-dark hover:bg-paper border border-line text-[10px] font-medium rounded-lg text-ink active:scale-95 transition-all"
+                >
+                  Log
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(task.id, 'REVIEW');
+                  }}
+                  className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                >
+                  Review
+                </button>
+              </>
+            )}
+
+            <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

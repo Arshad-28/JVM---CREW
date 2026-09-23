@@ -8,45 +8,94 @@
 -- 4. Full uninterrupted access for Spring Boot backend (service_role, postgres).
 -- =========================================================================
 
--- 1. Ensure Supabase auth helper functions & roles exist for portability
+-- 1. Ensure Supabase auth helper functions & roles exist for portability (safe on Supabase/Render & local)
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'postgres') THEN
-        CREATE ROLE postgres;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
-        CREATE ROLE service_role;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-        CREATE ROLE anon;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-        CREATE ROLE authenticated;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'auth') THEN
-        CREATE SCHEMA auth;
-    END IF;
-END $$;
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'postgres') THEN
+            CREATE ROLE postgres;
+        END IF;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
 
-CREATE OR REPLACE FUNCTION auth.uid()
-RETURNS UUID
-LANGUAGE sql
-STABLE
-AS $$
-    SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
-$$;
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+            CREATE ROLE service_role;
+        END IF;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+            CREATE ROLE anon;
+        END IF;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+            CREATE ROLE authenticated;
+        END IF;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+
+    -- Only attempt auth schema / function creation if running on local/vanilla postgres without Supabase auth
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'auth') THEN
+            CREATE SCHEMA auth;
+        END IF;
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_proc p 
+            JOIN pg_namespace n ON p.pronamespace = n.oid 
+            WHERE n.nspname = 'auth' AND p.proname = 'uid'
+        ) THEN
+            EXECUTE 'CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS $fn$ SELECT NULLIF(current_setting(''request.jwt.claim.sub'', true), '''')::uuid; $fn$';
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        -- auth schema and auth.uid() are already provided and managed by Supabase; ignore permission error
+        NULL;
+    END;
+END $$;
 
 -- 2. Helper Security Functions (STABLE, SECURITY DEFINER)
 CREATE OR REPLACE FUNCTION public.get_auth_user_id()
 RETURNS BIGINT
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-    SELECT id FROM public.users 
-    WHERE auth_user_id = auth.uid()
-    LIMIT 1;
+DECLARE
+    found_id BIGINT;
+    current_sub TEXT;
+BEGIN
+    BEGIN
+        current_sub := NULLIF(current_setting('request.jwt.claim.sub', true), '');
+    EXCEPTION WHEN OTHERS THEN
+        current_sub := NULL;
+    END;
+
+    IF current_sub IS NULL THEN
+        BEGIN
+            SELECT id INTO found_id FROM public.users WHERE auth_user_id = auth.uid() LIMIT 1;
+            RETURN found_id;
+        EXCEPTION WHEN OTHERS THEN
+            RETURN NULL;
+        END;
+    END IF;
+
+    -- 1. Match by Supabase auth UUID if valid UUID format
+    IF current_sub ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+        SELECT id INTO found_id FROM public.users WHERE auth_user_id = current_sub::uuid LIMIT 1;
+        IF found_id IS NOT NULL THEN
+            RETURN found_id;
+        END IF;
+    END IF;
+
+    -- 2. Fallback matching by email if sub claim contains email address
+    SELECT id INTO found_id FROM public.users WHERE email = current_sub LIMIT 1;
+    RETURN found_id;
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_auth_team_ids()
@@ -58,8 +107,7 @@ SET search_path = public
 AS $$
     SELECT tm.team_id 
     FROM public.team_members tm
-    JOIN public.users u ON tm.user_id = u.id
-    WHERE u.auth_user_id = auth.uid()
+    WHERE tm.user_id = public.get_auth_user_id()
       AND tm.is_active = true;
 $$;
 
@@ -73,8 +121,7 @@ AS $$
     SELECT EXISTS (
         SELECT 1 
         FROM public.team_members tm
-        JOIN public.users u ON tm.user_id = u.id
-        WHERE u.auth_user_id = auth.uid()
+        WHERE tm.user_id = public.get_auth_user_id()
           AND tm.team_id = check_team_id
           AND tm.is_active = true
           AND UPPER(tm.role) IN ('LEAD', 'ADMIN', 'OWNER')

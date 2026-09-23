@@ -37,15 +37,21 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
     checkPushStatus();
     pushService.syncExistingSubscription();
 
-    // Periodic gentle refresh for unread count (60s)
-    const interval = setInterval(fetchUnreadCount, 60000);
+    // Fast polling for real-time notifications & meeting invites (15s)
+    const interval = setInterval(fetchUnreadCount, 15000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchUnreadCount = async () => {
     try {
       const data = await api.getUnreadNotificationCount();
-      setUnreadCount(data.unreadCount || 0);
+      const count = data.unreadCount || 0;
+      setUnreadCount((prev) => {
+        if (count > prev) {
+          window.dispatchEvent(new CustomEvent('jvm_notification_received', { detail: { count } }));
+        }
+        return count;
+      });
     } catch {
       // Non-critical background failure
     }
@@ -306,6 +312,22 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
                       <p className="text-[11px] text-muted line-clamp-2 mt-0.5 leading-snug">
                         {n.message}
                       </p>
+                      {n.type === 'TEAM_MEETING_SCHEDULED' && (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsOpen(false);
+                              onNavigate?.('meetings', n.entityId);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 rounded-md text-[10px] font-bold hover:bg-rose-100 transition-colors"
+                          >
+                            <Video className="w-3 h-3 text-rose-600" />
+                            <span>Join Meeting Now</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {!n.isRead && (

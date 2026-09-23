@@ -87,7 +87,8 @@ public class SupabaseJwtVerifier {
             try {
                 authUserId = UUID.fromString(sub.trim());
             } catch (IllegalArgumentException e) {
-                log.warn("Supabase JWT 'sub' claim is not a valid UUID: {}", sub);
+                // 'sub' is not a UUID (typically standard app token with email as subject), cleanly fallback to tokenProvider
+                log.debug("JWT 'sub' claim is not a UUID (standard app token): {}", sub);
                 return null;
             }
 

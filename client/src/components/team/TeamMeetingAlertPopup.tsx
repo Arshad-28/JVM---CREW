@@ -31,42 +31,57 @@ export const TeamMeetingAlertPopup: React.FC<TeamMeetingAlertPopupProps> = ({ on
         return;
       }
 
-      // Check if dismissed in this session
+      setMeeting(nextMeeting);
+
+      // Check if explicitly dismissed
       const isDismissed = sessionStorage.getItem(`dismissed_meeting_${nextMeeting.id}`);
       if (isDismissed) {
         setDismissedId(nextMeeting.id);
-        return;
+      } else {
+        setDismissedId(null);
       }
-
-      setMeeting(nextMeeting);
     } catch {
       // Non-critical background failure
     }
   }, [user]);
 
-  // Initial check and periodic polling every 45s
+  // Initial check and periodic fast polling (15s) so teammates get immediate alerts
   useEffect(() => {
     checkUpcomingMeeting();
-    const interval = setInterval(checkUpcomingMeeting, 45000);
+    const interval = setInterval(checkUpcomingMeeting, 15000);
 
     const handleMeetingCreated = () => {
-      sessionStorage.removeItem('dismissed_meeting_');
+      sessionStorage.clear();
+      setDismissedId(null);
+      setMinimized(false);
       checkUpcomingMeeting();
     };
 
     window.addEventListener('jvm_meeting_created', handleMeetingCreated);
+    window.addEventListener('jvm_notification_received', handleMeetingCreated);
     window.addEventListener('focus', checkUpcomingMeeting);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('jvm_meeting_created', handleMeetingCreated);
+      window.removeEventListener('jvm_notification_received', handleMeetingCreated);
       window.removeEventListener('focus', checkUpcomingMeeting);
     };
   }, [checkUpcomingMeeting]);
 
-  if (!meeting || (dismissedId === meeting.id)) {
+  if (!meeting) {
     return null;
   }
+
+  const todayStr = new Date().toISOString().substring(0, 10);
+  const isToday = meeting.scheduledDate === todayStr;
+
+  // If dismissed and not today, hide completely. If today, keep as subtle floating live pill.
+  if (dismissedId === meeting.id && !isToday) {
+    return null;
+  }
+
+  const isActuallyMinimized = minimized || dismissedId === meeting.id;
 
   const handleDismiss = () => {
     sessionStorage.setItem(`dismissed_meeting_${meeting.id}`, 'true');
@@ -85,8 +100,6 @@ export const TeamMeetingAlertPopup: React.FC<TeamMeetingAlertPopupProps> = ({ on
     }
   };
 
-  const todayStr = new Date().toISOString().substring(0, 10);
-  const isToday = meeting.scheduledDate === todayStr;
   const isLiveNow = isToday; // highlight today's meetings as live/priority
 
   const platformLabel: Record<string, string> = {
@@ -99,18 +112,24 @@ export const TeamMeetingAlertPopup: React.FC<TeamMeetingAlertPopupProps> = ({ on
 
   return (
     <div className="fixed bottom-5 right-5 z-50 max-w-sm sm:max-w-md w-[calc(100vw-2.5rem)] animate-slide-up pointer-events-auto">
-      {minimized ? (
+      {isActuallyMinimized ? (
         <div
-          onClick={() => setMinimized(false)}
-          className="bg-paper-light border-2 border-primary/50 text-ink rounded-xl p-3 shadow-elevated flex items-center justify-between gap-3 cursor-pointer hover:border-primary transition-all backdrop-blur-md bg-paper/95"
+          onClick={() => {
+            setMinimized(false);
+            setDismissedId(null);
+          }}
+          className="bg-paper border-2 border-rose-500/60 text-ink rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-3 cursor-pointer hover:border-rose-500 hover:scale-[1.02] transition-all backdrop-blur-md bg-paper/95 ring-2 ring-rose-500/20"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
             </span>
-            <Video className="w-4 h-4 text-primary shrink-0" />
-            <span className="text-xs font-semibold truncate text-ink">{meeting.title}</span>
+            <Video className="w-4 h-4 text-rose-600 shrink-0" />
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold truncate text-ink">{meeting.title}</span>
+              <span className="text-[10px] text-muted font-medium">Live Sync • Click to expand & join</span>
+            </div>
           </div>
           <button
             type="button"
