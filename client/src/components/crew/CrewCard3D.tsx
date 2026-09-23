@@ -105,10 +105,10 @@ export const CrewCard3D: React.FC<CrewCard3DProps> = ({
     if (isCaptainCard) {
       return {
         badgeBorder: 'border-amber-500/80',
-        badgeBg: 'bg-amber-500/15 text-amber-400',
-        accentText: 'text-amber-400',
+        badgeBg: 'bg-amber-500/15 text-amber-900',
+        accentText: 'text-amber-800',
         accentGlow: 'shadow-amber-500/20',
-        tagBg: 'bg-amber-500/10 text-amber-300 border-amber-500/40',
+        tagBg: 'bg-amber-500/10 text-amber-950 border-amber-500/40',
         insignia: Crown,
         classLabel: 'LEADERSHIP / SDE INTERN',
       };
@@ -116,10 +116,10 @@ export const CrewCard3D: React.FC<CrewCard3DProps> = ({
     if (symbolUpper === 'A' || identityUpper.includes('ACE')) {
       return {
         badgeBorder: 'border-emerald-600/70',
-        badgeBg: 'bg-emerald-600/10 text-emerald-400',
-        accentText: 'text-emerald-400',
+        badgeBg: 'bg-emerald-600/10 text-emerald-800',
+        accentText: 'text-emerald-700',
         accentGlow: 'shadow-emerald-500/20',
-        tagBg: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+        tagBg: 'bg-emerald-500/10 text-emerald-950 border-emerald-500/30',
         insignia: Zap,
         classLabel: member.characterClass || 'PRECISION / PROBLEM SOLVING',
       };
@@ -127,10 +127,10 @@ export const CrewCard3D: React.FC<CrewCard3DProps> = ({
     if (symbolUpper === 'C' || identityUpper.includes('BUILDER')) {
       return {
         badgeBorder: 'border-blue-600/70',
-        badgeBg: 'bg-blue-600/10 text-blue-400',
-        accentText: 'text-blue-400',
+        badgeBg: 'bg-blue-600/10 text-blue-800',
+        accentText: 'text-blue-700',
         accentGlow: 'shadow-blue-500/20',
-        tagBg: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
+        tagBg: 'bg-blue-500/10 text-blue-950 border-blue-500/30',
         insignia: Cpu,
         classLabel: member.characterClass || 'ENGINEERING / IMPLEMENTATION',
       };
@@ -138,10 +138,10 @@ export const CrewCard3D: React.FC<CrewCard3DProps> = ({
     if (symbolUpper === 'P' || symbolUpper === 'S' || identityUpper.includes('STRATEGIST')) {
       return {
         badgeBorder: 'border-violet-600/70',
-        badgeBg: 'bg-violet-600/10 text-violet-400',
-        accentText: 'text-violet-400',
+        badgeBg: 'bg-violet-600/10 text-violet-800',
+        accentText: 'text-violet-700',
         accentGlow: 'shadow-violet-500/20',
-        tagBg: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
+        tagBg: 'bg-violet-500/10 text-violet-950 border-violet-500/30',
         insignia: Layers,
         classLabel: member.characterClass || 'STRATEGY / LOGIC',
       };
@@ -149,10 +149,10 @@ export const CrewCard3D: React.FC<CrewCard3DProps> = ({
     // Explorer
     return {
       badgeBorder: 'border-teal-600/70',
-      badgeBg: 'bg-teal-600/10 text-teal-400',
-      accentText: 'text-teal-400',
+      badgeBg: 'bg-teal-600/10 text-teal-800',
+      accentText: 'text-teal-700',
       accentGlow: 'shadow-teal-500/20',
-      tagBg: 'bg-teal-500/10 text-teal-300 border-teal-500/30',
+      tagBg: 'bg-teal-500/10 text-teal-950 border-teal-500/30',
       insignia: Compass,
       classLabel: member.characterClass || 'DISCOVERY / LEARNING',
     };

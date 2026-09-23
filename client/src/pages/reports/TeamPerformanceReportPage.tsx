@@ -561,25 +561,25 @@ export const TeamPerformanceReportPage: React.FC = () => {
                 <span className="font-display text-xl font-bold text-ink block">{teamReport.workflowPipeline.todoCount}</span>
                 <span className="text-[11px] text-muted block">{teamReport.workflowPipeline.todoPct}%</span>
               </div>
-              <div className="p-3.5 bg-amber-500/15 border border-amber-500/30 rounded-lg">
-                <span className="text-[11px] text-amber-400 uppercase font-semibold block">In Progress</span>
-                <span className="font-display text-xl font-bold text-amber-300 block">{teamReport.workflowPipeline.inProgressCount}</span>
-                <span className="text-[11px] text-amber-400/80 block">{teamReport.workflowPipeline.inProgressPct}%</span>
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-lg">
+                <span className="text-[11px] text-amber-900 uppercase font-semibold block">In Progress</span>
+                <span className="font-display text-xl font-bold text-amber-950 block">{teamReport.workflowPipeline.inProgressCount}</span>
+                <span className="text-[11px] text-amber-800 block">{teamReport.workflowPipeline.inProgressPct}%</span>
               </div>
-              <div className="p-3.5 bg-rose-500/15 border border-rose-500/30 rounded-lg">
-                <span className="text-[11px] text-rose-400 uppercase font-semibold block">Blocked</span>
-                <span className="font-display text-xl font-bold text-rose-300 block">{teamReport.workflowPipeline.blockedCount}</span>
-                <span className="text-[11px] text-rose-400/80 block">{teamReport.workflowPipeline.blockedPct}%</span>
+              <div className="p-3.5 bg-rose-500/10 border border-rose-500/25 rounded-lg">
+                <span className="text-[11px] text-rose-900 uppercase font-semibold block">Blocked</span>
+                <span className="font-display text-xl font-bold text-rose-950 block">{teamReport.workflowPipeline.blockedCount}</span>
+                <span className="text-[11px] text-rose-800 block">{teamReport.workflowPipeline.blockedPct}%</span>
               </div>
-              <div className="p-3.5 bg-purple-500/15 border border-purple-500/30 rounded-lg">
-                <span className="text-[11px] text-purple-400 uppercase font-semibold block">In Review</span>
-                <span className="font-display text-xl font-bold text-purple-300 block">{teamReport.workflowPipeline.reviewCount}</span>
-                <span className="text-[11px] text-purple-400/80 block">{teamReport.workflowPipeline.reviewPct}%</span>
+              <div className="p-3.5 bg-purple-500/10 border border-purple-500/25 rounded-lg">
+                <span className="text-[11px] text-purple-900 uppercase font-semibold block">In Review</span>
+                <span className="font-display text-xl font-bold text-purple-950 block">{teamReport.workflowPipeline.reviewCount}</span>
+                <span className="text-[11px] text-purple-800 block">{teamReport.workflowPipeline.reviewPct}%</span>
               </div>
-              <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 rounded-lg">
-                <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Completed</span>
-                <span className="font-display text-xl font-bold text-emerald-300 block">{teamReport.workflowPipeline.doneCount}</span>
-                <span className="text-[11px] text-emerald-400/80 block">{teamReport.workflowPipeline.donePct}%</span>
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg">
+                <span className="text-[11px] text-emerald-900 uppercase font-semibold block">Completed</span>
+                <span className="font-display text-xl font-bold text-emerald-950 block">{teamReport.workflowPipeline.doneCount}</span>
+                <span className="text-[11px] text-emerald-800 block">{teamReport.workflowPipeline.donePct}%</span>
               </div>
             </div>
           </div>

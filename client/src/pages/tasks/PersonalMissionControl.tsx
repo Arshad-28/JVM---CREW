@@ -94,7 +94,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
       <div className="border border-line bg-paper p-6 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-primary-soft text-primary border border-primary/30 px-2 py-0.5 rounded-xs">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 px-2 py-0.5 rounded-xs">
               {memberProfile?.serialNumber || user?.serialNumber || 'MEMBER'}
             </span>
             <span className="font-mono text-xs text-muted font-semibold uppercase">
@@ -113,9 +113,9 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
         <button
           onClick={onCreateTask}
-          className="px-4 py-2.5 bg-primary text-paper hover:bg-primary-hover rounded-sm font-mono text-xs font-bold transition-colors shadow-xs flex items-center space-x-2 self-start md:self-auto"
+          className="px-4 py-2.5 bg-ink text-paper hover:bg-ink/90 rounded-sm font-mono text-xs font-bold transition-colors shadow-xs flex items-center space-x-2 self-start md:self-auto"
         >
-          <Plus className="w-4 h-4 text-paper" />
+          <Plus className="w-4 h-4 text-emerald-400" />
           <span>New Mission</span>
         </button>
       </div>
@@ -133,7 +133,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
         <div className="border border-line bg-paper p-4 rounded-sm space-y-1">
           <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">IN REVIEW</span>
           <div className="flex items-baseline space-x-2">
-            <span className="font-display text-2xl font-black text-amber-400">{reviewTasks.length}</span>
+            <span className="font-display text-2xl font-black text-amber-700">{reviewTasks.length}</span>
             <span className="font-mono text-[10px] text-muted">waiting lead review</span>
           </div>
         </div>
@@ -141,7 +141,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
         <div className="border border-line bg-paper p-4 rounded-sm space-y-1">
           <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">APPROVED & DONE</span>
           <div className="flex items-baseline space-x-2">
-            <span className="font-display text-2xl font-black text-emerald-400">{completedTasks.length}</span>
+            <span className="font-display text-2xl font-black text-emerald-700">{completedTasks.length}</span>
             <span className="font-mono text-[10px] text-muted">approved by lead</span>
           </div>
         </div>
@@ -149,7 +149,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
         <div className="border border-line bg-paper p-4 rounded-sm space-y-1">
           <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">MOMENTUM</span>
           <div className="flex items-baseline space-x-2">
-            <span className="font-display text-2xl font-black text-amber-400">{momentumPct}%</span>
+            <span className="font-display text-2xl font-black text-amber-700">{momentumPct}%</span>
             <span className="font-mono text-[10px] text-muted">completion rate</span>
           </div>
         </div>
@@ -157,13 +157,13 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
       {/* 3. NEXT MOVE (Spotlight Task) */}
       {featuredTask && (
-        <div className="border border-primary/30 bg-primary-soft p-5 rounded-sm space-y-3">
+        <div className="border border-emerald-500/30 bg-emerald-500/5 p-5 rounded-sm space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 font-mono text-xs font-bold text-primary uppercase">
-              <Zap className="w-4 h-4 text-primary animate-pulse" />
+            <div className="flex items-center space-x-2 font-mono text-xs font-bold text-emerald-800 uppercase">
+              <Zap className="w-4 h-4 text-emerald-600 animate-pulse" />
               <span>NEXT MOVE • FEATURED ENGINEERING TASK</span>
             </div>
-            <span className="font-mono text-[10px] text-primary font-semibold">
+            <span className="font-mono text-[10px] text-emerald-700 font-semibold">
               TASK-{featuredTask.id}
             </span>
           </div>
@@ -192,7 +192,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
               {featuredTask.status === 'TODO' ? (
                 <button
                   onClick={() => onStatusChange(featuredTask.id, 'IN_PROGRESS')}
-                  className="px-4 py-2 bg-primary hover:bg-primary-hover text-paper font-mono text-xs font-bold rounded-sm shadow-xs"
+                  className="px-4 py-2 bg-ink text-paper font-mono text-xs font-bold rounded-sm shadow-xs"
                 >
                   START TASK
                 </button>
@@ -208,14 +208,14 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
                   <button
                     onClick={() => onStatusChange(featuredTask.id, 'REVIEW')}
-                    className="px-4 py-2 bg-primary hover:bg-primary-hover text-paper font-mono text-xs font-bold rounded-sm shadow-xs flex items-center space-x-1"
+                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-mono text-xs font-bold rounded-sm shadow-xs flex items-center space-x-1"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Submit for Review</span>
                   </button>
                 </>
               ) : (
-                <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/20 px-3 py-1.5 rounded-xs">
+                <span className="font-mono text-xs font-bold text-amber-800 bg-amber-500/20 px-3 py-1.5 rounded-xs">
                   {featuredTask.status === 'REVIEW' ? 'WAITING FOR LEAD REVIEW' : 'APPROVED BY LEAD'}
                 </span>
               )}
@@ -261,7 +261,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                   <span className="text-muted font-semibold">TASK-{task.id}</span>
                   <div className="flex items-center space-x-1.5">
                     {task.status === 'REVIEW' && (
-                      <span className="font-mono text-[9px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded-xs border border-amber-500/40">
+                      <span className="font-mono text-[9px] font-bold text-amber-800 bg-amber-500/20 px-1.5 py-0.2 rounded-xs border border-amber-500/40">
                         WAITING REVIEW
                       </span>
                     )}
@@ -432,8 +432,8 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
           ) : (
             <div className="space-y-2 font-mono text-xs">
               {completedTasks.slice(0, 5).map((t) => (
-                <div key={t.id} className="flex items-center space-x-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xs text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div key={t.id} className="flex items-center space-x-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xs text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="font-bold shrink-0">TASK-{t.id}</span>
                   <span className="truncate">{t.title}</span>
                 </div>

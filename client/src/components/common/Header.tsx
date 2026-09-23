@@ -280,8 +280,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenStandup}
                 className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all duration-200 flex items-center space-x-1.5 whitespace-nowrap shadow-2xs cursor-pointer active:scale-95 hover:-translate-y-[1px] ${
                   standupDoneToday
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 hover:shadow-xs'
-                    : 'bg-attention-subtle border-attention/30 text-attention hover:bg-attention/20 hover:shadow-xs'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/20 hover:shadow-xs'
+                    : 'bg-attention-subtle border-attention/30 text-attention hover:bg-attention/15 hover:shadow-xs'
                 }`}
                 title={standupDoneToday ? "Today's standup is submitted. Click to view log." : "Today's standup is pending. Click to submit."}
               >

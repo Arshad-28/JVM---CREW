@@ -170,7 +170,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
       <div className="border border-line bg-paper rounded-sm p-6 sm:p-7 shadow-2xs space-y-6 relative overflow-hidden">
         {/* TOP IDENTITY ROW */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-line pb-4">
-            <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2.5">
             <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-xs bg-paper-dark border border-line text-ink">
               {user.serialNumber || data.serialNumber || 'MEMBER'}
             </span>
@@ -178,11 +178,11 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               {user.position || data.position || 'SDE Intern'}
             </span>
             {user.role === 'LEAD' ? (
-              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/15 border border-amber-500/30 text-amber-400 uppercase">
+              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/15 border border-amber-500/30 text-amber-800 uppercase">
                 CURRENT LEAD
               </span>
             ) : (
-              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-accent/15 border border-accent/30 text-accent uppercase">
+              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-accent/10 border border-accent/20 text-accent uppercase">
                 MEMBER
               </span>
             )}
@@ -219,7 +219,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               <span className="font-mono text-[10px] font-bold text-muted uppercase tracking-wider">
                 TODAY'S STATUS
               </span>
-              <span className={`font-mono text-[10px] font-bold ${isSubmittedToday ? 'text-primary' : 'text-muted'}`}>
+              <span className={`font-mono text-[10px] font-bold ${isSubmittedToday ? 'text-accent' : 'text-muted'}`}>
                 {isSubmittedToday ? 'STANDUP DONE ✓' : 'STANDUP PENDING'}
               </span>
             </div>
@@ -234,7 +234,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               }`}>
                 <span className="font-mono text-[9px] text-muted uppercase font-bold block">Daily Standup</span>
                 <span className={`font-mono text-xs font-black block leading-tight pt-1 ${
-                  isSubmittedToday ? 'text-emerald-400' : 'text-ink'
+                  isSubmittedToday ? 'text-emerald-700' : 'text-ink'
                 }`}>
                   {isSubmittedToday ? 'DONE ✓' : 'PENDING'}
                 </span>
@@ -498,7 +498,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                 Today's Team Lead Standup
               </span>
               {data.teamLead && (
-                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/10 border border-amber-500/20 text-amber-800">
                   {data.teamLead.name} ({data.teamLead.position || 'SDE Intern'} · Current Team Lead)
                 </span>
               )}
@@ -513,7 +513,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-4">
                   <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700 shrink-0">
                       <UserCheck className="w-5 h-5" />
                     </div>
                     <div>
@@ -521,7 +521,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         <span className="font-display text-sm font-bold text-ink">
                           {data.teamLead?.name || 'TEAM LEAD'} · DAILY UPDATE
                         </span>
-                        <span className="font-mono text-[10px] text-amber-400 font-bold px-1.5 py-0.2 bg-amber-500/10 rounded-xs">
+                        <span className="font-mono text-[10px] text-amber-800 font-bold px-1.5 py-0.2 bg-amber-500/10 rounded-xs">
                           {data.teamLeadStandup.hasVoiceRecording || data.teamLeadStandup.submissionType === 'VOICE'
                             ? `Submitted · Voice · ${data.teamLeadStandup.audioDurationSeconds || 0}s`
                             : 'Submitted · Written'}
@@ -738,16 +738,16 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               <Calendar className="w-3.5 h-3.5 text-muted" />
             </div>
             <div className={`font-mono text-sm sm:text-base font-bold flex items-center space-x-1.5 pt-1 ${
-              isSubmittedToday ? 'text-emerald-400' : 'text-amber-400'
+              isSubmittedToday ? 'text-emerald-700' : 'text-amber-700'
             }`}>
               {isSubmittedToday ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Submitted ✓</span>
                 </>
               ) : (
                 <>
-                  <Clock className="w-4 h-4 text-amber-400" />
+                  <Clock className="w-4 h-4 text-amber-600" />
                   <span>Pending —</span>
                 </>
               )}
@@ -770,7 +770,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               <Shield className="w-3.5 h-3.5 text-muted" />
             </div>
             <div className={`font-mono text-2xl font-black ${
-              data.openBlockersCount > 0 ? 'text-red-400' : 'text-ink'
+              data.openBlockersCount > 0 ? 'text-red-700' : 'text-ink'
             }`}>
               {data.openBlockersCount}
             </div>
@@ -820,17 +820,17 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               let borderColor = 'border-line hover:border-ink';
               let badgeColor = 'bg-paper-dark border-line text-ink';
               if (isOverdue) {
-                borderColor = 'border-red-500/40 bg-red-500/10 hover:border-red-500';
-                badgeColor = 'bg-red-500/15 border-red-500/30 text-red-400';
+                borderColor = 'border-red-500/40 bg-red-500/5 hover:border-red-600';
+                badgeColor = 'bg-red-500/10 border-red-500/30 text-red-700';
               } else if (isDueToday) {
-                borderColor = 'border-amber-500/40 bg-amber-500/10 hover:border-amber-500';
-                badgeColor = 'bg-amber-500/15 border-amber-500/30 text-amber-400';
+                borderColor = 'border-amber-500/40 bg-amber-500/5 hover:border-amber-600';
+                badgeColor = 'bg-amber-500/10 border-amber-500/30 text-amber-800';
               } else if (isHomework) {
-                borderColor = 'border-indigo-500/30 bg-indigo-500/10 hover:border-indigo-500';
-                badgeColor = 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400';
+                borderColor = 'border-indigo-500/30 bg-indigo-500/5 hover:border-indigo-600';
+                badgeColor = 'bg-indigo-500/10 border-indigo-500/30 text-indigo-700';
               } else if (isBlocker) {
-                borderColor = 'border-rose-500/40 bg-rose-500/10 hover:border-rose-500';
-                badgeColor = 'bg-rose-500/15 border-rose-500/30 text-rose-400';
+                borderColor = 'border-rose-500/40 bg-rose-500/5 hover:border-rose-600';
+                badgeColor = 'bg-rose-500/10 border-rose-500/30 text-rose-700';
               }
 
               return (
@@ -945,9 +945,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                 <div className="shrink-0 pl-3">
                   <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs border uppercase ${
                     task.status === 'DONE'
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
                       : task.status === 'IN_PROGRESS'
-                      ? 'bg-accent/15 border-accent/30 text-accent'
+                      ? 'bg-accent/10 border-accent/30 text-ink'
                       : 'bg-paper-dark border-line text-muted'
                   }`}>
                     {task.status.replace('_', ' ')}
@@ -1005,7 +1005,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               </div>
               <div className="p-2.5 bg-paper-dark rounded-xs">
                 <span className="text-muted text-[10px] block uppercase font-bold">Today's Standup</span>
-                <span className={`font-bold text-sm flex items-center space-x-1 ${isSubmittedToday ? 'text-emerald-400' : 'text-amber-400'}`}>
+                <span className={`font-bold text-sm flex items-center space-x-1 ${isSubmittedToday ? 'text-emerald-700' : 'text-amber-800'}`}>
                   <span>{isSubmittedToday ? 'Submitted ✓' : 'Pending'}</span>
                 </span>
               </div>

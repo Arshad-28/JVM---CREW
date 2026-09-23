@@ -63,7 +63,7 @@ export const MyProfilePage: React.FC = () => {
       <div className="border border-line bg-paper p-4 sm:p-6 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-sm">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 px-2 py-0.5 rounded-sm">
               PERSONAL WORKSPACE
             </span>
             <span className="font-mono text-xs text-muted font-bold">ID: {myProfile?.serialNumber || user?.serialNumber || 'MEMBER'}</span>

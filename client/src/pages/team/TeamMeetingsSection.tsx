@@ -149,9 +149,9 @@ export const TeamMeetingsSection: React.FC = () => {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-xl flex items-center justify-between gap-3 animate-fade-in">
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-800 text-xs rounded-xl flex items-center justify-between gap-3 animate-fade-in">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             <span className="font-medium">{error}</span>
           </div>
           <button

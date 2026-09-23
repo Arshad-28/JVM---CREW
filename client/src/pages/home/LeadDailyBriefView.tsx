@@ -311,7 +311,7 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
               {/* ATTENTION */}
               <div className={`p-2 border rounded-xs space-y-0.5 ${
                 brief.needsAttentionCount > 0
-                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-900'
                   : 'bg-paper border-line text-ink'
               }`}>
                 <span className="font-mono text-[9px] text-muted uppercase font-bold block">Attention</span>
@@ -408,7 +408,7 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
           {/* TEAM ATTENTION */}
           <div className={`p-4 border rounded-xs space-y-1.5 transition-colors shadow-2xs ${
             brief.needsAttentionCount > 0
-              ? 'bg-amber-500/10 border-amber-500/30'
+              ? 'bg-amber-500/5 border-amber-500/30'
               : 'bg-paper border-line'
           }`}>
             <div className="flex items-center justify-between">
@@ -416,7 +416,7 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
               <AlertTriangle className="w-3.5 h-3.5 text-muted" />
             </div>
             <div className={`font-mono text-2xl font-black ${
-              brief.needsAttentionCount > 0 ? 'text-amber-400' : 'text-ink'
+              brief.needsAttentionCount > 0 ? 'text-amber-700' : 'text-ink'
             }`}>
               {brief.needsAttentionCount}
             </div>
@@ -428,7 +428,7 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
           {/* BLOCKERS */}
           <div className={`p-4 border rounded-xs space-y-1.5 transition-colors shadow-2xs ${
             brief.openBlockersCount > 0
-              ? 'bg-red-500/10 border-red-500/30'
+              ? 'bg-red-500/5 border-red-500/30'
               : 'bg-paper border-line'
           }`}>
             <div className="flex items-center justify-between">
@@ -436,7 +436,7 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
               <Shield className="w-3.5 h-3.5 text-muted" />
             </div>
             <div className={`font-mono text-2xl font-black ${
-              brief.openBlockersCount > 0 ? 'text-red-400' : 'text-ink'
+              brief.openBlockersCount > 0 ? 'text-red-700' : 'text-ink'
             }`}>
               {brief.openBlockersCount}
             </div>
@@ -784,9 +784,9 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
                 <div className="shrink-0 pl-3">
                   <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs border uppercase ${
                     task.status === 'DONE'
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
                       : task.status === 'IN_PROGRESS'
-                      ? 'bg-accent/15 border-accent/30 text-accent'
+                      ? 'bg-accent/10 border-accent/30 text-ink'
                       : 'bg-paper-dark border-line text-muted'
                   }`}>
                     {task.status.replace('_', ' ')}
