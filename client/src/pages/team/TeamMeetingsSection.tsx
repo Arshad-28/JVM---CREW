@@ -13,7 +13,6 @@ import {
   Sparkles,
   Users,
   CheckCircle2,
-  CalendarCheck,
 } from 'lucide-react';
 
 export const TeamMeetingsSection: React.FC = () => {
@@ -25,8 +24,9 @@ export const TeamMeetingsSection: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(!cachedMeetings);
   const [error, setError] = useState<string | null>(null);
 
-  // Tab Filter State
-  const [viewFilter, setViewFilter] = useState<'ALL' | 'UPCOMING' | 'PAST'>('UPCOMING');
+  // Tab Filter State - Smart initial filter: default to ALL or PAST if no upcoming meetings
+  const [viewFilter, setViewFilter] = useState<'ALL' | 'UPCOMING' | 'PAST'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -132,9 +132,30 @@ export const TeamMeetingsSection: React.FC = () => {
   );
 
   const heroMeeting = activeUpcomingMeetings[0] || null;
-  const gridUpcomingMeetings = heroMeeting
-    ? activeUpcomingMeetings.filter((m) => m.id !== heroMeeting.id)
-    : activeUpcomingMeetings;
+
+  // Filter meetings for the grid
+  const filteredMeetings = meetings.filter((m) => {
+    if (viewFilter === 'UPCOMING') {
+      return m.isActive && (m.scheduledDate >= todayStr || m.isUpcoming);
+    }
+    if (viewFilter === 'PAST') {
+      return !m.isActive || m.scheduledDate < todayStr;
+    }
+    return true; // 'ALL'
+  }).filter((m) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      m.title.toLowerCase().includes(q) ||
+      (m.description && m.description.toLowerCase().includes(q)) ||
+      (m.createdByName && m.createdByName.toLowerCase().includes(q))
+    );
+  });
+
+  // When upcoming is selected and hero is shown, avoid showing the exact same card twice in the grid
+  const gridMeetings = (viewFilter === 'UPCOMING' && heroMeeting)
+    ? filteredMeetings.filter((m) => m.id !== heroMeeting.id)
+    : filteredMeetings;
 
   return (
     <PageContainer width="default" className="space-y-6 sm:space-y-8 font-sans pb-16">
@@ -150,7 +171,17 @@ export const TeamMeetingsSection: React.FC = () => {
               Team Video & Sync Studio
             </span>
             <span className="text-muted/40">·</span>
-            <span className="text-xs text-muted font-medium">Google Meet, Zoom & Microsoft Teams</span>
+            {activeUpcomingMeetings.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {activeUpcomingMeetings.length} Upcoming Sync Active
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted font-medium bg-paper px-2.5 py-0.5 rounded-full border border-line">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                All Syncs Concluded
+              </span>
+            )}
           </div>
 
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
@@ -165,7 +196,7 @@ export const TeamMeetingsSection: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3 relative z-10">
           <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 bg-paper border border-line rounded-xl text-xs font-mono text-muted shadow-2xs">
             <Users className="w-3.5 h-3.5 text-primary" />
-            <span><strong className="text-ink font-bold">{activeUpcomingMeetings.length}</strong> Upcoming</span>
+            <span><strong className="text-ink font-bold">{meetings.length}</strong> Total · <strong className="text-emerald-700">{pastMeetings.length}</strong> Done</span>
           </div>
 
           {isLead && (
@@ -232,8 +263,8 @@ export const TeamMeetingsSection: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6 sm:space-y-8">
-          {/* 2. UPCOMING HERO MEETING SHOWCASE OR ALL-CONCLUDED BANNER */}
-          {heroMeeting ? (
+          {/* 2. UPCOMING HERO MEETING SHOWCASE (Only when there is an active upcoming sync) */}
+          {heroMeeting && (
             <div className="space-y-3">
               <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -248,55 +279,11 @@ export const TeamMeetingsSection: React.FC = () => {
                 isHero={true}
               />
             </div>
-          ) : pastMeetings.length > 0 ? (
-            <div className="border border-emerald-500/25 bg-emerald-500/5 rounded-2xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-5 shadow-xs relative overflow-hidden">
-              <div className="flex items-start sm:items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                  <CalendarCheck className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 px-2.5 py-0.5 rounded-md flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      All Syncs Concluded
-                    </span>
-                    <span className="text-xs text-muted">Team is all caught up</span>
-                  </div>
-                  <h3 className="font-display text-lg font-bold text-ink">
-                    No Upcoming Meetings Pending
-                  </h3>
-                  <p className="text-xs text-muted max-w-xl">
-                    All scheduled team meetings have concluded. You can review past meeting history below or schedule a new sync anytime.
-                  </p>
-                </div>
-              </div>
-              {isLead && (
-                <button
-                  type="button"
-                  onClick={handleOpenCreateModal}
-                  className="px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 shrink-0 self-start md:self-center cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 text-emerald-200" />
-                  <span>Schedule Next Sync</span>
-                </button>
-              )}
-            </div>
-          ) : null}
+          )}
 
-          {/* 3. INTERACTIVE VIEW FILTER TABS */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-3">
+          {/* 3. INTERACTIVE VIEW FILTER TABS & SEARCH */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
             <div className="flex items-center gap-1.5 bg-paper p-1 rounded-xl border border-line">
-              <button
-                onClick={() => setViewFilter('UPCOMING')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                  viewFilter === 'UPCOMING'
-                    ? 'bg-paper-light text-primary font-bold shadow-xs border border-primary/20'
-                    : 'text-muted hover:text-ink'
-                }`}
-              >
-                Upcoming Syncs ({activeUpcomingMeetings.length})
-              </button>
-
               <button
                 onClick={() => setViewFilter('ALL')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
@@ -306,6 +293,17 @@ export const TeamMeetingsSection: React.FC = () => {
                 }`}
               >
                 All Meetings ({meetings.length})
+              </button>
+
+              <button
+                onClick={() => setViewFilter('UPCOMING')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                  viewFilter === 'UPCOMING'
+                    ? 'bg-paper-light text-primary font-bold shadow-xs border border-primary/20'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                Upcoming ({activeUpcomingMeetings.length})
               </button>
 
               <button
@@ -320,13 +318,22 @@ export const TeamMeetingsSection: React.FC = () => {
               </button>
             </div>
 
-            <span className="text-xs text-muted font-mono">
-              Showing {viewFilter === 'UPCOMING' ? (gridUpcomingMeetings.length + (heroMeeting ? 1 : 0)) : viewFilter === 'PAST' ? pastMeetings.length : meetings.length} of {meetings.length} meetings
-            </span>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Search meetings by title or host..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-3 py-1.5 bg-paper border border-line rounded-xl text-xs text-ink placeholder:text-muted/60 focus:outline-hidden focus:border-primary w-full sm:w-64 transition-all"
+              />
+              <span className="text-xs text-muted font-mono shrink-0 hidden md:inline">
+                {gridMeetings.length + (viewFilter === 'UPCOMING' && heroMeeting ? 1 : 0)} of {meetings.length}
+              </span>
+            </div>
           </div>
 
-          {/* 4. MEETINGS GRID OR ACTIVE MEETING GUIDELINES */}
-          {viewFilter === 'UPCOMING' && gridUpcomingMeetings.length === 0 && heroMeeting ? (
+          {/* 4. MEETINGS GRID OR ENGAGING ACTIVE GUIDELINES */}
+          {viewFilter === 'UPCOMING' && gridMeetings.length === 0 && heroMeeting ? (
             <div className="bg-paper-light border border-line rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-line pb-3">
                 <div className="flex items-center gap-2">
@@ -374,13 +381,56 @@ export const TeamMeetingsSection: React.FC = () => {
                 </div>
               </div>
             </div>
-          ) : (viewFilter === 'UPCOMING' ? gridUpcomingMeetings : viewFilter === 'PAST' ? pastMeetings : meetings).length === 0 ? (
-            <div className="py-12 text-center text-xs text-muted bg-paper-light rounded-xl border border-line">
-              No meetings found for this filter.
+          ) : gridMeetings.length === 0 ? (
+            <div className="bg-paper-light border border-dashed border-line rounded-2xl p-10 text-center space-y-4 max-w-lg mx-auto my-4 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 mx-auto shadow-2xs">
+                {viewFilter === 'UPCOMING' ? (
+                  <CheckCircle2 className="w-6 h-6" />
+                ) : (
+                  <Video className="w-6 h-6 text-primary" />
+                )}
+              </div>
+              <div className="space-y-1 max-w-sm mx-auto">
+                <h3 className="font-display text-base font-bold text-ink">
+                  {viewFilter === 'UPCOMING'
+                    ? "All Syncs Completed"
+                    : viewFilter === 'PAST'
+                    ? "No Past Meetings Yet"
+                    : "No Meetings Found"}
+                </h3>
+                <p className="text-xs text-muted leading-relaxed">
+                  {viewFilter === 'UPCOMING'
+                    ? "All team meetings have concluded. You can review past syncs or schedule the next standup."
+                    : viewFilter === 'PAST'
+                    ? "Concluded meetings will appear here with history and attendance."
+                    : "No meetings matched your search criteria."}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                {viewFilter === 'UPCOMING' && pastMeetings.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setViewFilter('PAST')}
+                    className="px-4 py-2 bg-paper hover:bg-paper-dark border border-line text-ink rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                  >
+                    View Past History ({pastMeetings.length})
+                  </button>
+                )}
+                {isLead && (
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateModal}
+                    className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Schedule Meeting</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(viewFilter === 'UPCOMING' ? gridUpcomingMeetings : viewFilter === 'PAST' ? pastMeetings : meetings).map((m) => (
+              {gridMeetings.map((m) => (
                 <TeamMeetingCard
                   key={m.id}
                   meeting={m}
