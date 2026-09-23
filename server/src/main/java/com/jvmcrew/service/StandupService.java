@@ -15,6 +15,7 @@ import com.jvmcrew.model.enums.Role;
 import com.jvmcrew.repository.BlockerRepository;
 import com.jvmcrew.repository.StandupRepository;
 import com.jvmcrew.repository.TeamMemberRepository;
+import com.jvmcrew.repository.TeamRepository;
 import com.jvmcrew.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class StandupService {
     private final BlockerRepository blockerRepository;
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final TeamRepository teamRepository;
     private final AudioStorageService audioStorageService;
     private final LeadershipService leadershipService;
     private final NotificationService notificationService;
@@ -218,12 +220,59 @@ public class StandupService {
     }
 
     @Transactional
+    public TeamMember resolveUserTeamMember(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null when resolving team membership");
+        }
+
+        // 1. Check for active team membership with team fetched
+        Optional<TeamMember> activeOpt = teamMemberRepository.findActiveWithTeamByUser(user);
+        if (activeOpt.isPresent()) {
+            return activeOpt.get();
+        }
+
+        // 2. Check for any active team membership
+        activeOpt = teamMemberRepository.findFirstByUserAndIsActiveTrue(user);
+        if (activeOpt.isPresent()) {
+            return activeOpt.get();
+        }
+
+        // 3. Check for any existing team membership row (including inactive) and reactivate
+        Optional<TeamMember> anyOpt = teamMemberRepository.findFirstByUser(user);
+        if (anyOpt.isPresent()) {
+            TeamMember tm = anyOpt.get();
+            tm.setIsActive(true);
+            return teamMemberRepository.save(tm);
+        }
+
+        // 4. Fallback: Automatically attach user to the primary active team
+        Team defaultTeam = teamRepository.findFirstByOrderByIdAsc()
+                .orElseGet(() -> teamRepository.save(
+                        Team.builder()
+                                .name("Alpha")
+                                .customName("Alpha Team")
+                                .cohort("A")
+                                .isActive(true)
+                                .createdAt(Instant.now())
+                                .build()
+                ));
+
+        TeamMember newMember = TeamMember.builder()
+                .user(user)
+                .team(defaultTeam)
+                .role(Role.MEMBER)
+                .isActive(true)
+                .joinedAt(Instant.now())
+                .build();
+        return teamMemberRepository.save(newMember);
+    }
+
+    @Transactional
     public StandupResponse submitStandup(Long userId, StandupRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        var teamMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(user)
-                .orElseThrow(() -> new IllegalStateException("User does not belong to any active team"));
+        TeamMember teamMember = resolveUserTeamMember(user);
         Team team = teamMember.getTeam();
 
         LocalDate submissionDate = request.getDate() != null ? request.getDate() : LocalDate.now();
@@ -360,11 +409,10 @@ public class StandupService {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new IllegalArgumentException("Requester not found: " + requesterId));
 
-        TeamMember requesterMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(requester)
-                .orElseThrow(() -> new IllegalStateException("Requester does not belong to any active team"));
+        TeamMember requesterMember = resolveUserTeamMember(requester);
 
         // Strict team isolation: Requester and Standup must belong to the exact same active team
-        if (!requesterMember.getTeam().getId().equals(standup.getTeam().getId())) {
+        if (standup.getTeam() != null && !requesterMember.getTeam().getId().equals(standup.getTeam().getId())) {
             throw new org.springframework.security.access.AccessDeniedException("You are not authorized to view this standup.");
         }
 
@@ -384,10 +432,9 @@ public class StandupService {
     @Transactional(readOnly = true)
     public List<StandupResponse> getTeamStandupHistory(Long requesterId) {
         User requester = userRepository.findById(requesterId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + requesterId));
+                .orElseThrow(() -> new IllegalArgumentException("Requester not found: " + requesterId));
 
-        TeamMember requesterMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(requester)
-                .orElseThrow(() -> new IllegalStateException("Requester does not belong to any active team"));
+        TeamMember requesterMember = resolveUserTeamMember(requester);
 
         Team team = requesterMember.getTeam();
         return standupRepository.findByTeamOrderByDateDesc(team).stream()
@@ -401,18 +448,16 @@ public class StandupService {
         User lead = userRepository.findById(leadId)
                 .orElseThrow(() -> new IllegalArgumentException("Lead not found: " + leadId));
 
-        TeamMember leadMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(lead)
-                .orElseThrow(() -> new IllegalStateException("Lead does not belong to any active team"));
+        TeamMember leadMember = resolveUserTeamMember(lead);
 
-        if (leadMember.getRole() != Role.LEAD) {
+        if (leadMember.getRole() != Role.LEAD && leadMember.getRole() != Role.ADMIN) {
             throw new org.springframework.security.access.AccessDeniedException("Only Team Leads can view other members' standup history.");
         }
 
         User member = userRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberId));
 
-        TeamMember memberMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(member)
-                .orElseThrow(() -> new IllegalArgumentException("Member not found in any active team: " + memberId));
+        TeamMember memberMember = resolveUserTeamMember(member);
 
         if (!memberMember.getTeam().getId().equals(leadMember.getTeam().getId())) {
             throw new org.springframework.security.access.AccessDeniedException("You are not authorized to view standup history for members of another team.");
@@ -446,8 +491,7 @@ public class StandupService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        TeamMember teamMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(user)
-                .orElseThrow(() -> new IllegalStateException("User does not belong to any active team"));
+        TeamMember teamMember = resolveUserTeamMember(user);
         Team team = teamMember.getTeam();
 
         LocalDate standupDate = date != null ? date : LocalDate.now();
@@ -529,8 +573,7 @@ public class StandupService {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new IllegalArgumentException("Requester not found: " + requesterId));
 
-        TeamMember requesterMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(requester)
-                .orElseThrow(() -> new IllegalStateException("Requester does not belong to any active team"));
+        TeamMember requesterMember = resolveUserTeamMember(requester);
 
         Team team = requesterMember.getTeam();
         LocalDate queryDate = targetDate != null ? targetDate : LocalDate.now();
@@ -554,12 +597,16 @@ public class StandupService {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new IllegalArgumentException("Requester not found: " + requesterId));
 
-        TeamMember requesterMember = teamMemberRepository.findFirstByUserAndIsActiveTrue(requester)
-                .orElseThrow(() -> new IllegalStateException("Requester does not belong to any active team"));
+        // Allow the user who recorded the audio to always access their own audio
+        boolean isOwner = requester.getId().equals(standup.getUser().getId());
 
-        // Strict team isolation: Requester and Standup must belong to the exact same active team
-        if (!requesterMember.getTeam().getId().equals(standup.getTeam().getId())) {
-            throw new org.springframework.security.access.AccessDeniedException("You are not authorized to listen to this voice standup recording.");
+        if (!isOwner) {
+            TeamMember requesterMember = resolveUserTeamMember(requester);
+            boolean isAdmin = requesterMember.getRole() == Role.ADMIN;
+            // Strict team isolation: Requester and Standup must belong to the exact same active team
+            if (!isAdmin && standup.getTeam() != null && !requesterMember.getTeam().getId().equals(standup.getTeam().getId())) {
+                throw new org.springframework.security.access.AccessDeniedException("You are not authorized to listen to this voice standup recording.");
+            }
         }
 
         if (!StringUtils.hasText(standup.getAudioStoragePath())) {

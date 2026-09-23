@@ -11,6 +11,9 @@
 -- 1. Ensure Supabase auth helper functions & roles exist for portability
 DO $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'postgres') THEN
+        CREATE ROLE postgres;
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
         CREATE ROLE service_role;
     END IF;
@@ -74,7 +77,7 @@ AS $$
         WHERE u.auth_user_id = auth.uid()
           AND tm.team_id = check_team_id
           AND tm.is_active = true
-          AND (UPPER(tm.role) IN ('LEAD', 'ADMIN', 'OWNER') OR UPPER(u.role) IN ('LEAD', 'ADMIN', 'OWNER'))
+          AND UPPER(tm.role) IN ('LEAD', 'ADMIN', 'OWNER')
     );
 $$;
 
@@ -358,8 +361,12 @@ CREATE POLICY "interview_learning_sessions_user" ON public.interview_learning_se
 DROP POLICY IF EXISTS "interview_practice_questions_user" ON public.interview_practice_questions;
 CREATE POLICY "interview_practice_questions_user" ON public.interview_practice_questions
     FOR ALL TO authenticated
-    USING (user_id IS NULL OR user_id = public.get_auth_user_id())
-    WITH CHECK (user_id IS NULL OR user_id = public.get_auth_user_id());
+    USING (
+        session_id IN (SELECT id FROM public.interview_learning_sessions WHERE user_id = public.get_auth_user_id())
+    )
+    WITH CHECK (
+        session_id IN (SELECT id FROM public.interview_learning_sessions WHERE user_id = public.get_auth_user_id())
+    );
 
 DROP POLICY IF EXISTS "interview_practice_attempts_user" ON public.interview_practice_attempts;
 CREATE POLICY "interview_practice_attempts_user" ON public.interview_practice_attempts
@@ -377,21 +384,17 @@ DROP POLICY IF EXISTS "interview_mock_questions_user" ON public.interview_mock_q
 CREATE POLICY "interview_mock_questions_user" ON public.interview_mock_questions
     FOR ALL TO authenticated
     USING (
-        session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
+        mock_session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
     )
     WITH CHECK (
-        session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
+        mock_session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
     );
 
 DROP POLICY IF EXISTS "interview_mock_answers_user" ON public.interview_mock_answers;
 CREATE POLICY "interview_mock_answers_user" ON public.interview_mock_answers
     FOR ALL TO authenticated
-    USING (
-        session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
-    )
-    WITH CHECK (
-        session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
-    );
+    USING (user_id = public.get_auth_user_id())
+    WITH CHECK (user_id = public.get_auth_user_id());
 
 DROP POLICY IF EXISTS "interview_coding_problems_catalog" ON public.interview_coding_problems;
 CREATE POLICY "interview_coding_problems_catalog" ON public.interview_coding_problems
@@ -407,12 +410,8 @@ CREATE POLICY "interview_coding_attempts_user" ON public.interview_coding_attemp
 DROP POLICY IF EXISTS "interview_coach_messages_user" ON public.interview_coach_messages;
 CREATE POLICY "interview_coach_messages_user" ON public.interview_coach_messages
     FOR ALL TO authenticated
-    USING (
-        session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
-    )
-    WITH CHECK (
-        session_id IN (SELECT id FROM public.interview_mock_sessions WHERE user_id = public.get_auth_user_id())
-    );
+    USING (user_id = public.get_auth_user_id())
+    WITH CHECK (user_id = public.get_auth_user_id());
 
 DROP POLICY IF EXISTS "interview_user_weaknesses_user" ON public.interview_user_weaknesses;
 CREATE POLICY "interview_user_weaknesses_user" ON public.interview_user_weaknesses
@@ -433,8 +432,8 @@ CREATE POLICY "push_subscriptions_user" ON public.push_subscriptions
 DROP POLICY IF EXISTS "notifications_user" ON public.notifications;
 CREATE POLICY "notifications_user" ON public.notifications
     FOR ALL TO authenticated
-    USING (user_id = public.get_auth_user_id())
-    WITH CHECK (user_id = public.get_auth_user_id());
+    USING (recipient_user_id = public.get_auth_user_id())
+    WITH CHECK (recipient_user_id = public.get_auth_user_id());
 
 DROP POLICY IF EXISTS "notification_preferences_user" ON public.notification_preferences;
 CREATE POLICY "notification_preferences_user" ON public.notification_preferences

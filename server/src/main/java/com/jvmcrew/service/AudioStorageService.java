@@ -88,19 +88,53 @@ public class AudioStorageService {
         }
 
         String lowerMime = contentType.toLowerCase().split(";")[0].trim();
-        if (!ALLOWED_AUDIO_MIME_TYPES.contains(lowerMime)) {
+        String lowerFilename = originalFilename != null ? originalFilename.toLowerCase().trim() : "";
+
+        boolean isValidAudio = lowerMime.startsWith("audio/")
+                || lowerMime.startsWith("video/webm")
+                || lowerMime.startsWith("video/mp4")
+                || lowerMime.startsWith("video/ogg")
+                || lowerMime.startsWith("video/3gpp")
+                || "application/octet-stream".equals(lowerMime)
+                || lowerFilename.endsWith(".webm")
+                || lowerFilename.endsWith(".ogg")
+                || lowerFilename.endsWith(".wav")
+                || lowerFilename.endsWith(".mp3")
+                || lowerFilename.endsWith(".m4a")
+                || lowerFilename.endsWith(".mp4")
+                || lowerFilename.endsWith(".aac")
+                || lowerFilename.endsWith(".caf")
+                || lowerFilename.endsWith(".3gp")
+                || lowerFilename.endsWith(".weba");
+
+        if (!isValidAudio) {
+            log.warn("Rejected audio upload with mime='{}', filename='{}'", contentType, originalFilename);
             throw new IllegalArgumentException("Invalid file type: '" + contentType + "'. Only standard audio recordings are allowed.");
         }
 
+        // Determine file extension and normalized content type
         String extension = ".webm";
-        if (contentType.contains("mp4") || (originalFilename != null && originalFilename.endsWith(".mp4"))) {
+        if (lowerMime.contains("mp4") || lowerMime.contains("m4a") || lowerMime.contains("aac") || lowerFilename.endsWith(".mp4") || lowerFilename.endsWith(".m4a") || lowerFilename.endsWith(".aac")) {
             extension = ".mp4";
-        } else if (contentType.contains("ogg") || (originalFilename != null && originalFilename.endsWith(".ogg"))) {
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/mp4";
+        } else if (lowerMime.contains("ogg") || lowerFilename.endsWith(".ogg")) {
             extension = ".ogg";
-        } else if (contentType.contains("wav") || (originalFilename != null && originalFilename.endsWith(".wav"))) {
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/ogg";
+        } else if (lowerMime.contains("wav") || lowerFilename.endsWith(".wav")) {
             extension = ".wav";
-        } else if (contentType.contains("webm") || (originalFilename != null && originalFilename.endsWith(".webm"))) {
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/wav";
+        } else if (lowerMime.contains("mp3") || lowerMime.contains("mpeg") || lowerFilename.endsWith(".mp3")) {
+            extension = ".mp3";
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/mpeg";
+        } else if (lowerMime.contains("3gp") || lowerFilename.endsWith(".3gp")) {
+            extension = ".3gp";
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/3gpp";
+        } else if (lowerMime.contains("caf") || lowerFilename.endsWith(".caf")) {
+            extension = ".caf";
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/x-caf";
+        } else {
             extension = ".webm";
+            if ("application/octet-stream".equals(lowerMime)) contentType = "audio/webm";
         }
 
         LocalDate targetDate = date != null ? date : LocalDate.now();
@@ -117,18 +151,30 @@ public class AudioStorageService {
         try {
             byte[] fileBytes = file.getBytes();
 
-            // 1. Primary Persistent Cloud Storage: Supabase
-            if (supabaseStorageService.isConfigured()) {
-                supabaseStorageService.store(storagePath, fileBytes, contentType);
-                log.info("Successfully persisted voice recording to Supabase Storage: {} (size: {} bytes)", storagePath, fileBytes.length);
-            }
-
-            // 2. Local Mirror/Cache for zero-latency local playback
+            // 1. Local Cache/Mirror first for zero-latency local playback and guaranteed offline safety
+            boolean localSaved = false;
             try {
                 localStorageService.store(storagePath, fileBytes, contentType);
+                localSaved = true;
                 log.info("Cached voice recording locally: {} (size: {} bytes)", storagePath, fileBytes.length);
             } catch (Exception ex) {
-                log.warn("Local storage cache failed (non-critical) for {}: {}", storagePath, ex.getMessage());
+                log.warn("Local storage cache write failed for {}: {}", storagePath, ex.getMessage());
+            }
+
+            // 2. Persistent Cloud Storage: Supabase (safely isolated with try-catch so network/quota issues never fail user submission)
+            boolean supabaseSaved = false;
+            if (supabaseStorageService.isConfigured()) {
+                try {
+                    supabaseStorageService.store(storagePath, fileBytes, contentType);
+                    supabaseSaved = true;
+                    log.info("Successfully persisted voice recording to Supabase Storage: {} (size: {} bytes)", storagePath, fileBytes.length);
+                } catch (Exception ex) {
+                    log.error("Supabase Storage upload failed for {} (will rely on local storage): {}", storagePath, ex.getMessage(), ex);
+                }
+            }
+
+            if (!localSaved && !supabaseSaved) {
+                throw new IOException("Failed to save audio recording to both local disk and cloud storage providers.");
             }
 
             return StoredAudioMetadata.builder()
@@ -138,7 +184,7 @@ public class AudioStorageService {
                     .fileSize(file.getSize())
                     .build();
         } catch (IOException ex) {
-            log.error("Failed to read audio file bytes for team {} user {}: {}", safeTeamId, userId, ex.getMessage(), ex);
+            log.error("Failed to process audio file bytes for team {} user {}: {}", safeTeamId, userId, ex.getMessage(), ex);
             throw new RuntimeException("Could not process audio upload: " + ex.getMessage(), ex);
         }
     }

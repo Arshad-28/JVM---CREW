@@ -171,24 +171,37 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
       const candidateTypes = [
         'audio/webm;codecs=opus',
         'audio/webm',
+        'audio/mp4',
+        'audio/aac',
+        'audio/x-m4a',
         'audio/ogg;codecs=opus',
         'audio/ogg',
-        'audio/mp4',
         'audio/wav',
       ];
 
-      for (const t of candidateTypes) {
-        if (MediaRecorder.isTypeSupported(t)) {
-          mimeType = t;
-          break;
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        for (const t of candidateTypes) {
+          if (MediaRecorder.isTypeSupported(t)) {
+            mimeType = t;
+            break;
+          }
         }
       }
 
-      const options: MediaRecorderOptions = {
-        ...(mimeType ? { mimeType } : {}),
-        audioBitsPerSecond: 128000, // 128 kbps crystal-clear studio voice recording
-      };
-      const mediaRecorder = new MediaRecorder(stream, options);
+      let mediaRecorder: MediaRecorder;
+      try {
+        const options: MediaRecorderOptions = {
+          ...(mimeType ? { mimeType } : {}),
+          audioBitsPerSecond: 128000, // 128 kbps studio voice recording
+        };
+        mediaRecorder = new MediaRecorder(stream, options);
+      } catch (e1) {
+        try {
+          mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        } catch (e2) {
+          mediaRecorder = new MediaRecorder(stream);
+        }
+      }
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -285,7 +298,25 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
 
   const handleVoiceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!audioBlob) {
+
+    let blobToSend = audioBlob;
+
+    // If currently recording when submit is clicked, safely stop and capture the audio
+    if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      stopRecording();
+      // Allow up to 1000ms for onstop callback to assemble the blob
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 50));
+        if (audioChunksRef.current.length > 0) break;
+      }
+      if (audioChunksRef.current.length > 0) {
+        const finalType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+        blobToSend = new Blob(audioChunksRef.current, { type: finalType });
+        setAudioBlob(blobToSend);
+      }
+    }
+
+    if (!blobToSend || blobToSend.size === 0) {
       setErrorMessage('Please record your voice standup before submitting.');
       return;
     }
@@ -295,8 +326,17 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
     setSuccessMessage(null);
 
     try {
-      const extension = audioBlob.type.includes('ogg') ? 'ogg' : audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('wav') ? 'wav' : 'webm';
-      const file = new File([audioBlob], `standup_${effectiveDate}.${extension}`, { type: audioBlob.type || 'audio/webm' });
+      const blobType = blobToSend.type || 'audio/webm';
+      let extension = 'webm';
+      if (blobType.includes('mp4') || blobType.includes('m4a') || blobType.includes('aac')) {
+        extension = 'mp4';
+      } else if (blobType.includes('ogg')) {
+        extension = 'ogg';
+      } else if (blobType.includes('wav')) {
+        extension = 'wav';
+      }
+
+      const file = new File([blobToSend], `standup_${effectiveDate}.${extension}`, { type: blobType });
 
       const formData = new FormData();
       formData.append('voice', file);
