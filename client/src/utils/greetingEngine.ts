@@ -22,6 +22,19 @@ export function getTimeGreeting(fullName?: string): string {
   }
 }
 
+export function getTimeGreetingEmoji(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+    return '☀️';
+  } else if (hour >= 12 && hour < 17) {
+    return '🌤️';
+  } else if (hour >= 17 && hour < 21) {
+    return '🌆';
+  } else {
+    return '🌙';
+  }
+}
+
 const LEAD_SUBTITLES = [
   'Ready to move the crew forward today?',
   "Let's keep the team aligned and unblocked.",

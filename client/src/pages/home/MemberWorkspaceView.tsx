@@ -9,6 +9,7 @@ import { LeaveEmailModal } from '../../components/common/LeaveEmailModal';
 import { TeamMeetingCard } from '../../components/team/TeamMeetingCard';
 import {
   getTimeGreeting,
+  getTimeGreetingEmoji,
   getPersonalDailyContext,
   getFormattedTodayDate,
 } from '../../utils/greetingEngine';
@@ -149,6 +150,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
   const todayStandup = data.todayStandup;
 
   const greetingTitle = getTimeGreeting(user.name);
+  const greetingEmoji = getTimeGreetingEmoji();
   const dailyContext = getPersonalDailyContext({
     role: user.role,
     openBlockers: data.openBlockersCount,
@@ -183,8 +185,11 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             <div className="space-y-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-                {greetingTitle}
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight flex items-center gap-2.5">
+                <span>{greetingTitle}</span>
+                <span className="inline-block text-2xl sm:text-3xl select-none hover:scale-115 active:scale-95 transition-transform duration-200 cursor-default" title="Have a productive day">
+                  {greetingEmoji}
+                </span>
               </h1>
             </div>
 
