@@ -24,6 +24,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { PageContainer } from '../../components/common/PageContainer';
+import { Modal } from '../../components/common/Modal';
 
 export const HomeworkPage: React.FC = () => {
   const { user } = useAuth();
@@ -356,32 +357,44 @@ export const HomeworkPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* PAGE HEADER                                                               */}
       {/* ========================================================================= */}
-      <div className="border border-line bg-paper p-4 sm:p-5 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
-        <div>
-          <div className="flex items-center space-x-2">
-            <h1 className="font-display text-xl font-bold text-ink">
-              {isLead ? 'Homework & Classwork' : 'Homework'}
-            </h1>
-            <span className="font-mono text-xs text-muted">
-              · {isLead ? 'Leadership Action Center' : 'Your Assignments'}
-            </span>
-          </div>
-          <p className="text-xs text-muted mt-0.5">
-            {isLead
-              ? 'Assign questions from class, track submissions, and share solutions with your team.'
-              : 'Questions and assignments from your Lead / Instructor.'}
-          </p>
-        </div>
+      <div className="relative overflow-hidden bg-gradient-to-br from-paper-light via-surface to-paper border border-line/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
-        {isLead && (
-          <button
-            onClick={() => handleOpenAddModal()}
-            className="px-4 py-2 bg-ink text-paper hover:bg-ink-light font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 shadow-xs shrink-0"
-          >
-            <Plus className="w-4 h-4 text-accent" />
-            <span>+ Add Homework</span>
-          </button>
-        )}
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {isLead ? 'LEADERSHIP ACTION CENTER' : 'STUDENT ASSIGNMENTS'}
+              </span>
+              <span className="text-muted/40">·</span>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-paper border border-line text-muted">
+                {activeHomeworkList.length} Active
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-3">
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+                {isLead ? 'Homework & Classwork Hub' : 'My Homework Assignments'}
+              </h1>
+            </div>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
+              {isLead
+                ? 'Assign questions from class, track submissions, and share instructor solutions with your team.'
+                : 'Questions, practice exercises, and solution guidelines assigned by your Team Lead.'}
+            </p>
+          </div>
+
+          {isLead && (
+            <button
+              onClick={() => handleOpenAddModal()}
+              className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 text-emerald-300 group-hover:rotate-90 transition-transform duration-200" />
+              <span>Add Homework</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -1143,495 +1156,453 @@ export const HomeworkPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* LEAD ADD / EDIT HOMEWORK MODAL                                            */}
       {/* ========================================================================= */}
-      {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
-          <div className="bg-paper border border-line max-w-2xl w-full p-4 sm:p-6 rounded-t-lg sm:rounded-sm shadow-xl space-y-4 my-0 sm:my-8 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-line pb-3">
-              <div>
-                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent">
-                  CLASSWORK MANAGEMENT
-                </span>
-                <h3 className="font-display text-lg font-bold text-ink mt-0.5">
-                  {editingHomework ? 'Edit Homework' : 'Add Homework'}
-                </h3>
-              </div>
+      <Modal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        size="lg"
+        kicker="CLASSWORK MANAGEMENT"
+        title={editingHomework ? 'Edit Homework' : 'Add Homework'}
+        subtitle="Assign technical questions, practice tasks, and guidelines to the crew."
+        footer={
+          <div className="flex items-center justify-between w-full">
+            {editingHomework ? (
               <button
-                onClick={() => setAddModalOpen(false)}
-                className="text-muted hover:text-ink"
+                type="button"
+                onClick={() => {
+                  setAddModalOpen(false);
+                  setHomeworkToDelete(editingHomework);
+                }}
+                className="px-3.5 py-2 border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                <span>Delete Homework</span>
+              </button>
+            ) : (
+              <div />
+            )}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAddModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-paper-dark rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveHomework(false)}
+                disabled={savingHomework}
+                className="px-4 py-2 text-xs font-semibold border border-line hover:border-line-dark hover:bg-paper-dark rounded-xl transition-all text-ink disabled:opacity-50 cursor-pointer"
+              >
+                {savingHomework ? 'Saving...' : 'Save as Draft'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveHomework(true)}
+                disabled={savingHomework}
+                className="px-5 py-2 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{savingHomework ? 'Publishing...' : 'Publish Homework'}</span>
+              </button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-4 text-xs">
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-ink">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formTitle}
+              onChange={(e) => setFormTitle(e.target.value)}
+              placeholder="e.g. Java If-Else Practice & Conditionals"
+              className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
+              autoFocus
+            />
+          </div>
+
+          {/* Subject / Topic & Due Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-ink">
+                Subject / Topic
+              </label>
+              <input
+                type="text"
+                value={formTopic}
+                onChange={(e) => setFormTopic(e.target.value)}
+                placeholder="e.g. Core Java — Control Flow"
+                className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-ink">
+                Due Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={formDueDate}
+                onChange={(e) => setFormDueDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink outline-none transition-all font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Questions List */}
+          <div className="space-y-2 p-3.5 bg-paper/60 border border-line rounded-xl">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-ink flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-primary" />
+                <span>Questions / Problem Statements <span className="text-red-500">*</span></span>
+              </label>
+              <button
+                type="button"
+                onClick={handleAddQuestionField}
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Question</span>
               </button>
             </div>
 
-            <div className="space-y-4 text-xs">
-              {/* Title */}
-              <div className="space-y-1">
-                <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Java If-Else Practice"
-                  className="w-full p-2.5 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
-                  autoFocus
-                />
-              </div>
-
-              {/* Subject / Topic & Due Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                    Subject / Topic
-                  </label>
-                  <input
-                    type="text"
-                    value={formTopic}
-                    onChange={(e) => setFormTopic(e.target.value)}
-                    placeholder="e.g. Java — Conditional Statements"
-                    className="w-full p-2.5 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
+            <div className="space-y-2">
+              {formQuestions.map((q, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <span className="font-mono font-bold text-primary text-xs shrink-0 pt-2.5 w-5 text-right">
+                    {idx + 1}.
+                  </span>
+                  <textarea
+                    rows={2}
+                    value={q}
+                    onChange={(e) => handleQuestionChange(idx, e.target.value)}
+                    placeholder={`Question ${idx + 1} statement or challenge requirements...`}
+                    className="flex-1 p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-none transition-all font-sans"
                   />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                    Due Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={formDueDate}
-                    onChange={(e) => setFormDueDate(e.target.value)}
-                    className="w-full p-2.5 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
-                  />
-                </div>
-              </div>
-
-              {/* Questions List */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="font-mono text-[11px] font-bold text-muted uppercase">
-                    Questions / Assignments *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleAddQuestionField}
-                    className="font-mono text-[11px] text-accent hover:underline flex items-center space-x-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Add Question</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {formQuestions.map((q, idx) => (
-                    <div key={idx} className="flex items-start space-x-2">
-                      <span className="font-mono font-bold text-accent shrink-0 pt-2.5">
-                        {idx + 1}.
-                      </span>
-                      <textarea
-                        rows={2}
-                        value={q}
-                        onChange={(e) => handleQuestionChange(idx, e.target.value)}
-                        placeholder={`Question ${idx + 1}...`}
-                        className="flex-1 p-2 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
-                      />
-                      {formQuestions.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveQuestionField(idx)}
-                          className="pt-2 text-muted hover:text-attention"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Optional Instructions */}
-              <div className="space-y-1">
-                <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                  Optional Instructions
-                </label>
-                <textarea
-                  rows={2}
-                  value={formInstructions}
-                  onChange={(e) => setFormInstructions(e.target.value)}
-                  placeholder="Optional hints or guidelines for the team..."
-                  className="w-full p-2 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
-                />
-              </div>
-
-              {/* Optional Attachment Upload */}
-              <div className="space-y-1.5">
-                <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                  Optional Attachment (PDF, Image, Doc)
-                </label>
-                <div className="flex items-center space-x-3">
-                  <label className="px-3 py-1.5 bg-paper-dark border border-line hover:border-ink rounded-sm font-mono text-xs font-semibold text-ink cursor-pointer flex items-center space-x-1.5 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-accent" />
-                    <span>Choose File</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileUpload(e, (name, data, type) => {
-                          setFormAttachmentName(name);
-                          setFormAttachmentData(data);
-                          setFormAttachmentType(type);
-                        })
-                      }
-                    />
-                  </label>
-                  {formAttachmentName && (
-                    <div className="flex items-center space-x-2 font-mono text-xs text-ink bg-paper-light border border-line px-2 py-1 rounded-sm">
-                      <span>{formAttachmentName}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormAttachmentName('');
-                          setFormAttachmentData('');
-                          setFormAttachmentType('');
-                        }}
-                        className="text-muted hover:text-attention"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  {formQuestions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveQuestionField(idx)}
+                      className="p-1.5 text-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer mt-1"
+                      title="Remove question"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
-              </div>
-
-              {/* Optional Solution Draft */}
-              <div className="space-y-1.5 p-3 bg-paper-dark rounded-sm">
-                <label className="font-mono text-[11px] font-bold text-ink uppercase block">
-                  Optional Answer / Solution (Draft)
-                </label>
-                <p className="text-[10px] text-muted mb-1">
-                  You can type the solution now. It will not be shown to members until you explicitly publish it.
-                </p>
-                <textarea
-                  rows={3}
-                  value={formSolutionText}
-                  onChange={(e) => setFormSolutionText(e.target.value)}
-                  placeholder="Solution code or explanation (optional)..."
-                  className="w-full p-2 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-line">
-              {editingHomework ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddModalOpen(false);
-                    setHomeworkToDelete(editingHomework);
-                  }}
-                  className="px-3.5 py-2 border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-red-700 font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                  <span>Delete Homework</span>
-                </button>
-              ) : (
-                <div />
-              )}
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setAddModalOpen(false)}
-                  className="px-3.5 py-2 border border-line text-muted hover:text-ink font-mono text-xs rounded-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveHomework(false)}
-                  disabled={savingHomework}
-                  className="px-4 py-2 border border-line hover:bg-paper-dark font-mono text-xs font-semibold rounded-sm transition-colors text-ink disabled:opacity-50"
-                >
-                  Save as Draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveHomework(true)}
-                  disabled={savingHomework}
-                  className="px-5 py-2 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 shadow-xs"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Publish Homework</span>
-                </button>
-              </div>
+              ))}
             </div>
           </div>
+
+          {/* Optional Instructions */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-ink">
+              Optional Guidelines / Hints
+            </label>
+            <textarea
+              rows={2}
+              value={formInstructions}
+              onChange={(e) => setFormInstructions(e.target.value)}
+              placeholder="e.g. Ensure O(n) complexity. Write unit tests covering edge cases..."
+              className="w-full p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-none transition-all font-sans"
+            />
+          </div>
+
+          {/* Optional Attachment Upload */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-ink">
+              Optional Attachment (PDF, Image, Doc)
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="px-3.5 py-2 bg-paper-dark hover:bg-paper border border-line hover:border-line-dark rounded-xl text-xs font-semibold text-ink cursor-pointer flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs">
+                <Upload className="w-3.5 h-3.5 text-primary" />
+                <span>Choose File</span>
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleFileUpload(e, (name, data, type) => {
+                      setFormAttachmentName(name);
+                      setFormAttachmentData(data);
+                      setFormAttachmentType(type);
+                    })
+                  }
+                />
+              </label>
+              {formAttachmentName && (
+                <div className="flex items-center gap-2 text-xs text-ink bg-paper-light border border-line px-3 py-1.5 rounded-xl font-mono">
+                  <span>{formAttachmentName}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormAttachmentName('');
+                      setFormAttachmentData('');
+                      setFormAttachmentType('');
+                    }}
+                    className="text-muted hover:text-red-600 p-0.5 rounded"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Optional Solution Draft */}
+          <div className="space-y-2 p-3.5 bg-paper-dark/50 border border-line rounded-xl">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-ink">
+                Official Answer / Solution (Draft)
+              </label>
+              <span className="text-[10px] text-muted">Kept private until published</span>
+            </div>
+            <textarea
+              rows={3}
+              value={formSolutionText}
+              onChange={(e) => setFormSolutionText(e.target.value)}
+              placeholder="Paste reference solution, code, or explanation here..."
+              className="w-full p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-none transition-all font-mono"
+            />
+          </div>
         </div>
-      )}
+      </Modal>
 
       {/* ========================================================================= */}
       {/* LEAD REVIEW MEMBER SUBMISSION MODAL                                       */}
       {/* ========================================================================= */}
-      {reviewModalSubmission && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
-          <div className="bg-paper border border-line max-w-lg w-full p-4 sm:p-5 rounded-t-lg sm:rounded-sm shadow-xl space-y-4 my-0 sm:my-8 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-line pb-3">
-              <div>
-                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent">
-                  SUBMISSION REVIEW
+      <Modal
+        isOpen={!!reviewModalSubmission}
+        onClose={() => setReviewModalSubmission(null)}
+        size="md"
+        kicker="SUBMISSION REVIEW"
+        title={reviewModalSubmission?.memberStatus.name || 'Member Submission'}
+        subtitle="Review member solution code, download attachments, and send constructive feedback."
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <button
+              type="button"
+              onClick={() => setReviewModalSubmission(null)}
+              className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-paper-dark rounded-xl transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleReviewSubmit}
+              disabled={submittingReview}
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>
+                {submittingReview ? 'Saving...' : 'Mark Reviewed & Send Feedback'}
+              </span>
+            </button>
+          </div>
+        }
+      >
+        {reviewModalSubmission && (
+          <div className="space-y-4 text-xs">
+            {reviewModalSubmission.memberStatus.answerText && (
+              <div className="p-3.5 bg-paper rounded-xl border border-line space-y-1.5">
+                <span className="text-[10px] uppercase font-bold text-muted block">
+                  Typed Answer / Code
                 </span>
-                <h3 className="font-display text-base font-bold text-ink mt-0.5">
-                  {reviewModalSubmission.memberStatus.name}
-                </h3>
+                <p className="text-ink font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                  {reviewModalSubmission.memberStatus.answerText}
+                </p>
               </div>
-              <button
-                onClick={() => setReviewModalSubmission(null)}
-                className="text-muted hover:text-ink"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            )}
 
-            <div className="space-y-3 text-xs">
-              {reviewModalSubmission.memberStatus.answerText && (
-                <div className="p-3 bg-paper-light border border-line rounded-sm space-y-1">
-                  <span className="font-mono text-[10px] uppercase font-bold text-muted block">
-                    Typed Answer / Code
+            {reviewModalSubmission.memberStatus.attachmentData && (
+              <div className="p-3.5 bg-paper-dark/50 border border-line rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="font-mono text-xs font-semibold text-ink">
+                    {reviewModalSubmission.memberStatus.attachmentName || 'Completed_Work'}
                   </span>
-                  <p className="text-ink font-mono whitespace-pre-wrap leading-relaxed">
-                    {reviewModalSubmission.memberStatus.answerText}
-                  </p>
                 </div>
-              )}
-
-              {reviewModalSubmission.memberStatus.attachmentData && (
-                <div className="p-3 bg-paper-dark border border-line rounded-sm flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="w-4 h-4 text-accent" />
-                    <span className="font-mono text-xs font-semibold text-ink">
-                      {reviewModalSubmission.memberStatus.attachmentName || 'Completed_Work'}
-                    </span>
-                  </div>
-                  <a
-                    href={reviewModalSubmission.memberStatus.attachmentData}
-                    download={reviewModalSubmission.memberStatus.attachmentName || 'Completed_Work'}
-                    className="px-3 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-[11px] text-ink font-semibold flex items-center space-x-1"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download</span>
-                  </a>
-                </div>
-              )}
-
-              {reviewModalSubmission.memberStatus.notes && (
-                <div className="p-2.5 bg-paper-dark rounded-sm">
-                  <span className="font-mono text-[10px] font-bold text-muted block">
-                    Member's Note:
-                  </span>
-                  <p className="text-ink italic">"{reviewModalSubmission.memberStatus.notes}"</p>
-                </div>
-              )}
-
-              {/* Lead Feedback */}
-              <div className="space-y-1.5 pt-2">
-                <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                  Feedback / Review Notes
-                </label>
-                <textarea
-                  rows={3}
-                  value={reviewFeedback}
-                  onChange={(e) => setReviewFeedback(e.target.value)}
-                  placeholder="Provide feedback or guidance on their solution..."
-                  className="w-full p-2.5 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
-                  autoFocus
-                />
+                <a
+                  href={reviewModalSubmission.memberStatus.attachmentData}
+                  download={reviewModalSubmission.memberStatus.attachmentName || 'Completed_Work'}
+                  className="px-3 py-1.5 bg-paper border border-line hover:border-line-dark rounded-lg font-mono text-xs text-ink font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5 text-primary" />
+                  <span>Download</span>
+                </a>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-line">
-              <button
-                type="button"
-                onClick={() => setReviewModalSubmission(null)}
-                className="px-3 py-1.5 border border-line text-muted hover:text-ink font-mono text-xs rounded-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleReviewSubmit}
-                disabled={submittingReview}
-                className="px-4 py-1.5 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 shadow-xs"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>
-                  {submittingReview ? 'Saving...' : 'Mark Reviewed & Send Feedback'}
+            {reviewModalSubmission.memberStatus.notes && (
+              <div className="p-3 bg-paper-dark/30 border border-line/60 rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-muted block uppercase">
+                  Member's Note:
                 </span>
-              </button>
+                <p className="text-ink italic text-xs leading-relaxed">"{reviewModalSubmission.memberStatus.notes}"</p>
+              </div>
+            )}
+
+            {/* Lead Feedback */}
+            <div className="space-y-1.5 pt-1">
+              <label className="block text-xs font-bold text-ink">
+                Instructor Review Feedback
+              </label>
+              <textarea
+                rows={3}
+                value={reviewFeedback}
+                onChange={(e) => setReviewFeedback(e.target.value)}
+                placeholder="Provide constructive feedback or guidance on their solution..."
+                className="w-full p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-none transition-all font-sans"
+                autoFocus
+              />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* ========================================================================= */}
       {/* LEAD PUBLISH ANSWER / SOLUTION MODAL                                      */}
       {/* ========================================================================= */}
-      {solutionModalHomework && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 backdrop-blur-xs p-0 sm:p-4 overflow-y-auto">
-          <div className="bg-paper border border-line max-w-lg w-full p-4 sm:p-5 rounded-t-lg sm:rounded-sm shadow-xl space-y-4 my-0 sm:my-8 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-line pb-3">
-              <div>
-                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent">
-                  SOLUTION RELEASE
-                </span>
-                <h3 className="font-display text-base font-bold text-ink mt-0.5">
-                  Publish Solution · {solutionModalHomework.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSolutionModalHomework(null)}
-                className="text-muted hover:text-ink"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <Modal
+        isOpen={!!solutionModalHomework}
+        onClose={() => setSolutionModalHomework(null)}
+        size="md"
+        kicker="SOLUTION RELEASE"
+        title={`Publish Solution · ${solutionModalHomework?.title || ''}`}
+        subtitle="Release the official solution and explanation to the full crew."
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <button
+              type="button"
+              onClick={() => setSolutionModalHomework(null)}
+              className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-paper-dark rounded-xl transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handlePublishSolutionSubmit}
+              disabled={submittingSolution}
+              className="px-5 py-2 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{submittingSolution ? 'Publishing...' : 'Publish Solution'}</span>
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4 text-xs">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-ink">
+              Official Solution Explanation / Code
+            </label>
+            <textarea
+              rows={6}
+              value={solutionText}
+              onChange={(e) => setSolutionText(e.target.value)}
+              placeholder="Paste reference solution, code, or explanation..."
+              className="w-full p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-none transition-all font-mono"
+              autoFocus
+            />
+          </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                  Solution Explanation / Code
-                </label>
-                <textarea
-                  rows={6}
-                  value={solutionText}
-                  onChange={(e) => setSolutionText(e.target.value)}
-                  placeholder="Type the official answer, code, or explanation..."
-                  className="w-full p-2.5 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-mono"
-                  autoFocus
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-ink">
+              Solution File Attachment (Optional)
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="px-3.5 py-2 bg-paper-dark hover:bg-paper border border-line hover:border-line-dark rounded-xl text-xs font-semibold text-ink cursor-pointer flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs">
+                <Upload className="w-3.5 h-3.5 text-primary" />
+                <span>Choose Solution File</span>
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.java"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleFileUpload(e, (name, data, type) => {
+                      setSolutionFileName(name);
+                      setSolutionFileData(data);
+                      setSolutionFileType(type);
+                    })
+                  }
                 />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                  Solution File Attachment (Optional)
-                </label>
-                <div className="flex items-center space-x-3">
-                  <label className="px-3 py-1.5 bg-paper-dark border border-line hover:border-ink rounded-sm font-mono text-xs font-semibold text-ink cursor-pointer flex items-center space-x-1.5 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-accent" />
-                    <span>Choose Solution File</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.java"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileUpload(e, (name, data, type) => {
-                          setSolutionFileName(name);
-                          setSolutionFileData(data);
-                          setSolutionFileType(type);
-                        })
-                      }
-                    />
-                  </label>
-                  {solutionFileName && (
-                    <div className="flex items-center space-x-2 font-mono text-xs text-ink bg-paper-light border border-line px-2 py-1 rounded-sm">
-                      <span>{solutionFileName}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSolutionFileName('');
-                          setSolutionFileData('');
-                          setSolutionFileType('');
-                        }}
-                        className="text-muted hover:text-attention"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
+              </label>
+              {solutionFileName && (
+                <div className="flex items-center gap-2 text-xs text-ink bg-paper-light border border-line px-3 py-1.5 rounded-xl font-mono">
+                  <span>{solutionFileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSolutionFileName('');
+                      setSolutionFileData('');
+                      setSolutionFileType('');
+                    }}
+                    className="text-muted hover:text-red-600 p-0.5 rounded"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-line">
-              <button
-                type="button"
-                onClick={() => setSolutionModalHomework(null)}
-                className="px-3 py-1.5 border border-line text-muted hover:text-ink font-mono text-xs rounded-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handlePublishSolutionSubmit}
-                disabled={submittingSolution}
-                className="px-5 py-2 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 shadow-xs"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{submittingSolution ? 'Publishing...' : 'Publish Solution'}</span>
-              </button>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* ========================================================================= */}
       {/* DELETE HOMEWORK CONFIRMATION MODAL                                        */}
       {/* ========================================================================= */}
-      {homeworkToDelete && (
-        <div className="fixed inset-0 z-60 bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
-          <div className="bg-paper border border-line w-full max-w-md rounded-sm shadow-xl p-6 space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-600 shrink-0">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-display text-base font-bold text-ink">
-                  Delete Homework?
-                </h3>
-                <p className="text-xs text-muted leading-relaxed">
-                  Are you sure you want to delete <strong className="text-ink">{homeworkToDelete.title}</strong>? All student submissions, files, and review history will be permanently removed. This action cannot be undone.
-                </p>
-              </div>
-            </div>
-
-            {deleteHomeworkError && (
-              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{deleteHomeworkError}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-line font-mono text-xs">
-              <button
-                type="button"
-                disabled={isDeletingHomework}
-                onClick={() => {
-                  setHomeworkToDelete(null);
-                  setDeleteHomeworkError(null);
-                }}
-                className="px-4 py-2 bg-paper border border-line hover:border-ink rounded-sm font-bold text-ink transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeletingHomework}
-                onClick={handleConfirmDeleteHomework}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-sm font-bold transition-colors flex items-center space-x-1.5 shadow-xs disabled:opacity-50"
-              >
-                {isDeletingHomework ? (
-                  <span>Deleting...</span>
-                ) : (
-                  <>
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete Homework</span>
-                  </>
-                )}
-              </button>
-            </div>
+      <Modal
+        isOpen={!!homeworkToDelete}
+        onClose={() => {
+          setHomeworkToDelete(null);
+          setDeleteHomeworkError(null);
+        }}
+        size="sm"
+        kicker="DANGER ZONE"
+        title="Delete Homework?"
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <button
+              type="button"
+              disabled={isDeletingHomework}
+              onClick={() => {
+                setHomeworkToDelete(null);
+                setDeleteHomeworkError(null);
+              }}
+              className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-paper-dark/70 rounded-xl transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDeletingHomework}
+              onClick={handleConfirmDeleteHomework}
+              className="px-5 py-2 text-xs font-semibold bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeletingHomework ? 'Deleting...' : 'Delete Homework'}</span>
+            </button>
           </div>
+        }
+      >
+        <div className="space-y-3 text-xs">
+          <p className="text-muted leading-relaxed">
+            Are you sure you want to permanently delete{' '}
+            <strong className="text-ink font-bold">{homeworkToDelete?.title}</strong>? All student submissions, files, and review history will be permanently erased.
+          </p>
+
+          {deleteHomeworkError && (
+            <div className="p-3 border border-red-300 bg-red-50 text-red-900 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{deleteHomeworkError}</span>
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
     </PageContainer>
   );
 };
