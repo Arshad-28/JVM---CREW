@@ -495,7 +495,7 @@ export const KanbanBoardPage: React.FC = () => {
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="font-bold text-ink font-display text-base">{user.name}</span>
-                    <span className="font-mono text-[10px] font-bold text-amber-800 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-xs">
+                    <span className="font-mono text-[10px] font-bold text-amber-400 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-xs">
                       LEAD • {user.serialNumber || 'LEAD'}
                     </span>
                   </div>
@@ -507,7 +507,7 @@ export const KanbanBoardPage: React.FC = () => {
                 <div className="px-3 py-1 bg-paper-dark border border-line rounded-xs text-[11px] font-bold text-ink">
                   ACTIVE MEMBERS: {memberAccounts.length}
                 </div>
-                <div className="px-3 py-1 bg-amber-500/20 text-amber-900 border border-amber-500/40 rounded-xs text-[11px] font-bold">
+                <div className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-xs text-[11px] font-bold">
                   TEAM PROGRESS: {overallTeamPct}%
                 </div>
               </div>
@@ -521,22 +521,22 @@ export const KanbanBoardPage: React.FC = () => {
 
               <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
                 <span className="text-[10px] uppercase font-bold text-muted block">AWAITING REVIEW</span>
-                <span className="font-display text-lg font-black text-amber-700">{reviewCount}</span>
+                <span className="font-display text-lg font-black text-amber-400">{reviewCount}</span>
               </div>
 
               <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
                 <span className="text-[10px] uppercase font-bold text-muted block">BLOCKED TASKS</span>
-                <span className="font-display text-lg font-black text-red-700">{blockedCount}</span>
+                <span className="font-display text-lg font-black text-red-400">{blockedCount}</span>
               </div>
 
               <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
                 <span className="text-[10px] uppercase font-bold text-muted block">COMPLETED TODAY</span>
-                <span className="font-display text-lg font-black text-emerald-700">{completedCount}</span>
+                <span className="font-display text-lg font-black text-emerald-400">{completedCount}</span>
               </div>
 
               <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
                 <span className="text-[10px] uppercase font-bold text-muted block">OVERDUE</span>
-                <span className="font-display text-lg font-black text-red-700">{overdueTasks.length}</span>
+                <span className="font-display text-lg font-black text-red-400">{overdueTasks.length}</span>
               </div>
 
               <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
@@ -554,13 +554,13 @@ export const KanbanBoardPage: React.FC = () => {
               <span className="text-muted">→</span>
               <span className="px-2.5 py-1 bg-paper-dark border border-line rounded-xs font-bold text-ink">TO DO ({assignedCount})</span>
               <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-amber-500/10 text-amber-900 border border-amber-500/30 rounded-xs font-bold">IN PROGRESS ({inProgressCount})</span>
+              <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-xs font-bold">IN PROGRESS ({inProgressCount})</span>
               <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-amber-500/20 text-amber-900 border border-amber-500/40 rounded-xs font-bold">SUBMITTED ({reviewCount})</span>
+              <span className="px-2.5 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-xs font-bold">SUBMITTED ({reviewCount})</span>
               <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-amber-500/30 text-amber-900 border border-amber-500/50 rounded-xs font-bold">REVIEW ({reviewCount})</span>
+              <span className="px-2.5 py-1 bg-amber-500/30 text-amber-400 border border-amber-500/50 rounded-xs font-bold">REVIEW ({reviewCount})</span>
               <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-900 border border-emerald-500/40 rounded-xs font-bold">APPROVED / COMPLETED ({completedCount})</span>
+              <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-xs font-bold">APPROVED / COMPLETED ({completedCount})</span>
             </div>
           </div>
 
@@ -568,11 +568,11 @@ export const KanbanBoardPage: React.FC = () => {
           {reviewCount > 0 && (
             <div className="border border-amber-500/40 bg-amber-500/10 p-5 rounded-sm space-y-3 font-mono">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-amber-900 font-bold uppercase text-xs">
-                  <FileCheck className="w-4 h-4 text-amber-700" />
+                <div className="flex items-center space-x-2 text-amber-400 font-bold uppercase text-xs">
+                  <FileCheck className="w-4 h-4 text-amber-400" />
                   <span>REVIEW QUEUE • {reviewCount} TASKS REQUIRE YOUR ATTENTION</span>
                 </div>
-                <span className="text-[11px] text-amber-800">Review & Approve Submissions</span>
+                <span className="text-[11px] text-amber-400">Review & Approve Submissions</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-sans">
@@ -580,12 +580,12 @@ export const KanbanBoardPage: React.FC = () => {
                   <div key={rt.id} className="p-3 bg-paper border border-amber-500/40 rounded-xs space-y-2 font-mono text-xs">
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="font-bold text-ink">TASK-{rt.id}</span>
-                      <span className="text-amber-800 font-bold bg-amber-500/20 px-1.5 py-0.2 rounded-xs">SUBMITTED</span>
+                      <span className="text-amber-400 font-bold bg-amber-500/20 px-1.5 py-0.2 rounded-xs">SUBMITTED</span>
                     </div>
                     <div className="font-bold text-ink truncate text-xs">{rt.title}</div>
                     <div className="text-[11px] text-muted flex items-center justify-between">
                       <span>{rt.assigneeName || 'Unassigned'}</span>
-                      <span className="font-bold text-emerald-700">{rt.progressPct}%</span>
+                      <span className="font-bold text-emerald-400">{rt.progressPct}%</span>
                     </div>
                     <div className="pt-2 border-t border-line flex items-center space-x-1.5 text-[10px]">
                       <button
@@ -688,19 +688,19 @@ export const KanbanBoardPage: React.FC = () => {
 
                   if (cmBlocked.length > 0) {
                     memberStatus = 'BLOCKED';
-                    statusBg = 'bg-red-500/10 text-red-800 border-red-500/30';
+                    statusBg = 'bg-red-500/10 text-red-400 border-red-500/30';
                   } else if (cmReview.length > 0) {
                     memberStatus = 'WAITING FOR REVIEW';
-                    statusBg = 'bg-amber-500/20 text-amber-900 border-amber-500/40';
+                    statusBg = 'bg-amber-500/20 text-amber-400 border-amber-500/40';
                   } else if (cmOverdue.length > 0) {
                     memberStatus = 'OVERDUE';
-                    statusBg = 'bg-red-500/10 text-red-800 border-red-500/30';
+                    statusBg = 'bg-red-500/10 text-red-400 border-red-500/30';
                   } else if (cmActive.length === 0 && cmDone.length > 0) {
                     memberStatus = 'COMPLETED';
-                    statusBg = 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30';
+                    statusBg = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
                   } else {
                     memberStatus = 'ON TRACK';
-                    statusBg = 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30';
+                    statusBg = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
                   }
 
                   const needsAttention = memberStatus === 'BLOCKED' || memberStatus === 'WAITING FOR REVIEW' || memberStatus === 'OVERDUE';
@@ -735,8 +735,8 @@ export const KanbanBoardPage: React.FC = () => {
 
                       {/* Needs Attention Badge */}
                       {needsAttention && (
-                        <div className="p-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xs flex items-center space-x-1.5 text-amber-900 font-bold text-[10px]">
-                          <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        <div className="p-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xs flex items-center space-x-1.5 text-amber-400 font-bold text-[10px]">
+                          <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           <span>NEEDS LEAD ATTENTION</span>
                         </div>
                       )}
@@ -746,7 +746,7 @@ export const KanbanBoardPage: React.FC = () => {
                         <div className="space-y-1.5">
                           <div className="flex justify-between items-center text-[10px]">
                             <span className="text-muted font-bold">CURRENT MISSION:</span>
-                            <span className="font-bold text-amber-800 uppercase text-[9px] bg-paper-dark px-1.5 py-0.2 rounded-xs">
+                            <span className="font-bold text-amber-400 uppercase text-[9px] bg-paper-dark px-1.5 py-0.2 rounded-xs">
                               {featuredTask.status}
                             </span>
                           </div>
@@ -1164,19 +1164,19 @@ export const KanbanBoardPage: React.FC = () => {
                   TASK WORKFLOW PIPELINE
                 </span>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status !== 'BACKLOG' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30 font-bold' : 'bg-paper text-muted border-line'}`}>
+                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status !== 'BACKLOG' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-bold' : 'bg-paper text-muted border-line'}`}>
                     ✓ ASSIGNED
                   </span>
                   <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'TODO' ? 'bg-amber-500/20 text-amber-900 border-amber-500/40 font-bold shadow-2xs' : selectedTask.status !== 'BACKLOG' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
+                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'TODO' ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 font-bold shadow-2xs' : selectedTask.status !== 'BACKLOG' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
                     {selectedTask.status === 'TODO' ? '→ TO DO' : '✓ TO DO'}
                   </span>
                   <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-900 border-amber-500/40 font-bold shadow-2xs' : selectedTask.status === 'REVIEW' || selectedTask.status === 'DONE' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
+                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 font-bold shadow-2xs' : selectedTask.status === 'REVIEW' || selectedTask.status === 'DONE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
                     {selectedTask.status === 'IN_PROGRESS' ? '→ IN PROGRESS' : selectedTask.status === 'REVIEW' || selectedTask.status === 'DONE' ? '✓ IN PROGRESS' : '○ IN PROGRESS'}
                   </span>
                   <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'REVIEW' ? 'bg-amber-500/30 text-amber-900 border-amber-500/50 font-bold animate-pulse shadow-2xs' : selectedTask.status === 'DONE' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
+                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'REVIEW' ? 'bg-amber-500/30 text-amber-400 border-amber-500/50 font-bold animate-pulse shadow-2xs' : selectedTask.status === 'DONE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
                     {selectedTask.status === 'REVIEW' ? '→ SUBMITTED / REVIEW' : selectedTask.status === 'DONE' ? '✓ SUBMITTED' : '○ SUBMITTED'}
                   </span>
                   <span className="text-muted font-bold">→</span>
@@ -1249,15 +1249,15 @@ export const KanbanBoardPage: React.FC = () => {
                   <div className="pt-2 border-t border-line flex justify-between items-center text-[10px]">
                     <span className="text-muted uppercase font-bold">STATUS INDICATOR:</span>
                     {selectedTask.status !== 'DONE' && selectedTask.deadline && selectedTask.deadline < todayStr ? (
-                      <span className="font-bold text-red-700 bg-red-500/10 px-2 py-0.5 rounded-xs border border-red-500/30">
+                      <span className="font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-xs border border-red-500/30">
                         OVERDUE BY {Math.ceil((new Date(todayStr).getTime() - new Date(selectedTask.deadline).getTime()) / (1000 * 3600 * 24))} DAY(S)
                       </span>
                     ) : selectedTask.deadline === todayStr ? (
-                      <span className="font-bold text-amber-800 bg-amber-500/20 px-2 py-0.5 rounded-xs border border-amber-500/30">
+                      <span className="font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-xs border border-amber-500/30">
                         DUE TODAY
                       </span>
                     ) : (
-                      <span className="font-bold text-emerald-800 bg-emerald-500/10 px-2 py-0.5 rounded-xs">
+                      <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-xs">
                         ON TRACK
                       </span>
                     )}
@@ -1268,8 +1268,8 @@ export const KanbanBoardPage: React.FC = () => {
               {/* 4. PROMINENT LEAD REVIEW AREA */}
               {selectedTask.status === 'REVIEW' && isLead && (
                 <div className="p-5 border border-amber-500/40 bg-amber-500/10 rounded-sm space-y-3 font-mono text-xs">
-                  <div className="flex items-center space-x-2 text-amber-900 font-bold uppercase">
-                    <FileCheck className="w-4 h-4 text-amber-700" />
+                  <div className="flex items-center space-x-2 text-amber-400 font-bold uppercase">
+                    <FileCheck className="w-4 h-4 text-amber-400" />
                     <span>AWAITING LEAD REVIEW • Review submission before approval</span>
                   </div>
 
@@ -1307,12 +1307,12 @@ export const KanbanBoardPage: React.FC = () => {
               )}
 
               {selectedTask.status === 'DONE' && (
-                <div className="p-4 border border-emerald-500/30 bg-emerald-500/10 rounded-xs font-mono text-xs text-emerald-900 space-y-1">
+                <div className="p-4 border border-emerald-500/30 bg-emerald-500/10 rounded-xs font-mono text-xs text-emerald-300 space-y-1">
                   <div className="font-bold flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <span>APPROVED BY: {user.name} (LEAD)</span>
                   </div>
-                  <div className="text-[11px] text-emerald-800">
+                  <div className="text-[11px] text-emerald-400">
                     STATUS: TASK COMPLETED & FULLY VERIFIED BY LEAD
                   </div>
                 </div>
@@ -1450,8 +1450,8 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
 
             {deleteError && (
-              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-400 rounded-sm font-mono text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                 <span>{deleteError}</span>
               </div>
             )}
@@ -1501,8 +1501,8 @@ export const KanbanBoardPage: React.FC = () => {
 
             {/* Validation Error Message */}
             {validationError && (
-              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-400 rounded-sm font-mono text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                 <span>{validationError}</span>
               </div>
             )}

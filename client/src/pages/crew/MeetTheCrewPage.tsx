@@ -150,12 +150,12 @@ export const MeetTheCrewPage: React.FC = () => {
               className={`px-4 py-2 font-mono text-xs font-bold rounded-md border transition-all flex items-center space-x-1.5 uppercase ${
                 isSelected
                   ? isCaptain
-                    ? 'bg-amber-500/15 text-amber-900 border-amber-500/40 shadow-2xs font-bold'
+                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/40 shadow-2xs font-bold'
                     : 'bg-primary-soft text-primary border-primary/25 shadow-2xs font-bold'
                   : 'bg-surface-raised text-muted hover:text-ink hover:bg-surface-soft border-line'
               }`}
             >
-              {isCaptain && <Crown className="w-3.5 h-3.5 text-amber-700" />}
+              {isCaptain && <Crown className="w-3.5 h-3.5 text-amber-400" />}
               <span>{member.name}</span>
               <span className="opacity-70 text-[10px]">({member.symbol})</span>
             </button>

@@ -333,36 +333,36 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
     switch (status) {
       case 'ACCEPTED':
         return (
-          <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 rounded-lg flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+          <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-lg flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             <span>Accepted · {score}/100</span>
           </span>
         );
       case 'SYNTAX_OR_COMPILATION_ERROR':
         return (
-          <span className="text-xs font-semibold px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-800 rounded-lg flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5 text-rose-700" />
+          <span className="text-xs font-semibold px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-lg flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
             <span>Syntax / Compilation Error · {score}/100</span>
           </span>
         );
       case 'MISUNDERSTOOD_REQUIREMENTS':
         return (
-          <span className="text-xs font-semibold px-2.5 py-1 bg-purple-500/15 border border-purple-500/30 text-purple-900 rounded-lg flex items-center gap-1.5">
-            <HelpCircle className="w-3.5 h-3.5 text-purple-700" />
+          <span className="text-xs font-semibold px-2.5 py-1 bg-purple-500/15 border border-purple-500/30 text-purple-300 rounded-lg flex items-center gap-1.5">
+            <HelpCircle className="w-3.5 h-3.5 text-purple-300" />
             <span>Requirements Misunderstood · {score}/100</span>
           </span>
         );
       case 'INCORRECT_LOGIC':
         return (
-          <span className="text-xs font-semibold px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-800 rounded-lg flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5 text-rose-700" />
+          <span className="text-xs font-semibold px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-lg flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
             <span>Logic Error · {score}/100</span>
           </span>
         );
       case 'INEFFICIENT_SOLUTION':
         return (
-          <span className="text-xs font-semibold px-2.5 py-1 bg-amber-500/15 border border-amber-500/30 text-amber-800 rounded-lg flex items-center gap-1.5">
-            <TrendingUp className="w-3.5 h-3.5 text-amber-700" />
+          <span className="text-xs font-semibold px-2.5 py-1 bg-amber-500/15 border border-amber-500/30 text-amber-400 rounded-lg flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
             <span>Inefficient Solution · {score}/100</span>
           </span>
         );
@@ -476,8 +476,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3 text-amber-900 text-xs animate-fade-in">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3 text-amber-300 text-xs animate-fade-in">
+          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <p className="font-bold">Prompt Notice</p>
             <p>{errorMessage}</p>
@@ -592,7 +592,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
               >
                 <MessageSquare className="w-4 h-4 shrink-0" />
                 <span>Ask Coach</span>
-                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 font-bold">
+                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
                   24/7
                 </span>
               </button>
@@ -664,8 +664,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
               {/* 4. COMMON MISTAKES */}
               {activeSession.commonMistakes && activeSession.commonMistakes.length > 0 && (
                 <div className="bg-paper border border-line p-6 rounded-xl space-y-3 shadow-xs">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
                     Common Mistakes & Anti-Patterns to Avoid
                   </span>
                   <div className="space-y-2">
@@ -857,10 +857,10 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                         {evalResult && (
                           <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
                             evalResult.score >= 8
-                              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-800'
+                              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
                               : evalResult.score >= 5
-                              ? 'bg-amber-500/15 border-amber-500/30 text-amber-800'
-                              : 'bg-rose-500/15 border-rose-500/30 text-rose-800'
+                              ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                              : 'bg-rose-500/15 border-rose-500/30 text-rose-400'
                           }`}>
                             Score: {evalResult.score}/10
                           </span>
@@ -912,8 +912,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
 
                         {/* Hint Box */}
                         {hintRevealed && q.hint && (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-lg flex items-start gap-2 text-xs text-amber-900 animate-fade-in">
-                            <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-lg flex items-start gap-2 text-xs text-amber-300 animate-fade-in">
+                            <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                             <p>{q.hint}</p>
                           </div>
                         )}
@@ -956,14 +956,14 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
 
                             {evalResult.whatYouGotRight && (
                               <div className="space-y-0.5">
-                                <span className="font-semibold text-emerald-800">What you got right:</span>
+                                <span className="font-semibold text-emerald-400">What you got right:</span>
                                 <p className="text-ink">{evalResult.whatYouGotRight}</p>
                               </div>
                             )}
 
                             {evalResult.whatIsMissing && (
                               <div className="space-y-0.5">
-                                <span className="font-semibold text-amber-800">Areas for improvement:</span>
+                                <span className="font-semibold text-amber-400">Areas for improvement:</span>
                                 <p className="text-ink">{evalResult.whatIsMissing}</p>
                               </div>
                             )}
@@ -1087,7 +1087,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                               type="button"
                               onClick={() => handleToggleCodingSolution(prob.id)}
                               disabled={isLoadingSolution}
-                              className="text-xs font-semibold text-amber-700 hover:underline cursor-pointer ml-3"
+                              className="text-xs font-semibold text-amber-400 hover:underline cursor-pointer ml-3"
                             >
                               {isLoadingSolution ? 'Loading Solution...' : showSolution ? 'Hide Solution' : 'View Reference Solution'}
                             </button>
@@ -1097,8 +1097,8 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                         {currentHints.length > 0 && (
                           <div className="space-y-2 pt-1">
                             {currentHints.map((hText, hIdx) => (
-                              <div key={hIdx} className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-lg text-xs text-amber-950 flex items-start gap-2">
-                                <span className="font-bold text-amber-800 shrink-0">Hint #{hIdx + 1}:</span>
+                              <div key={hIdx} className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-lg text-xs text-amber-300 flex items-start gap-2">
+                                <span className="font-bold text-amber-400 shrink-0">Hint #{hIdx + 1}:</span>
                                 <span>{hText}</span>
                               </div>
                             ))}
@@ -1244,7 +1244,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                     </div>
 
                     {activeMock.status === 'COMPLETED' && activeMock.overallScore != null && (
-                      <span className="text-sm font-bold px-3 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 rounded-lg">
+                      <span className="text-sm font-bold px-3 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-lg">
                         Final Score: {activeMock.overallScore}%
                       </span>
                     )}
@@ -1319,7 +1319,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
               {/* Coach Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-line pb-4 gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shadow-2xl">
                     <Bot className="w-5 h-5" />
                   </div>
                   <div>
@@ -1327,7 +1327,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                       <h3 className="font-display text-base font-bold text-ink">
                         Technical Interview Coach
                       </h3>
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Online 24/7
                       </span>

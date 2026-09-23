@@ -744,15 +744,15 @@ export const TeamDashboardPage: React.FC = () => {
                   </div>
 
                   {memberSaveSuccess && (
-                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>{memberSaveSuccess}</span>
                     </div>
                   )}
 
                   {memberSaveError && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-800 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
-                      <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
+                      <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                       <span>{memberSaveError}</span>
                     </div>
                   )}
@@ -800,7 +800,7 @@ export const TeamDashboardPage: React.FC = () => {
                           value={editSerial}
                           onChange={(e) => setEditSerial(e.target.value)}
                           placeholder="STACK-002"
-                          className="w-full px-3 py-2 text-xs font-mono font-bold bg-paper border border-line rounded-xs text-emerald-800 focus:border-ink outline-none"
+                          className="w-full px-3 py-2 text-xs font-mono font-bold bg-paper border border-line rounded-xs text-emerald-400 focus:border-ink outline-none"
                         />
                       </div>
 
@@ -1115,9 +1115,9 @@ export const TeamDashboardPage: React.FC = () => {
                             key={idx}
                             className={`p-1 sm:p-2 border rounded-xs transition-colors ${
                               w.hasSubmission
-                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                                 : w.isToday
-                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-800'
+                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
                                 : 'bg-paper-dark border-line text-muted'
                             }`}
                           >

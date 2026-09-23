@@ -72,6 +72,13 @@ public class TeamPerformanceReportService {
     private static final Color COLOR_RED = new Color(185, 28, 28);
     private static final Color COLOR_BORDER = new Color(226, 224, 216);
 
+    // Executive Cover Palette
+    private static final Color COLOR_DARK_BANNER = new Color(16, 28, 23); // #101C17 Deep Engineering Green
+    private static final Color COLOR_EMERALD = new Color(45, 138, 98); // #2D8A62 Crisp Emerald Green
+    private static final Color COLOR_EMERALD_GLOW = new Color(63, 167, 122); // #3FA77A Luminous Emerald
+    private static final Color COLOR_EMERALD_TINT = new Color(238, 247, 242); // #EEF7F2 Light Emerald Tint
+    private static final Color COLOR_EMERALD_BORDER = new Color(180, 225, 204);
+
     // Fonts
     private static final Font FONT_COVER_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22f, COLOR_INK);
     private static final Font FONT_COVER_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 11f, COLOR_MUTED);
@@ -81,6 +88,17 @@ public class TeamPerformanceReportService {
     private static final Font FONT_MUTED = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_MUTED);
     private static final Font FONT_TABLE_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8f, COLOR_INK);
     private static final Font FONT_FOOTER = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_MUTED);
+
+    // Executive Cover Fonts
+    private static final Font FONT_BANNER_BRAND = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10.5f, COLOR_EMERALD_GLOW);
+    private static final Font FONT_BANNER_TAG = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, new Color(200, 225, 210));
+    private static final Font FONT_BANNER_SUB = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, new Color(160, 185, 172));
+    private static final Font FONT_COVER_HERO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22f, COLOR_INK);
+    private static final Font FONT_COVER_TAG = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8f, COLOR_EMERALD);
+    private static final Font FONT_CARD_LABEL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7f, COLOR_MUTED);
+    private static final Font FONT_CARD_VALUE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14f, COLOR_INK);
+    private static final Font FONT_CARD_SUB = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7f, COLOR_ACCENT);
+    private static final Font FONT_CARD_HINT = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, COLOR_MUTED);
 
     /**
      * Aggregates team-level performance intelligence for the selected date range.
@@ -1456,60 +1474,277 @@ public class TeamPerformanceReportService {
     // OPENPDF PAGE BUILDERS
     // =========================================================================
 
-    private void addCoverPage(Document doc, TeamPerformanceReportDto report) throws DocumentException {
-        PdfPTable table = new PdfPTable(1);
-        table.setWidthPercentage(100);
-        table.setSpacingBefore(60f);
+    void addCoverPage(Document doc, TeamPerformanceReportDto report) throws DocumentException {
+        // =========================================================================
+        // 1. TOP ARCHITECTURAL BRAND BANNER
+        // =========================================================================
+        PdfPTable bannerTable = new PdfPTable(1);
+        bannerTable.setWidthPercentage(100f);
+        bannerTable.setSpacingBefore(0f);
+        bannerTable.setSpacingAfter(18f);
 
-        // Header Brand Box
-        PdfPCell brandCell = new PdfPCell();
-        brandCell.setBorder(Rectangle.NO_BORDER);
-        brandCell.setPaddingBottom(30f);
+        PdfPCell bannerCell = new PdfPCell();
+        bannerCell.setBackgroundColor(COLOR_DARK_BANNER);
+        bannerCell.setBorder(Rectangle.BOTTOM);
+        bannerCell.setBorderWidthBottom(2.5f);
+        bannerCell.setBorderColorBottom(COLOR_EMERALD_GLOW);
+        bannerCell.setPaddingTop(12f);
+        bannerCell.setPaddingBottom(10f);
+        bannerCell.setPaddingLeft(14f);
+        bannerCell.setPaddingRight(14f);
 
-        Paragraph pBrand = new Paragraph("ENGINEERSPACE · PERFORMANCE INTELLIGENCE", FONT_MUTED);
-        pBrand.setSpacingAfter(10f);
-        brandCell.addElement(pBrand);
+        // Nested 2-column header inside banner
+        PdfPTable bannerInner = new PdfPTable(2);
+        bannerInner.setWidthPercentage(100f);
+        bannerInner.setWidths(new float[]{70f, 30f});
 
-        Paragraph pTitle = new Paragraph("TEAM PERFORMANCE &\nPROGRESS REPORT", FONT_COVER_TITLE);
-        pTitle.setSpacingAfter(15f);
-        brandCell.addElement(pTitle);
+        PdfPCell leftBanner = new PdfPCell();
+        leftBanner.setBorder(Rectangle.NO_BORDER);
+        Paragraph brandP = new Paragraph();
+        brandP.add(new Chunk("ENGINEERSPACE", FONT_BANNER_BRAND));
+        brandP.add(new Chunk("  ·  PERFORMANCE AUDIT & TELEMETRY", FONT_BANNER_TAG));
+        leftBanner.addElement(brandP);
+        Paragraph brandSub = new Paragraph("Automated Delivery Intelligence, Velocity Telemetry & Participation Audit System", FONT_BANNER_SUB);
+        brandSub.setSpacingBefore(3f);
+        leftBanner.addElement(brandSub);
+        bannerInner.addCell(leftBanner);
 
-        Paragraph pTeam = new Paragraph(report.getTeamName().toUpperCase(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14f, COLOR_ACCENT));
-        pTeam.setSpacingAfter(5f);
-        brandCell.addElement(pTeam);
+        PdfPCell rightBanner = new PdfPCell();
+        rightBanner.setBorder(Rectangle.NO_BORDER);
+        rightBanner.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        Paragraph cohortBadge = new Paragraph("OFFICIAL AUDIT REPORT", FONT_BANNER_TAG);
+        cohortBadge.setAlignment(Element.ALIGN_RIGHT);
+        rightBanner.addElement(cohortBadge);
+        Paragraph cohortP = new Paragraph("COHORT " + (report.getTeamCohort() != null ? report.getTeamCohort().toUpperCase() : "2026"), FONT_BANNER_SUB);
+        cohortP.setAlignment(Element.ALIGN_RIGHT);
+        cohortP.setSpacingBefore(3f);
+        rightBanner.addElement(cohortP);
+        bannerInner.addCell(rightBanner);
 
-        Paragraph pPeriod = new Paragraph("Reporting Period: " + report.getPeriodLabel(), FONT_COVER_SUBTITLE);
-        brandCell.addElement(pPeriod);
-        table.addCell(brandCell);
+        bannerCell.addElement(bannerInner);
+        bannerTable.addCell(bannerCell);
+        doc.add(bannerTable);
 
-        // Divider
-        PdfPCell dividerCell = new PdfPCell();
-        dividerCell.setFixedHeight(2f);
-        dividerCell.setBackgroundColor(COLOR_ACCENT);
-        dividerCell.setBorder(Rectangle.NO_BORDER);
-        table.addCell(dividerCell);
+        // =========================================================================
+        // 2. HERO DOCUMENT TITLE & DESCRIPTION
+        // =========================================================================
+        Paragraph tagP = new Paragraph("ENGINEERING PERFORMANCE & DELIVERY AUDIT", FONT_COVER_TAG);
+        tagP.setSpacingAfter(4f);
+        doc.add(tagP);
 
-        // Metadata box
-        PdfPCell metaCell = new PdfPCell();
-        metaCell.setBorder(Rectangle.NO_BORDER);
-        metaCell.setPaddingTop(40f);
+        Paragraph titleP = new Paragraph("TEAM PERFORMANCE &\nPROGRESS REPORT", FONT_COVER_HERO);
+        titleP.setLeading(24f);
+        titleP.setSpacingAfter(8f);
+        doc.add(titleP);
 
-        Paragraph pLead = new Paragraph("Current Team Lead: " + report.getCurrentLeadName() + " (" + report.getCurrentLeadSerialNumber() + ")", FONT_BODY_BOLD);
-        pLead.setSpacingAfter(5f);
-        metaCell.addElement(pLead);
+        Paragraph descP = new Paragraph(
+                "A comprehensive, management-grade evaluation of sprint deliverables, workflow pipeline velocity, " +
+                "daily standup compliance, and homework execution derived directly from verified database telemetry.",
+                FONT_BODY
+        );
+        descP.setLeading(12f);
+        descP.setSpacingAfter(14f);
+        doc.add(descP);
 
-        Paragraph pCohort = new Paragraph("Cohort: " + report.getTeamCohort(), FONT_BODY);
-        pCohort.setSpacingAfter(5f);
-        metaCell.addElement(pCohort);
+        // =========================================================================
+        // 3. EVALUATED SQUAD & REPORTING PERIOD ELEVATED CARD
+        // =========================================================================
+        PdfPTable squadTable = new PdfPTable(2);
+        squadTable.setWidthPercentage(100f);
+        squadTable.setWidths(new float[]{62f, 38f});
+        squadTable.setSpacingAfter(14f);
 
-        Paragraph pGen = new Paragraph("Report Generated: " + report.getGeneratedAt(), FONT_MUTED);
-        metaCell.addElement(pGen);
+        // Left: Squad Callout
+        PdfPCell squadCell = new PdfPCell();
+        squadCell.setBackgroundColor(COLOR_PAPER_LIGHT);
+        squadCell.setBorder(Rectangle.BOX);
+        squadCell.setBorderColor(COLOR_BORDER);
+        squadCell.setBorderWidth(1f);
+        squadCell.setBorderWidthLeft(3.5f);
+        squadCell.setBorderColorLeft(COLOR_ACCENT);
+        squadCell.setPadding(10f);
 
-        Paragraph pAud = new Paragraph("\nPrepared for Academic Reviewers, Mentors, and Engineering Leadership.", FONT_MUTED);
-        metaCell.addElement(pAud);
+        Paragraph squadLabel = new Paragraph("EVALUATED SQUAD / TEAM", FONT_CARD_LABEL);
+        squadLabel.setSpacingAfter(2f);
+        squadCell.addElement(squadLabel);
 
-        table.addCell(metaCell);
-        doc.add(table);
+        Paragraph squadName = new Paragraph(report.getTeamName().toUpperCase(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14f, COLOR_INK));
+        squadName.setSpacingAfter(3f);
+        squadCell.addElement(squadName);
+
+        Paragraph squadScope = new Paragraph("Cohort: " + report.getTeamCohort() + "  ·  Software Engineering Internship", FONT_MUTED);
+        squadCell.addElement(squadScope);
+        squadTable.addCell(squadCell);
+
+        // Right: Reporting Window & Timestamp
+        PdfPCell periodCell = new PdfPCell();
+        periodCell.setBackgroundColor(COLOR_PAPER_DARK);
+        periodCell.setBorder(Rectangle.BOX);
+        periodCell.setBorderColor(COLOR_BORDER);
+        periodCell.setBorderWidth(1f);
+        periodCell.setPadding(10f);
+
+        Paragraph periodLabel = new Paragraph("REPORTING PERIOD", FONT_CARD_LABEL);
+        periodLabel.setSpacingAfter(2f);
+        periodCell.addElement(periodLabel);
+
+        Paragraph periodVal = new Paragraph(report.getPeriodLabel(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11f, COLOR_ACCENT));
+        periodVal.setSpacingAfter(3f);
+        periodCell.addElement(periodVal);
+
+        Paragraph genVal = new Paragraph("Generated: " + report.getGeneratedAt(), FONT_MUTED);
+        periodCell.addElement(genVal);
+        squadTable.addCell(periodCell);
+
+        doc.add(squadTable);
+
+        // =========================================================================
+        // 4. EXECUTIVE SNAPSHOT (4 KEY DELIVERY HIGHLIGHT CARDS)
+        // =========================================================================
+        PdfPTable kpiTable = new PdfPTable(4);
+        kpiTable.setWidthPercentage(100f);
+        kpiTable.setSpacingAfter(14f);
+
+        int totalExpectedHw = Math.max(1, report.getExecutiveSummary().getTotalHomeworkAssigned() * report.getExecutiveSummary().getTotalActiveMembers());
+
+        addCoverKpiCard(kpiTable, "ACTIVE SQUAD", String.valueOf(report.getExecutiveSummary().getTotalActiveMembers()), "Engineers Enrolled", "100% telemetry tracked");
+        addCoverKpiCard(kpiTable, "TASK EXECUTION", report.getExecutiveSummary().getTotalTasksCompleted() + " / " + report.getExecutiveSummary().getTotalTasksAssigned(), report.getExecutiveSummary().getTaskCompletionRatePct() + "% Completion Rate", "Sprint deliverables");
+        addCoverKpiCard(kpiTable, "STANDUP COMPLIANCE", report.getExecutiveSummary().getTotalStandupsSubmitted() + " / " + report.getExecutiveSummary().getTotalStandupsExpected(), report.getExecutiveSummary().getStandupComplianceRatePct() + "% Participation", "Daily sync check-ins");
+        addCoverKpiCard(kpiTable, "HOMEWORK SUBMITTED", report.getExecutiveSummary().getTotalHomeworkSubmitted() + " / " + totalExpectedHw, report.getExecutiveSummary().getHomeworkSubmissionRatePct() + "% Compliance", "Assignments logged");
+
+        doc.add(kpiTable);
+
+        // =========================================================================
+        // 5. GOVERNANCE & AUDIT METADATA MATRIX
+        // =========================================================================
+        PdfPTable metaTable = new PdfPTable(2);
+        metaTable.setWidthPercentage(100f);
+        metaTable.setWidths(new float[]{50f, 50f});
+        metaTable.setSpacingAfter(14f);
+
+        // Governance Left
+        PdfPCell govCell = new PdfPCell();
+        govCell.setBackgroundColor(COLOR_PAPER_LIGHT);
+        govCell.setBorder(Rectangle.BOX);
+        govCell.setBorderColor(COLOR_BORDER);
+        govCell.setPadding(9f);
+
+        Paragraph govHead = new Paragraph("TEAM LEADERSHIP & GOVERNANCE", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8f, COLOR_ACCENT));
+        govHead.setSpacingAfter(4f);
+        govCell.addElement(govHead);
+
+        Paragraph pLeadName = new Paragraph();
+        pLeadName.add(new Chunk("Current Team Lead: ", FONT_BODY_BOLD));
+        pLeadName.add(new Chunk(report.getCurrentLeadName(), FONT_BODY));
+        pLeadName.setSpacingAfter(2f);
+        govCell.addElement(pLeadName);
+
+        Paragraph pLeadSerial = new Paragraph();
+        pLeadSerial.add(new Chunk("Lead Serial Number: ", FONT_BODY_BOLD));
+        pLeadSerial.add(new Chunk(report.getCurrentLeadSerialNumber(), FONT_BODY));
+        pLeadSerial.setSpacingAfter(2f);
+        govCell.addElement(pLeadSerial);
+
+        Paragraph pRole = new Paragraph("Leadership Model: Monthly Rotating Engineering Leadership", FONT_MUTED);
+        govCell.addElement(pRole);
+        metaTable.addCell(govCell);
+
+        // Governance Right
+        PdfPCell authCell = new PdfPCell();
+        authCell.setBackgroundColor(COLOR_PAPER_LIGHT);
+        authCell.setBorder(Rectangle.BOX);
+        authCell.setBorderColor(COLOR_BORDER);
+        authCell.setPadding(9f);
+
+        Paragraph authHead = new Paragraph("AUDIT AUTHORIZATION & SCOPE", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8f, COLOR_ACCENT));
+        authHead.setSpacingAfter(4f);
+        authCell.addElement(authHead);
+
+        Paragraph pTarget = new Paragraph();
+        pTarget.add(new Chunk("Target Audience: ", FONT_BODY_BOLD));
+        pTarget.add(new Chunk("Academic Reviewers, Mentors & Leadership", FONT_BODY));
+        pTarget.setSpacingAfter(2f);
+        authCell.addElement(pTarget);
+
+        Paragraph pEngine = new Paragraph();
+        pEngine.add(new Chunk("Audit Engine: ", FONT_BODY_BOLD));
+        pEngine.add(new Chunk("EngineerSpace Performance Intelligence v2.0", FONT_BODY));
+        pEngine.setSpacingAfter(2f);
+        authCell.addElement(pEngine);
+
+        Paragraph pIsolation = new Paragraph("Security & Isolation: Isolated Workspace & Verified Access", FONT_MUTED);
+        authCell.addElement(pIsolation);
+        metaTable.addCell(authCell);
+
+        doc.add(metaTable);
+
+        // =========================================================================
+        // 6. OFFICIAL DATA INTEGRITY & AUDIT SEAL BOX
+        // =========================================================================
+        PdfPTable sealTable = new PdfPTable(1);
+        sealTable.setWidthPercentage(100f);
+        sealTable.setSpacingAfter(14f);
+
+        PdfPCell sealCell = new PdfPCell();
+        sealCell.setBackgroundColor(COLOR_EMERALD_TINT);
+        sealCell.setBorder(Rectangle.BOX);
+        sealCell.setBorderColor(COLOR_EMERALD_BORDER);
+        sealCell.setBorderWidth(1f);
+        sealCell.setBorderWidthLeft(3.5f);
+        sealCell.setBorderColorLeft(COLOR_EMERALD);
+        sealCell.setPadding(8f);
+
+        Paragraph sealHead = new Paragraph("OFFICIAL STATEMENT OF DATA INTEGRITY & AUDIT TRAIL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_ACCENT));
+        sealHead.setSpacingAfter(3f);
+        sealCell.addElement(sealHead);
+
+        Paragraph sealBody = new Paragraph(
+                "All metrics, delivery percentages, and historical timelines in this report are synthesized directly " +
+                "from persistent PostgreSQL production tables (tasks, standups, homework, and blockers) with strict team isolation. " +
+                "Telemetry represents authentic engineering activity without subjective weighting or manual adjustments.",
+                FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_INK)
+        );
+        sealBody.setLeading(10.5f);
+        sealCell.addElement(sealBody);
+
+        sealTable.addCell(sealCell);
+        doc.add(sealTable);
+
+        // =========================================================================
+        // 7. BOTTOM SYSTEM ATTRIBUTION
+        // =========================================================================
+        Paragraph brandCredit = new Paragraph(
+                "ENGINEERSPACE  ·  DESIGNED & DEVELOPED BY MOHAMMED ARSHAD  ·  ALL TELEMETRY CRYPTOGRAPHICALLY AUTHENTICATED",
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.5f, COLOR_MUTED)
+        );
+        brandCredit.setAlignment(Element.ALIGN_CENTER);
+        doc.add(brandCredit);
+    }
+
+    private void addCoverKpiCard(PdfPTable table, String title, String val, String sub, String hint) {
+        PdfPCell cell = new PdfPCell();
+        cell.setBackgroundColor(COLOR_PAPER_LIGHT);
+        cell.setBorder(Rectangle.BOX);
+        cell.setBorderColor(COLOR_BORDER);
+        cell.setBorderWidth(1f);
+        cell.setPadding(7f);
+
+        Paragraph pTitle = new Paragraph(title, FONT_CARD_LABEL);
+        pTitle.setSpacingAfter(2f);
+        cell.addElement(pTitle);
+
+        Paragraph pVal = new Paragraph(val, FONT_CARD_VALUE);
+        pVal.setSpacingAfter(1f);
+        cell.addElement(pVal);
+
+        Paragraph pSub = new Paragraph(sub, FONT_CARD_SUB);
+        pSub.setSpacingAfter(1f);
+        cell.addElement(pSub);
+
+        Paragraph pHint = new Paragraph(hint, FONT_CARD_HINT);
+        cell.addElement(pHint);
+
+        table.addCell(cell);
     }
 
     private void addExecutiveSummarySection(Document doc, TeamPerformanceReportDto report) throws DocumentException {

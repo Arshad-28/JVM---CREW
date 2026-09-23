@@ -273,8 +273,8 @@ export const EditCrewMemberModal: React.FC<EditCrewMemberModalProps> = ({
           {/* Right: Form Controls */}
           <form id="crew-edit-modal-form" onSubmit={handleSubmit} className="lg:col-span-7 p-6 overflow-y-auto space-y-5 text-xs">
             {saveSuccessMsg && (
-              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-sm text-emerald-800 font-bold flex items-center space-x-2 animate-in fade-in">
-                <Check className="w-4 h-4 text-emerald-600" />
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-sm text-emerald-400 font-bold flex items-center space-x-2 animate-in fade-in">
+                <Check className="w-4 h-4 text-emerald-400" />
                 <span>✓ Profile updated successfully! Card saved to database.</span>
               </div>
             )}

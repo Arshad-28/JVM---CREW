@@ -27,21 +27,21 @@ export const getPlatformDetails = (platform: MeetingPlatform) => {
     case 'GOOGLE_MEET':
       return {
         label: 'Google Meet',
-        badgeBg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800',
+        badgeBg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
         iconBg: 'bg-emerald-600 text-white',
         borderHover: 'hover:border-emerald-500/50',
       };
     case 'ZOOM':
       return {
         label: 'Zoom Video',
-        badgeBg: 'bg-blue-500/10 border-blue-500/30 text-blue-800',
+        badgeBg: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
         iconBg: 'bg-blue-600 text-white',
         borderHover: 'hover:border-blue-500/50',
       };
     case 'MS_TEAMS':
       return {
         label: 'Microsoft Teams',
-        badgeBg: 'bg-purple-500/10 border-purple-500/30 text-purple-800',
+        badgeBg: 'bg-purple-500/10 border-purple-500/30 text-purple-300',
         iconBg: 'bg-purple-600 text-white',
         borderHover: 'hover:border-purple-500/50',
       };

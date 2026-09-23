@@ -280,15 +280,15 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
         </div>
 
         {accountSuccess && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{accountSuccess}</span>
           </div>
         )}
 
         {accountError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-800 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xs text-xs font-mono flex items-center space-x-2 animate-fade-in">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{accountError}</span>
           </div>
         )}
@@ -436,7 +436,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                 <span>Crew Serial ID</span>
                 <span className="text-[9px] text-muted bg-paper-dark border border-line px-1 py-0.2 rounded-xs font-mono">Managed by Team Lead</span>
               </label>
-              <div className="p-2.5 bg-paper-dark/60 border border-line rounded-xs font-mono text-xs text-emerald-800 font-bold select-none">
+              <div className="p-2.5 bg-paper-dark/60 border border-line rounded-xs font-mono text-xs text-emerald-400 font-bold select-none">
                 {crewId}
               </div>
             </div>
@@ -515,15 +515,15 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
 
         <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-xl">
           {passwordSuccess && (
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 rounded-xs text-xs font-mono flex items-center space-x-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xs text-xs font-mono flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{passwordSuccess}</span>
             </div>
           )}
 
           {passwordError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-800 rounded-xs text-xs font-mono flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xs text-xs font-mono flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
               <span>{passwordError}</span>
             </div>
           )}
@@ -538,13 +538,14 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter existing password"
                 className="w-full px-3 py-2 text-xs bg-paper border border-line rounded-xs text-ink focus:border-ink outline-none pr-9 font-mono"
+                required
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-2.5 top-2.5 text-muted hover:text-ink transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink cursor-pointer"
               >
-                {showCurrentPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -557,20 +558,22 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
+                placeholder="Min 6 characters"
                 className="w-full px-3 py-2 text-xs bg-paper border border-line rounded-xs text-ink focus:border-ink outline-none pr-9 font-mono"
+                required
+                minLength={6}
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-2.5 top-2.5 text-muted hover:text-ink transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink cursor-pointer"
               >
-                {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password */}
+          {/* Confirm New Password */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-ink">Confirm New Password</label>
             <div className="relative">
@@ -578,15 +581,17 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-type new password"
+                placeholder="Re-enter new password"
                 className="w-full px-3 py-2 text-xs bg-paper border border-line rounded-xs text-ink focus:border-ink outline-none pr-9 font-mono"
+                required
+                minLength={6}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2.5 top-2.5 text-muted hover:text-ink transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink cursor-pointer"
               >
-                {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -594,7 +599,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
           <button
             type="submit"
             disabled={submittingPassword}
-            className="px-4 py-2 bg-ink text-paper hover:bg-ink/90 rounded-xs font-mono text-xs font-bold transition-colors shadow-2xs flex items-center space-x-2 disabled:opacity-50"
+            className="px-5 py-2 bg-ink text-paper hover:bg-ink/90 rounded-xs font-mono text-xs font-bold transition-colors shadow-2xs flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
           >
             <Key className="w-3.5 h-3.5 text-accent" />
             <span>{submittingPassword ? 'Updating Password...' : 'Update Password'}</span>
@@ -615,12 +620,12 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
           <span
             className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs uppercase tracking-wider border ${
               pushStatus === 'SUBSCRIBED'
-                ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                 : pushStatus === 'DENIED'
-                ? 'bg-rose-500/10 text-rose-800 border-rose-500/30'
+                ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                 : pushStatus === 'UNSUPPORTED'
                 ? 'bg-line text-muted border-line-dark'
-                : 'bg-amber-500/10 text-amber-800 border-amber-500/30'
+                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
             }`}
           >
             {pushStatus === 'SUBSCRIBED'
@@ -862,7 +867,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
       {/* SECTION 5: SIGN OUT */}
       <div className="border border-red-500/30 bg-red-500/5 rounded-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono">
         <div>
-          <p className="text-xs font-bold text-red-900 uppercase">Session Sign Out</p>
+          <p className="text-xs font-bold text-red-400 uppercase">Session Sign Out</p>
           <p className="text-[11px] text-muted">End your active authenticated workspace session on this device.</p>
         </div>
         <button

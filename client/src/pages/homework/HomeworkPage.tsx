@@ -1595,8 +1595,8 @@ export const HomeworkPage: React.FC = () => {
             </div>
 
             {deleteHomeworkError && (
-              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-400 rounded-sm font-mono text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                 <span>{deleteHomeworkError}</span>
               </div>
             )}

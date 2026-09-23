@@ -248,9 +248,9 @@ export const TeamManagementSection: React.FC = () => {
     <div className="border border-line bg-paper rounded-sm p-5 space-y-5 font-sans shadow-2xs">
       {/* SUCCESS / ERROR ALERTS */}
       {successMsg && (
-        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 rounded-xs font-mono text-xs flex items-center justify-between">
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xs font-mono text-xs flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </span>
           <button onClick={() => setSuccessMsg(null)} className="text-muted hover:text-ink">
@@ -260,9 +260,9 @@ export const TeamManagementSection: React.FC = () => {
       )}
 
       {errorMsg && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-700 rounded-xs font-mono text-xs flex items-center justify-between">
+        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xs font-mono text-xs flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{errorMsg}</span>
           </span>
           <button onClick={() => setErrorMsg(null)} className="text-muted hover:text-ink">
@@ -319,7 +319,7 @@ export const TeamManagementSection: React.FC = () => {
               <span className="font-display text-sm font-bold text-ink uppercase">
                 {teamInfo.currentLead ? teamInfo.currentLead.name : 'No Active Lead'}
               </span>
-              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/15 border border-amber-500/30 text-amber-800 uppercase">
+              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/15 border border-amber-500/30 text-amber-400 uppercase">
                 CURRENT LEAD
               </span>
             </div>
@@ -448,7 +448,7 @@ export const TeamManagementSection: React.FC = () => {
                   <td className="py-2.5 px-3 text-muted">{m.position || 'SDE Intern'}</td>
                   <td className="py-2.5 px-3">
                     {m.isCurrentLead ? (
-                      <span className="px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-800 border border-amber-500/30 text-[10px] font-bold uppercase">
+                      <span className="px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase">
                         CURRENT LEAD
                       </span>
                     ) : (
@@ -472,7 +472,7 @@ export const TeamManagementSection: React.FC = () => {
                       {!m.isCurrentLead && (
                         <button
                           onClick={() => handleRemoveMember(m.userId, m.name)}
-                          className="px-2 py-0.5 border border-red-500/20 text-red-600 hover:bg-red-500/10 rounded-xs text-[10px]"
+                          className="px-2 py-0.5 border border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-xs text-[10px]"
                           title="Remove from active team roster"
                         >
                           Remove
@@ -496,7 +496,7 @@ export const TeamManagementSection: React.FC = () => {
                   <span className="font-bold text-ink text-xs">{m.name}</span>
                 </div>
                 {m.isCurrentLead ? (
-                  <span className="px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-800 border border-amber-500/30 text-[10px] font-bold uppercase font-mono">
+                  <span className="px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase font-mono">
                     CURRENT LEAD
                   </span>
                 ) : (

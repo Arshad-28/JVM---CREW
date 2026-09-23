@@ -152,8 +152,8 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
         {error && (
-          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 text-rose-800 rounded-xl flex items-center gap-2.5 animate-fade-in">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl flex items-center gap-2.5 animate-fade-in">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
             <span className="font-medium">{error}</span>
           </div>
         )}

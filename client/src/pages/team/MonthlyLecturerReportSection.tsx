@@ -93,7 +93,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                     <Users className="w-3.5 h-3.5 text-accent" />
                     <span>Your Personal Deliverables ({evaluation.personalPerformance.name})</span>
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-800 border border-emerald-500/30">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                     {evaluation.personalPerformance.performanceRating}
                   </span>
                 </div>
@@ -112,7 +112,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                     <span className="text-sm font-black text-ink block">
                       {evaluation.personalPerformance.homeworkSubmitted} / {evaluation.personalPerformance.homeworkAssigned}
                     </span>
-                    <span className="text-[9px] text-emerald-700 block">{evaluation.personalPerformance.homeworkReviewed} Reviewed</span>
+                    <span className="text-[9px] text-emerald-400 block">{evaluation.personalPerformance.homeworkReviewed} Reviewed</span>
                   </div>
 
                   <div className="p-2.5 bg-paper border border-line rounded-xs space-y-0.5">
@@ -134,7 +134,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                     <Shield className="w-3.5 h-3.5 text-accent" />
                     <span>Rotation Leadership Execution ({evaluation.leadershipPerformance.leadName})</span>
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-800 border border-amber-500/30">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-xs bg-amber-500/15 text-amber-400 border border-amber-500/30">
                     {evaluation.leadershipPerformance.leadershipRating}
                   </span>
                 </div>
@@ -145,7 +145,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                     <span className="text-sm font-black text-ink block">
                       {evaluation.leadershipPerformance.tasksCreatedForTeam}
                     </span>
-                    <span className="text-[9px] text-emerald-700 block">{evaluation.leadershipPerformance.tasksApproved} Approved</span>
+                    <span className="text-[9px] text-emerald-400 block">{evaluation.leadershipPerformance.tasksApproved} Approved</span>
                   </div>
 
                   <div className="p-2.5 bg-paper border border-line rounded-xs space-y-0.5">
@@ -196,7 +196,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                       <td className="py-2.5 px-3">
                         <span className={`px-1.5 py-0.2 rounded-xs text-[10px] font-bold ${
                           m.roleInMonth.includes('LEAD')
-                            ? 'bg-amber-500/15 text-amber-800 border border-amber-500/30'
+                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                             : 'bg-paper-dark text-muted border border-line'
                         }`}>
                           {m.roleInMonth}
@@ -223,7 +223,7 @@ export const MonthlyLecturerReportSection: React.FC = () => {
                     </div>
                     <span className={`px-1.5 py-0.5 rounded-xs text-[10px] font-bold ${
                       m.roleInMonth.includes('LEAD')
-                        ? 'bg-amber-500/15 text-amber-800 border border-amber-500/30'
+                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                         : 'bg-paper-dark text-muted border border-line'
                     }`}>
                       {m.roleInMonth}

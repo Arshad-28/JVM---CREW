@@ -123,7 +123,7 @@ export const LeadershipRotationSection: React.FC = () => {
               <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-paper border border-line text-muted">
                 {currentLead?.serialNumber || user?.serialNumber || 'LEAD'}
               </span>
-              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 uppercase">
+              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 uppercase">
                 ACTIVE ROTATION
               </span>
             </div>
@@ -138,7 +138,7 @@ export const LeadershipRotationSection: React.FC = () => {
         <div className="md:col-span-4 bg-paper border border-line rounded-xs p-2.5 text-right font-mono text-xs space-y-0.5">
           <span className="text-[10px] text-muted block uppercase font-bold">Rotation Term</span>
           <span className="font-bold text-ink block">{currentLead?.periodLabel || 'Active Rotation'}</span>
-          <span className="text-[10px] text-emerald-700 block">✓ Validated via PostgreSQL</span>
+          <span className="text-[10px] text-emerald-400 block">✓ Validated via PostgreSQL</span>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ export const LeadershipRotationSection: React.FC = () => {
                     <td className="py-2.5 px-3 text-muted">{row.endDate}</td>
                     <td className="py-2.5 px-3">
                       {row.isCurrent ? (
-                        <span className="px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 font-bold text-[10px]">
+                        <span className="px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
                           CURRENT LEAD
                         </span>
                       ) : (
@@ -206,7 +206,7 @@ export const LeadershipRotationSection: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-ink">{row.monthLabel}</span>
                   {row.isCurrent ? (
-                    <span className="px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 font-bold text-[10px]">
+                    <span className="px-2 py-0.5 rounded-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
                       CURRENT LEAD
                     </span>
                   ) : (
