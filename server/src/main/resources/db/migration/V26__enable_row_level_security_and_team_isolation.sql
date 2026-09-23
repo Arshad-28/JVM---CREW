@@ -494,27 +494,31 @@ CREATE POLICY "notification_preferences_user" ON public.notification_preferences
 
 DO $$
 BEGIN
-    -- Ensure bucket is private if storage.buckets exists
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'storage' AND table_name = 'buckets'
-    ) THEN
-        UPDATE storage.buckets
-        SET public = false
-        WHERE id = 'jvmcrew-files';
-    END IF;
+    BEGIN
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = 'storage' AND table_name = 'buckets'
+        ) THEN
+            UPDATE storage.buckets
+            SET public = false
+            WHERE id = 'jvmcrew-files';
+        END IF;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
 
-    -- Enable RLS on storage.objects if it exists
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'storage' AND table_name = 'objects'
-    ) THEN
-        EXECUTE 'ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY';
-        
-        EXECUTE 'DROP POLICY IF EXISTS "jvmcrew_files_service_role_all" ON storage.objects';
-        EXECUTE 'CREATE POLICY "jvmcrew_files_service_role_all" ON storage.objects FOR ALL TO postgres, service_role USING (true) WITH CHECK (true)';
-        
-        EXECUTE 'DROP POLICY IF EXISTS "jvmcrew_files_authenticated_read" ON storage.objects';
-        EXECUTE 'CREATE POLICY "jvmcrew_files_authenticated_read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = ''jvmcrew-files'')';
-    END IF;
+    BEGIN
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = 'storage' AND table_name = 'objects'
+        ) THEN
+            EXECUTE 'ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY';
+            
+            EXECUTE 'DROP POLICY IF EXISTS "jvmcrew_files_service_role_all" ON storage.objects';
+            EXECUTE 'CREATE POLICY "jvmcrew_files_service_role_all" ON storage.objects FOR ALL TO postgres, service_role USING (true) WITH CHECK (true)';
+            
+            EXECUTE 'DROP POLICY IF EXISTS "jvmcrew_files_authenticated_read" ON storage.objects';
+            EXECUTE 'CREATE POLICY "jvmcrew_files_authenticated_read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = ''jvmcrew-files'')';
+        END IF;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
 END $$;
