@@ -32,7 +32,6 @@ public class TeamManagementService {
     private final LeadershipService leadershipService;
     private final StreakService streakService;
     private final PasswordEncoder passwordEncoder;
-    private final SupabaseAdminService supabaseAdminService;
 
     @Transactional(readOnly = true)
     public TeamManagementDto getMyTeam(UserPrincipal principal) {
@@ -139,19 +138,12 @@ public class TeamManagementService {
             }
             String name = StringUtils.hasText(request.getName()) ? request.getName().trim() : "SDE Intern";
             String email = request.getEmail().trim().toLowerCase();
-            String rawPassword = StringUtils.hasText(request.getPassword()) ? request.getPassword().trim() : null;
-
-            // Provision user in Supabase Auth via Admin API
-            java.util.UUID supabaseAuthId = null;
-            if (rawPassword != null) {
-                supabaseAuthId = supabaseAdminService.createAuthUser(email, rawPassword, name).orElse(null);
-            }
+            String rawPassword = StringUtils.hasText(request.getPassword()) ? request.getPassword().trim() : "password123";
 
             targetUser = userRepository.save(User.builder()
                     .name(name)
                     .email(email)
-                    .authUserId(supabaseAuthId)
-                    .passwordHash(rawPassword != null ? passwordEncoder.encode(rawPassword) : null)
+                    .passwordHash(passwordEncoder.encode(rawPassword))
                     .phoneNumber(StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null)
                     .college(StringUtils.hasText(request.getCollege()) ? request.getCollege().trim() : null)
                     .organization(StringUtils.hasText(request.getOrganization()) ? request.getOrganization().trim() : "Algorithms365")

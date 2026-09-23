@@ -25,11 +25,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "auth_user_id", unique = true)
-    private java.util.UUID authUserId;
-
     @JsonIgnore
-    @Column(name = "password_hash")
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
     @Column(name = "phone_number", length = 50)

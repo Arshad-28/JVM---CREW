@@ -25,7 +25,5 @@ public class RegisterRequest {
 
     private String teamName;
 
-    private String authUserId; // Supabase Auth UUID if pre-authenticated
-
     private Role role; // Optional, defaults to MEMBER
 }

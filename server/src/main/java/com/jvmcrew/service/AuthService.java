@@ -15,7 +15,6 @@ import com.jvmcrew.repository.TeamMemberRepository;
 import com.jvmcrew.repository.TeamRepository;
 import com.jvmcrew.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,7 +32,6 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -44,7 +42,6 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final AuthenticationManager authenticationManager;
     private final LeadershipService leadershipService;
-    private final SupabaseAdminService supabaseAdminService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -90,19 +87,10 @@ public class AuthService {
         team = teamRepository.save(team);
 
         // 2. Create the User (Team Lead)
-        java.util.UUID authUuid = null;
-        if (StringUtils.hasText(request.getAuthUserId())) {
-            try {
-                authUuid = java.util.UUID.fromString(request.getAuthUserId().trim());
-            } catch (Exception ignored) {}
-        }
-        String pwdHash = StringUtils.hasText(request.getPassword()) ? passwordEncoder.encode(request.getPassword().trim()) : null;
-
         User user = User.builder()
                 .name(request.getName().trim())
                 .email(email)
-                .authUserId(authUuid)
-                .passwordHash(pwdHash)
+                .passwordHash(passwordEncoder.encode(request.getPassword().trim()))
                 .build();
         user = userRepository.save(user);
 
@@ -146,7 +134,6 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .id(user.getId())
-                .authUserId(user.getAuthUserId() != null ? user.getAuthUserId().toString() : null)
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(Role.LEAD)
@@ -176,20 +163,6 @@ public class AuthService {
         User user = principal.getUser() != null 
                 ? principal.getUser() 
                 : userRepository.findById(principal.getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        // If legacy user is missing Supabase authUserId, provision them in Supabase Auth seamlessly
-        if (user.getAuthUserId() == null && supabaseAdminService != null && supabaseAdminService.isConfigured()) {
-            try {
-                java.util.Optional<java.util.UUID> createdUuid = supabaseAdminService.createAuthUser(user.getEmail(), request.getPassword(), user.getName());
-                if (createdUuid.isPresent()) {
-                    user.setAuthUserId(createdUuid.get());
-                    userRepository.save(user);
-                    log.info("Auto-provisioned Supabase Auth user for legacy user {} with UUID {}", user.getEmail(), createdUuid.get());
-                }
-            } catch (Exception e) {
-                log.warn("Could not auto-provision Supabase Auth user for {}: {}", user.getEmail(), e.getMessage());
-            }
-        }
 
         TeamMember teamMember = principal.getTeamMember() != null
                 ? principal.getTeamMember()
@@ -228,7 +201,6 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .id(user.getId())
-                .authUserId(user.getAuthUserId() != null ? user.getAuthUserId().toString() : null)
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(role)
@@ -291,7 +263,6 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .id(user.getId())
-                .authUserId(user.getAuthUserId() != null ? user.getAuthUserId().toString() : null)
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(role)

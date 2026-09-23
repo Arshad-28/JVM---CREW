@@ -9,7 +9,6 @@ export type BlockerPriority = 'LOW' | 'MED' | 'HIGH';
 
 export interface AuthUser {
   id: number;
-  authUserId?: string;
   name: string;
   email: string;
   role: Role;
