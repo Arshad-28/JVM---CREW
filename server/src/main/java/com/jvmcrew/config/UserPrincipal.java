@@ -17,6 +17,7 @@ public class UserPrincipal implements UserDetails {
     private final User user;
     private final TeamMember teamMember;
     private final Long id;
+    private final java.util.UUID authUserId;
     private final String name;
     private final String email;
     private final Long teamId;
@@ -31,6 +32,7 @@ public class UserPrincipal implements UserDetails {
         this.user = user;
         this.teamMember = teamMember;
         this.id = user != null ? user.getId() : null;
+        this.authUserId = user != null ? user.getAuthUserId() : null;
         this.name = user != null ? user.getName() : "";
         this.email = user != null ? user.getEmail() : "";
         this.teamId = teamId != null ? teamId : (teamMember != null && teamMember.getTeam() != null ? teamMember.getTeam().getId() : null);
@@ -39,9 +41,14 @@ public class UserPrincipal implements UserDetails {
     }
 
     public UserPrincipal(Long id, String email, String name, Long teamId, Role role) {
+        this(id, null, email, name, teamId, role);
+    }
+
+    public UserPrincipal(Long id, java.util.UUID authUserId, String email, String name, Long teamId, Role role) {
         this.user = null;
         this.teamMember = null;
         this.id = id;
+        this.authUserId = authUserId;
         this.email = email != null ? email : "";
         this.name = name != null ? name : "";
         this.teamId = teamId;
