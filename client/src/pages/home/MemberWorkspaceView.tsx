@@ -253,9 +253,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. CORE TELEMETRY METRICS (4 clean, human-designed KPI cards)               */}
+      {/* 2. CORE TELEMETRY METRICS (Interactive, Animated KPI Cockpit)             */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5">
         {/* CARD 1: DAILY STANDUP */}
         <div
           onClick={() => {
@@ -270,18 +270,20 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             }
             setStandupModalOpen(true);
           }}
-          className={`p-4 sm:p-5 rounded-xl border transition-colors duration-150 cursor-pointer shadow-xs flex flex-col justify-between ${
+          className={`p-4 sm:p-5 rounded-xl border cursor-pointer shadow-xs flex flex-col justify-between group transition-all duration-200 ease-out hover:-translate-y-1 active:scale-[0.98] select-none ${
             isSubmittedToday
-              ? 'bg-paper border-emerald-500/30 hover:border-emerald-500/60'
-              : 'bg-paper border-line hover:border-line-dark'
+              ? 'bg-paper border-emerald-500/30 hover:border-emerald-500/70 hover:shadow-[0_8px_24px_rgba(16,185,129,0.15)]'
+              : 'bg-paper border-line hover:border-amber-500/60 hover:shadow-[0_8px_24px_rgba(217,119,6,0.15)]'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Daily Standup</span>
-            <div className={`p-2 rounded-lg transition-colors ${
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider group-hover:text-ink transition-colors">
+              Daily Standup
+            </span>
+            <div className={`p-2.5 rounded-lg transition-all duration-200 group-hover:scale-110 group-hover:rotate-3 shadow-2xs ${
               isSubmittedToday
-                ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
-                : 'bg-paper-dark text-muted border border-line'
+                ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/25 group-hover:bg-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-700 border border-amber-500/25 group-hover:bg-amber-500/20'
             }`}>
               <Calendar className="w-4 h-4" />
             </div>
@@ -289,8 +291,13 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
           
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${isSubmittedToday ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-              <span className={`font-mono text-xl sm:text-2xl font-bold block leading-none tracking-tight ${
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                {!isSubmittedToday && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isSubmittedToday ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+              </span>
+              <span className={`font-mono text-xl sm:text-2xl font-black block leading-none tracking-tight group-hover:scale-[1.02] origin-left transition-transform duration-150 ${
                 isSubmittedToday ? 'text-emerald-700' : 'text-amber-700'
               }`}>
                 {isSubmittedToday ? 'COMPLETED' : 'PENDING'}
@@ -305,14 +312,15 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
                   : 'Action needed today'}
               </span>
-              <span className="text-[10px] font-semibold text-primary">
-                {isSubmittedToday ? 'View →' : 'Submit →'}
+              <span className="text-[10px] font-bold text-primary flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform duration-150">
+                <span>{isSubmittedToday ? 'View' : 'Submit'}</span>
+                <span>→</span>
               </span>
             </div>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 group-hover:h-1.5 bg-line/60 rounded-full overflow-hidden transition-all duration-200">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  isSubmittedToday ? 'w-full bg-emerald-500' : 'w-1/4 bg-amber-500'
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isSubmittedToday ? 'w-full bg-gradient-to-r from-emerald-500 to-teal-500' : 'w-1/3 bg-gradient-to-r from-amber-500 to-orange-500'
                 }`}
               />
             </div>
@@ -322,18 +330,20 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         {/* CARD 2: MY TASKS */}
         <div
           onClick={() => onNavigateTab('tasks')}
-          className="p-4 sm:p-5 bg-paper border border-line hover:border-line-dark rounded-xl transition-colors duration-150 cursor-pointer shadow-xs flex flex-col justify-between group"
+          className="p-4 sm:p-5 bg-paper border border-line hover:border-blue-500/60 rounded-xl cursor-pointer shadow-xs flex flex-col justify-between group transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(59,130,246,0.15)] active:scale-[0.98] select-none"
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">My Tasks</span>
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-700 border border-blue-500/20">
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider group-hover:text-ink transition-colors">
+              My Tasks
+            </span>
+            <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-700 border border-blue-500/25 group-hover:bg-blue-500/20 group-hover:scale-110 group-hover:rotate-3 shadow-2xs transition-all duration-200">
               <CheckSquare className="w-4 h-4" />
             </div>
           </div>
           
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className="font-mono text-2xl sm:text-3xl font-extrabold text-ink block leading-none tracking-tight">
+              <span className="font-mono text-2xl sm:text-3xl font-black text-ink block leading-none tracking-tight group-hover:text-blue-700 group-hover:scale-[1.02] origin-left transition-all duration-150">
                 {data.openTasksCount}
               </span>
               {data.openTasksCount === 0 && (
@@ -351,11 +361,11 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   ? `${data.tasksDueTodayCount} due today`
                   : `${data.lifetimeCompletedTasks || 0} completed`}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-150" />
             </div>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 group-hover:h-1.5 bg-line/60 rounded-full overflow-hidden transition-all duration-200">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
                 style={{
                   width: `${data.openTasksCount === 0 ? 100 : Math.min(100, Math.max(15, ((data.lifetimeCompletedTasks || 0) / Math.max(1, (data.lifetimeCompletedTasks || 0) + (data.openTasksCount || 0))) * 100))}%`
                 }}
@@ -367,18 +377,20 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         {/* CARD 3: HOMEWORK */}
         <div
           onClick={() => onNavigateTab('homework')}
-          className="p-4 sm:p-5 bg-paper border border-line hover:border-line-dark rounded-xl transition-colors duration-150 cursor-pointer shadow-xs flex flex-col justify-between group"
+          className="p-4 sm:p-5 bg-paper border border-line hover:border-amber-500/60 rounded-xl cursor-pointer shadow-xs flex flex-col justify-between group transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(245,158,11,0.15)] active:scale-[0.98] select-none"
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Homework & Labs</span>
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-500/20">
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider group-hover:text-ink transition-colors">
+              Homework & Labs
+            </span>
+            <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-500/25 group-hover:bg-amber-500/20 group-hover:scale-110 group-hover:rotate-6 shadow-2xs transition-all duration-200">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
 
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className="font-mono text-2xl sm:text-3xl font-extrabold text-ink block leading-none tracking-tight">
+              <span className="font-mono text-2xl sm:text-3xl font-black text-ink block leading-none tracking-tight group-hover:text-amber-700 group-hover:scale-[1.02] origin-left transition-all duration-150">
                 {data.pendingHomeworkCount}
               </span>
               {data.pendingHomeworkCount === 0 && (
@@ -396,11 +408,11 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   ? `${data.totalHomeworkCount - data.pendingHomeworkCount}/${data.totalHomeworkCount} submitted`
                   : 'All coursework done'}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-amber-600 group-hover:translate-x-1 transition-all duration-150" />
             </div>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 group-hover:h-1.5 bg-line/60 rounded-full overflow-hidden transition-all duration-200">
               <div
-                className="h-full rounded-full bg-amber-600 transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
                 style={{
                   width: `${data.totalHomeworkCount > 0 ? Math.min(100, Math.max(15, ((data.totalHomeworkCount - data.pendingHomeworkCount) / data.totalHomeworkCount) * 100)) : 100}%`
                 }}
@@ -416,18 +428,20 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               setAskLeadOpen(true);
             }
           }}
-          className={`p-4 sm:p-5 rounded-xl border transition-colors duration-150 shadow-xs flex flex-col justify-between ${
+          className={`p-4 sm:p-5 rounded-xl border shadow-xs flex flex-col justify-between group transition-all duration-200 ease-out hover:-translate-y-1 active:scale-[0.98] select-none ${
             data.openBlockersCount > 0
-              ? 'bg-paper border-rose-500/40 hover:border-rose-500 cursor-pointer'
-              : 'bg-paper border-line hover:border-line-dark cursor-default'
+              ? 'bg-paper border-rose-500/40 hover:border-rose-500 hover:shadow-[0_8px_24px_rgba(244,63,94,0.15)] cursor-pointer'
+              : 'bg-paper border-line hover:border-emerald-500/50 hover:shadow-[0_8px_24px_rgba(16,185,129,0.12)] cursor-default'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Blockers</span>
-            <div className={`p-2 rounded-lg transition-colors ${
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider group-hover:text-ink transition-colors">
+              Blockers
+            </span>
+            <div className={`p-2.5 rounded-lg shadow-2xs transition-all duration-200 group-hover:scale-110 group-hover:-rotate-3 ${
               data.openBlockersCount > 0
-                ? 'bg-rose-500/10 text-rose-700 border border-rose-500/20'
-                : 'bg-paper-dark text-muted border border-line'
+                ? 'bg-rose-500/10 text-rose-700 border border-rose-500/25 group-hover:bg-rose-500/20'
+                : 'bg-paper-dark text-muted border border-line group-hover:text-emerald-700 group-hover:border-emerald-500/30'
             }`}>
               <Shield className="w-4 h-4" />
             </div>
@@ -435,7 +449,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
           <div className="py-2.5">
             <div className="flex items-center space-x-2">
-              <span className={`font-mono text-2xl sm:text-3xl font-extrabold block leading-none tracking-tight ${
+              <span className={`font-mono text-2xl sm:text-3xl font-black block leading-none tracking-tight group-hover:scale-[1.02] origin-left transition-all duration-150 ${
                 data.openBlockersCount > 0 ? 'text-rose-700' : 'text-ink'
               }`}>
                 {data.openBlockersCount}
@@ -452,10 +466,10 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             <span className="font-mono text-[10px] text-muted truncate block">
               {data.openBlockersCount > 0 ? 'Lead assistance requested' : 'Full velocity · No blockers'}
             </span>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1 group-hover:h-1.5 bg-line/60 rounded-full overflow-hidden transition-all duration-200">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-primary/40'
+                className={`h-full rounded-full transition-all duration-500 ${
+                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-gradient-to-r from-emerald-500 to-teal-500'
                 }`}
               />
             </div>
