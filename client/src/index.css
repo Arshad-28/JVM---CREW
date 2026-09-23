@@ -190,3 +190,36 @@
     background: #14221C !important;
   }
 }
+
+/* Print Media Styles for Management Reports */
+@media print {
+  header, nav, aside, .no-print, button, [role="navigation"] {
+    display: none !important;
+  }
+
+  body, html {
+    background: #FFFFFF !important;
+    color: #111827 !important;
+  }
+
+  .bg-paper, .bg-paper-dark, .bg-paper-card {
+    background: #FFFFFF !important;
+    border-color: #E5E7EB !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+
+  .text-ink {
+    color: #111827 !important;
+  }
+
+  .text-muted {
+    color: #4B5563 !important;
+  }
+
+  .page-break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
