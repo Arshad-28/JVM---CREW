@@ -27,6 +27,9 @@ import {
   ShieldAlert,
   ExternalLink,
   Trash2,
+  Layers,
+  Target,
+  Check,
 } from 'lucide-react';
 
 const COLUMNS: {
@@ -451,154 +454,231 @@ export const KanbanBoardPage: React.FC = () => {
         />
       ) : (
         /* CONDITION B: LEAD ROLE -> CREW COMMAND CENTER */
-        <div className="space-y-6 animate-fade-in font-sans">
+        <div className="space-y-7 animate-fade-in font-sans">
           {/* 1. CREW TASK CONTROL (Top Dashboard Banner) */}
-          <div className="border border-line bg-paper p-6 rounded-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-900 border border-amber-500/30 px-2 py-0.5 rounded-xs">
-                  CREW TASK CONTROL
-                </span>
-                <span className="font-mono text-xs text-muted font-semibold">{user.serialNumber || 'LEAD'}</span>
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-black text-ink uppercase tracking-tight">
-                ENGINEERING TASK COMMAND CENTER
-              </h1>
-              <p className="font-mono text-xs text-muted">
-                Team-wide engineering task orchestration, member workload monitoring, and review queue approvals.
-              </p>
-            </div>
+          <div className="relative overflow-hidden bg-gradient-to-r from-paper-light via-surface to-paper border border-line/80 rounded-2xl p-6 sm:p-7 shadow-xs">
+            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-44 h-44 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-900 border border-amber-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    CREW TASK CONTROL
+                  </span>
+                  <span className="text-muted/40">·</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-paper-dark border border-line text-muted">
+                    {user.serialNumber || 'LEAD'}
+                  </span>
+                  <span className="text-muted/40">·</span>
+                  <span className="text-xs text-muted font-medium">
+                    {user.position || 'Team Lead'}
+                  </span>
+                </div>
 
-            <button
-              onClick={() => {
-                setStatus('TODO');
-                setAssignmentMode('INDIVIDUAL');
-                setSelectedMemberIds(memberAccounts[0] ? [memberAccounts[0].userId] : []);
-                setSelectedLabels(['Java', 'Core Java']);
-                setIsLabelPickerOpen(false);
-                setIsCreatingTask(true);
-              }}
-              className="px-4 py-2.5 bg-ink text-paper hover:bg-ink/90 rounded-sm font-mono text-xs font-bold transition-colors shadow-xs flex items-center space-x-2 self-start md:self-auto"
-            >
-              <Plus className="w-4 h-4 text-amber-400" />
-              <span>Assign New Task</span>
-            </button>
+                <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+                  Engineering Task Command Center
+                </h1>
+                <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-2xl">
+                  Team-wide engineering task orchestration, member workload monitoring, and review queue approvals.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setStatus('TODO');
+                  setAssignmentMode('INDIVIDUAL');
+                  setSelectedMemberIds(memberAccounts[0] ? [memberAccounts[0].userId] : []);
+                  setSelectedLabels(['Java', 'Core Java']);
+                  setIsLabelPickerOpen(false);
+                  setIsCreatingTask(true);
+                }}
+                className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer self-start md:self-auto shrink-0"
+              >
+                <Plus className="w-4 h-4 text-amber-200 group-hover:rotate-90 transition-transform duration-200" />
+                <span>Assign New Task</span>
+              </button>
+            </div>
           </div>
 
-          {/* DEDICATED LEAD COMMAND STATUS AREA */}
-          <div className="border border-amber-500/40 bg-paper p-5 rounded-sm space-y-3 font-mono">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-line pb-3">
+          {/* 2. DEDICATED LEAD COMMAND STATUS & KPI METRIC CARDS */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-paper-light border border-line/80 rounded-2xl">
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 bg-ink text-paper rounded-xs flex items-center justify-center font-bold font-display text-sm">
+                <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/20 text-amber-800 rounded-xl flex items-center justify-center font-bold font-display text-base shadow-2xs">
                   {user.name.charAt(0)}
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-ink font-display text-base">{user.name}</span>
-                    <span className="font-mono text-[10px] font-bold text-amber-800 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-xs">
-                      LEAD • {user.serialNumber || 'LEAD'}
+                    <span className="font-bold text-ink font-display text-sm sm:text-base">{user.name}</span>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full">
+                      LEAD
                     </span>
                   </div>
-                  <span className="text-[11px] text-muted font-sans">{user.position || 'SDE Intern'}</span>
+                  <span className="text-xs text-muted font-sans">Active Sprint Leader</span>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                <div className="px-3 py-1 bg-paper-dark border border-line rounded-xs text-[11px] font-bold text-ink">
-                  ACTIVE MEMBERS: {memberAccounts.length}
+                <div className="px-3 py-1.5 bg-paper border border-line rounded-xl text-xs font-semibold text-ink">
+                  Active Engineers: <span className="font-bold text-primary">{memberAccounts.length}</span>
                 </div>
-                <div className="px-3 py-1 bg-amber-500/20 text-amber-900 border border-amber-500/40 rounded-xs text-[11px] font-bold">
-                  TEAM PROGRESS: {overallTeamPct}%
+                <div className="px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-semibold">
+                  Team Progress: <span className="font-bold text-emerald-700">{overallTeamPct}%</span>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs">
-              <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
-                <span className="text-[10px] uppercase font-bold text-muted block">ACTIVE TASKS</span>
-                <span className="font-display text-lg font-black text-ink">{totalActiveCount}</span>
+            {/* 6 Executive KPI Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Active</span>
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Target className="w-4 h-4" />
+                  </div>
+                </div>
+                <span className="font-display text-xl sm:text-2xl font-black text-ink">{totalActiveCount}</span>
+                <span className="block text-[10px] text-muted">in progress</span>
               </div>
 
-              <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
-                <span className="text-[10px] uppercase font-bold text-muted block">AWAITING REVIEW</span>
-                <span className="font-display text-lg font-black text-amber-700">{reviewCount}</span>
+              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">In Review</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <FileCheck className="w-4 h-4" />
+                  </div>
+                </div>
+                <span className="font-display text-xl sm:text-2xl font-black text-amber-700">{reviewCount}</span>
+                <span className="block text-[10px] text-muted">needs signoff</span>
               </div>
 
-              <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
-                <span className="text-[10px] uppercase font-bold text-muted block">BLOCKED TASKS</span>
-                <span className="font-display text-lg font-black text-red-700">{blockedCount}</span>
+              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Blocked</span>
+                  <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                </div>
+                <span className="font-display text-xl sm:text-2xl font-black text-red-700">{blockedCount}</span>
+                <span className="block text-[10px] text-muted">needs help</span>
               </div>
 
-              <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
-                <span className="text-[10px] uppercase font-bold text-muted block">COMPLETED TODAY</span>
-                <span className="font-display text-lg font-black text-emerald-700">{completedCount}</span>
+              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Completed</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                </div>
+                <span className="font-display text-xl sm:text-2xl font-black text-emerald-700">{completedCount}</span>
+                <span className="block text-[10px] text-muted">signed off</span>
               </div>
 
-              <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
-                <span className="text-[10px] uppercase font-bold text-muted block">OVERDUE</span>
-                <span className="font-display text-lg font-black text-red-700">{overdueTasks.length}</span>
+              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Overdue</span>
+                  <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 text-red-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                </div>
+                <span className="font-display text-xl sm:text-2xl font-black text-red-700">{overdueTasks.length}</span>
+                <span className="block text-[10px] text-muted">past deadline</span>
               </div>
 
-              <div className="p-2.5 bg-paper-dark/30 border border-line rounded-xs">
-                <span className="text-[10px] uppercase font-bold text-muted block">TOTAL CREW TASKS</span>
-                <span className="font-display text-lg font-black text-ink">{tasks.length}</span>
+              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Total</span>
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                </div>
+                <span className="font-display text-xl sm:text-2xl font-black text-ink">{tasks.length}</span>
+                <span className="block text-[10px] text-muted">crew missions</span>
               </div>
             </div>
           </div>
 
-          {/* TEAM ACTIVITY / WORKFLOW STAGE SUMMARY STRIP */}
-          <div className="p-3 border border-line bg-paper rounded-sm font-mono text-xs space-y-1.5">
-            <span className="text-[10px] font-bold text-muted uppercase block">WORKFLOW STAGE DISTRIBUTION</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 bg-paper-dark border border-line rounded-xs font-bold text-ink">ASSIGNED ({assignedCount})</span>
-              <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-paper-dark border border-line rounded-xs font-bold text-ink">TO DO ({assignedCount})</span>
-              <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-amber-500/10 text-amber-900 border border-amber-500/30 rounded-xs font-bold">IN PROGRESS ({inProgressCount})</span>
-              <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-amber-500/20 text-amber-900 border border-amber-500/40 rounded-xs font-bold">SUBMITTED ({reviewCount})</span>
-              <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-amber-500/30 text-amber-900 border border-amber-500/50 rounded-xs font-bold">REVIEW ({reviewCount})</span>
-              <span className="text-muted">→</span>
-              <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-900 border border-emerald-500/40 rounded-xs font-bold">APPROVED / COMPLETED ({completedCount})</span>
+          {/* 3. WORKFLOW STAGE DISTRIBUTION PIPELINE */}
+          <div className="p-4 sm:p-5 bg-paper-light border border-line/80 rounded-2xl space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                Workflow Pipeline Distribution
+              </span>
+              <span className="text-xs text-muted font-medium">Sprint Cycle Flow</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="px-3 py-1 bg-paper border border-line rounded-xl font-semibold text-ink">
+                Assigned ({assignedCount})
+              </span>
+              <span className="text-muted/60">→</span>
+              <span className="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl font-semibold">
+                In Progress ({inProgressCount})
+              </span>
+              <span className="text-muted/60">→</span>
+              <span className="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl font-semibold">
+                Submitted / Review ({reviewCount})
+              </span>
+              <span className="text-muted/60">→</span>
+              <span className="px-3 py-1 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl font-semibold">
+                Approved / Done ({completedCount})
+              </span>
             </div>
           </div>
 
-          {/* REVIEW QUEUE (Top Priority Lead Section) */}
+          {/* 4. REVIEW QUEUE (Top Priority Lead Section) */}
           {reviewCount > 0 && (
-            <div className="border border-amber-500/40 bg-amber-500/10 p-5 rounded-sm space-y-3 font-mono">
+            <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-paper-light to-amber-500/5 border border-amber-500/30 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-amber-900 font-bold uppercase text-xs">
-                  <FileCheck className="w-4 h-4 text-amber-700" />
-                  <span>REVIEW QUEUE • {reviewCount} TASKS REQUIRE YOUR ATTENTION</span>
+                <div className="flex items-center space-x-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-800 flex items-center justify-center">
+                    <FileCheck className="w-4 h-4" />
+                  </div>
+                  <span>Review Queue • {reviewCount} Submissions Awaiting Your Approval</span>
                 </div>
-                <span className="text-[11px] text-amber-800">Review & Approve Submissions</span>
+                <span className="text-xs text-amber-800 font-medium">Review & Sign Off</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-sans">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-sans">
                 {reviewTasks.map((rt) => (
-                  <div key={rt.id} className="p-3 bg-paper border border-amber-500/40 rounded-xs space-y-2 font-mono text-xs">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-ink">TASK-{rt.id}</span>
-                      <span className="text-amber-800 font-bold bg-amber-500/20 px-1.5 py-0.2 rounded-xs">SUBMITTED</span>
+                  <div
+                    key={rt.id}
+                    className="p-4 bg-paper-light border border-amber-300/80 rounded-2xl space-y-3 shadow-2xs hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-mono text-[11px] font-bold text-muted bg-paper px-2 py-0.5 rounded-md border border-line">
+                          TASK-{rt.id}
+                        </span>
+                        <span className="text-amber-800 font-bold bg-amber-100/80 border border-amber-200 px-2 py-0.5 rounded-full text-[10px]">
+                          Submitted
+                        </span>
+                      </div>
+
+                      <h4 className="font-display font-bold text-ink truncate text-sm">
+                        {rt.title}
+                      </h4>
+
+                      <div className="text-xs text-muted flex items-center justify-between">
+                        <span>{rt.assigneeName || 'Unassigned'}</span>
+                        <span className="font-bold text-emerald-700">{rt.progressPct}%</span>
+                      </div>
                     </div>
-                    <div className="font-bold text-ink truncate text-xs">{rt.title}</div>
-                    <div className="text-[11px] text-muted flex items-center justify-between">
-                      <span>{rt.assigneeName || 'Unassigned'}</span>
-                      <span className="font-bold text-emerald-700">{rt.progressPct}%</span>
-                    </div>
-                    <div className="pt-2 border-t border-line flex items-center space-x-1.5 text-[10px]">
+
+                    <div className="pt-2 border-t border-line/60 flex items-center space-x-2 text-xs">
                       <button
                         onClick={() => handleStatusChange(rt.id, 'DONE')}
-                        className="flex-1 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xs text-center shadow-xs"
+                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-center shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        Approve Task
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Approve</span>
                       </button>
                       <button
                         onClick={() => openTaskDrawer(rt)}
-                        className="py-1 px-2.5 border border-line hover:bg-paper-dark text-ink font-bold rounded-xs"
+                        className="py-1.5 px-3 border border-line hover:border-line-dark bg-paper text-ink font-semibold rounded-xl active:scale-95 transition-all cursor-pointer"
                       >
-                        Review Details
+                        Details
                       </button>
                     </div>
                   </div>
@@ -607,45 +687,47 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
           )}
 
-          {/* ATTENTION REQUIRED BANNER */}
+          {/* 5. ATTENTION REQUIRED BANNER */}
           {(overdueTasks.length > 0 || dueSoonTasks.length > 0) && (
-            <div className="border border-red-500/30 bg-red-500/10 p-4 rounded-sm flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs">
-              <div className="flex items-center space-x-2 text-red-900 font-bold uppercase">
-                <AlertTriangle className="w-4 h-4 text-red-700 shrink-0" />
-                <span>ATTENTION REQUIRED • OVERDUE & UPCOMING DEADLINES</span>
+            <div className="border border-red-300/80 bg-red-50/20 p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center space-x-2.5 text-red-900 font-bold uppercase tracking-wider">
+                <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-700 shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <span>Attention Required • Deadlines & Bottlenecks</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 {overdueTasks.length > 0 && (
                   <button
                     onClick={() => setAttentionFilter(attentionFilter === 'OVERDUE' ? null : 'OVERDUE')}
-                    className={`px-2.5 py-1 rounded-xs border font-bold transition-colors ${
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
                       attentionFilter === 'OVERDUE'
-                        ? 'bg-red-700 text-white border-red-800'
-                        : 'bg-paper text-red-900 border-red-500/40 hover:bg-paper-dark'
+                        ? 'bg-red-700 text-white border-red-800 shadow-xs'
+                        : 'bg-paper text-red-900 border-red-300 hover:bg-red-50'
                     }`}
                   >
-                    {overdueTasks.length} OVERDUE
+                    {overdueTasks.length} Overdue
                   </button>
                 )}
 
                 {dueSoonTasks.length > 0 && (
                   <button
                     onClick={() => setAttentionFilter(attentionFilter === 'DUE_SOON' ? null : 'DUE_SOON')}
-                    className={`px-2.5 py-1 rounded-xs border font-bold transition-colors ${
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
                       attentionFilter === 'DUE_SOON'
-                        ? 'bg-ink text-paper border-ink'
+                        ? 'bg-ink text-white border-ink shadow-xs'
                         : 'bg-paper text-ink border-line hover:bg-paper-dark'
                     }`}
                   >
-                    {dueSoonTasks.length} DUE SOON
+                    {dueSoonTasks.length} Due Soon
                   </button>
                 )}
 
                 {attentionFilter && (
                   <button
                     onClick={() => setAttentionFilter(null)}
-                    className="text-xs text-muted hover:text-ink underline ml-1"
+                    className="text-xs text-muted hover:text-ink underline ml-1 cursor-pointer"
                   >
                     Clear Filter
                   </button>
@@ -654,11 +736,22 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
           )}
 
-          {/* CREW WORKLOAD OVERVIEW (NON-LEAD MEMBERS) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-line pb-2 font-mono">
-              <span className="text-xs font-bold text-ink uppercase">CREW WORKLOAD OVERVIEW • MEMBER CARDS</span>
-              <span className="text-[10px] text-muted">{memberAccounts.length} Crew Engineers</span>
+          {/* 6. CREW WORKLOAD OVERVIEW (NON-LEAD MEMBERS) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="font-display text-base font-bold text-ink">
+                    Crew Workload Overview
+                  </h2>
+                  <p className="text-xs text-muted">
+                    Workload, active tasks, and status for all {memberAccounts.length} team members
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -684,23 +777,23 @@ export const KanbanBoardPage: React.FC = () => {
 
                   // Dynamic Member Status Calculation
                   let memberStatus: 'BLOCKED' | 'WAITING FOR REVIEW' | 'OVERDUE' | 'COMPLETED' | 'ON TRACK' = 'ON TRACK';
-                  let statusBg = 'bg-paper-dark text-ink border-line';
+                  let statusBg = 'bg-paper text-ink border-line';
 
                   if (cmBlocked.length > 0) {
                     memberStatus = 'BLOCKED';
-                    statusBg = 'bg-red-500/10 text-red-800 border-red-500/30';
+                    statusBg = 'bg-red-50 text-red-800 border-red-200';
                   } else if (cmReview.length > 0) {
                     memberStatus = 'WAITING FOR REVIEW';
-                    statusBg = 'bg-amber-500/20 text-amber-900 border-amber-500/40';
+                    statusBg = 'bg-amber-50 text-amber-900 border-amber-200';
                   } else if (cmOverdue.length > 0) {
                     memberStatus = 'OVERDUE';
-                    statusBg = 'bg-red-500/10 text-red-800 border-red-500/30';
+                    statusBg = 'bg-red-50 text-red-800 border-red-200';
                   } else if (cmActive.length === 0 && cmDone.length > 0) {
                     memberStatus = 'COMPLETED';
-                    statusBg = 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30';
+                    statusBg = 'bg-emerald-50 text-emerald-800 border-emerald-200';
                   } else {
                     memberStatus = 'ON TRACK';
-                    statusBg = 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30';
+                    statusBg = 'bg-emerald-50 text-emerald-800 border-emerald-200';
                   }
 
                   const needsAttention = memberStatus === 'BLOCKED' || memberStatus === 'WAITING FOR REVIEW' || memberStatus === 'OVERDUE';
@@ -710,133 +803,136 @@ export const KanbanBoardPage: React.FC = () => {
                     <div
                       key={cm.id}
                       onClick={() => setAssigneeFilter(isSelected ? 'ALL' : String(cm.userId))}
-                      className={`p-4 border rounded-sm cursor-pointer space-y-3 font-mono text-xs transition-all ${
+                      className={`p-5 bg-paper-light border rounded-2xl cursor-pointer space-y-3.5 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
                         isSelected
-                          ? 'bg-amber-500/10 border-amber-500 shadow-md'
-                          : 'bg-paper border-line hover:border-ink shadow-2xs hover:shadow-xs'
+                          ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md bg-amber-50/10'
+                          : 'border-line/80 hover:border-primary/50'
                       }`}
                     >
-                      {/* Card Header */}
-                      <div className="flex items-center justify-between border-b border-line pb-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-7 h-7 bg-paper-dark border border-line rounded-xs flex items-center justify-center font-bold text-ink text-xs">
-                            {cm.name.charAt(0)}
+                      <div className="space-y-3">
+                        {/* Card Header */}
+                        <div className="flex items-center justify-between pb-2 border-b border-line/60">
+                          <div className="flex items-center space-x-2.5">
+                            <div className="w-8 h-8 bg-paper border border-line rounded-xl flex items-center justify-center font-bold text-ink text-xs shadow-2xs">
+                              {cm.name.charAt(0)}
+                            </div>
+                            <div>
+                              <span className="font-bold text-ink block font-display text-sm leading-snug">{cm.name}</span>
+                              <span className="text-[10px] text-muted font-mono">{cm.serialNumber}</span>
+                            </div>
+                          </div>
+
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusBg}`}>
+                            {memberStatus}
+                          </span>
+                        </div>
+
+                        {/* Needs Attention Alert */}
+                        {needsAttention && (
+                          <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl flex items-center space-x-1.5 text-amber-900 font-semibold text-[10px]">
+                            <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                            <span>Needs Attention</span>
+                          </div>
+                        )}
+
+                        {/* Current Mission Spotlight */}
+                        {featuredTask ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-muted font-bold uppercase tracking-wider">Current Focus:</span>
+                              <span className="font-semibold text-amber-800 text-[10px] bg-paper px-2 py-0.5 rounded-md border border-line">
+                                {featuredTask.status}
+                              </span>
+                            </div>
+
+                            <div className="font-semibold text-ink truncate text-xs">
+                              {featuredTask.title}
+                            </div>
+
+                            <div className="space-y-1 pt-1">
+                              <div className="flex justify-between text-[10px]">
+                                <span className="text-muted">Progress</span>
+                                <span className="font-bold text-ink">{featuredTask.progressPct}%</span>
+                              </div>
+                              <ProgressBar progressPct={featuredTask.progressPct} />
+                            </div>
+
+                            <div className="flex justify-between text-[10px] text-muted pt-1">
+                              <span>Due: {featuredTask.deadline || 'Today'}</span>
+                              <span>Est: {featuredTask.estHours || 4.0}h</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-muted italic text-xs py-3 text-center border border-dashed border-line rounded-xl bg-paper/50">
+                            No active missions.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Member Metrics & Dynamic Action Button */}
+                      <div className="space-y-3 pt-2 border-t border-line/60">
+                        <div className="grid grid-cols-3 gap-1 text-[11px] text-center py-2 bg-paper rounded-xl border border-line">
+                          <div>
+                            <span className="block font-bold text-ink">{cmActive.length}</span>
+                            <span className="text-[10px] text-muted">Active</span>
                           </div>
                           <div>
-                            <span className="font-bold text-ink block font-display text-sm leading-none">{cm.name}</span>
-                            <span className="text-[9px] text-muted">{cm.serialNumber}</span>
+                            <span className="block font-bold text-amber-700">{cmReview.length}</span>
+                            <span className="text-[10px] text-muted">Review</span>
+                          </div>
+                          <div>
+                            <span className="block font-bold text-emerald-700">{cmDone.length}</span>
+                            <span className="text-[10px] text-muted">Done</span>
                           </div>
                         </div>
 
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-xs border ${statusBg}`}>
-                          {memberStatus}
-                        </span>
-                      </div>
-
-                      {/* Needs Attention Badge */}
-                      {needsAttention && (
-                        <div className="p-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xs flex items-center space-x-1.5 text-amber-900 font-bold text-[10px]">
-                          <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                          <span>NEEDS LEAD ATTENTION</span>
-                        </div>
-                      )}
-
-                      {/* Current Mission Spotlight */}
-                      {featuredTask ? (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center text-[10px]">
-                            <span className="text-muted font-bold">CURRENT MISSION:</span>
-                            <span className="font-bold text-amber-800 uppercase text-[9px] bg-paper-dark px-1.5 py-0.2 rounded-xs">
-                              {featuredTask.status}
-                            </span>
-                          </div>
-
-                          <div className="font-semibold text-ink truncate text-xs font-sans">
-                            {featuredTask.title}
-                          </div>
-
-                          <div className="space-y-1 pt-1">
-                            <div className="flex justify-between text-[10px]">
-                              <span className="text-muted">Progress</span>
-                              <span className="font-bold text-ink">{featuredTask.progressPct}%</span>
-                            </div>
-                            <ProgressBar progressPct={featuredTask.progressPct} />
-                          </div>
-
-                          <div className="flex justify-between text-[10px] text-muted pt-1">
-                            <span>Deadline: {featuredTask.deadline || 'Today'}</span>
-                            <span>Est: {featuredTask.estHours || 4.0}h</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-muted italic text-[11px] py-2 text-center border border-dashed border-line rounded-xs">
-                          No active missions assigned.
-                        </div>
-                      )}
-
-                      {/* Member Metrics Strip */}
-                      <div className="grid grid-cols-3 gap-1 text-[10px] text-center py-1.5 bg-paper-dark/30 rounded-xs border border-line">
                         <div>
-                          <span className="block font-bold text-ink">{cmActive.length}</span>
-                          <span className="text-muted">Active</span>
+                          {memberStatus === 'WAITING FOR REVIEW' ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (featuredTask) openTaskDrawer(featuredTask);
+                              }}
+                              className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
+                            >
+                              <FileCheck className="w-3.5 h-3.5" />
+                              <span>Review Submission</span>
+                            </button>
+                          ) : memberStatus === 'BLOCKED' ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (featuredTask) openTaskDrawer(featuredTask);
+                              }}
+                              className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
+                            >
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              <span>View Blocked Task</span>
+                            </button>
+                          ) : memberStatus === 'COMPLETED' ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (featuredTask) openTaskDrawer(featuredTask);
+                              }}
+                              className="w-full py-2 bg-paper border border-line hover:border-ink/50 text-ink font-semibold text-xs rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>View Details</span>
+                            </button>
+                          ) : featuredTask ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openTaskDrawer(featuredTask);
+                              }}
+                              className="w-full py-2 bg-primary hover:bg-primary-hover text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-emerald-300" />
+                              <span>View Task</span>
+                            </button>
+                          ) : null}
                         </div>
-                        <div>
-                          <span className="block font-bold text-amber-700">{cmReview.length}</span>
-                          <span className="text-muted">Review</span>
-                        </div>
-                        <div>
-                          <span className="block font-bold text-emerald-700">{cmDone.length}</span>
-                          <span className="text-muted">Done</span>
-                        </div>
-                      </div>
-
-                      {/* Dynamic Action Button */}
-                      <div className="pt-1">
-                        {memberStatus === 'WAITING FOR REVIEW' ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (featuredTask) openTaskDrawer(featuredTask);
-                            }}
-                            className="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-xs shadow-xs flex items-center justify-center space-x-1"
-                          >
-                            <FileCheck className="w-3.5 h-3.5" />
-                            <span>REVIEW SUBMISSION</span>
-                          </button>
-                        ) : memberStatus === 'BLOCKED' ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (featuredTask) openTaskDrawer(featuredTask);
-                            }}
-                            className="w-full py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold text-[11px] rounded-xs shadow-xs flex items-center justify-center space-x-1"
-                          >
-                            <AlertCircle className="w-3.5 h-3.5" />
-                            <span>VIEW BLOCKED TASK</span>
-                          </button>
-                        ) : memberStatus === 'COMPLETED' ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (featuredTask) openTaskDrawer(featuredTask);
-                            }}
-                            className="w-full py-1.5 bg-paper border border-line hover:border-ink text-ink font-bold text-[11px] rounded-xs flex items-center justify-center space-x-1"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>VIEW DETAILS</span>
-                          </button>
-                        ) : featuredTask ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openTaskDrawer(featuredTask);
-                            }}
-                            className="w-full py-1.5 bg-ink text-paper hover:bg-ink/90 font-bold text-[11px] rounded-xs shadow-xs flex items-center justify-center space-x-1"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
-                            <span>VIEW TASK</span>
-                          </button>
-                        ) : null}
                       </div>
                     </div>
                   );
@@ -844,28 +940,28 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Lead Filter Bar & Search */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 sm:p-4 bg-paper border border-line rounded-sm font-mono text-xs">
+          {/* 7. LEAD FILTER BAR & SEARCH */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-paper-light border border-line/80 rounded-2xl text-xs">
             <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span className="text-muted font-bold mr-1">MEMBER:</span>
+              <span className="text-muted font-bold mr-1">Filter Member:</span>
               <button
                 onClick={() => setAssigneeFilter('ALL')}
-                className={`px-2.5 sm:px-3 py-1 rounded-xs border transition-colors ${
+                className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
                   assigneeFilter === 'ALL'
-                    ? 'bg-primary-soft text-primary border-primary/30 font-bold shadow-2xs'
-                    : 'bg-paper text-muted border-line hover:border-ink'
+                    ? 'bg-primary text-white border-primary font-semibold shadow-xs'
+                    : 'bg-paper text-muted border-line hover:border-line-dark'
                 }`}
               >
-                ALL CREW ({tasks.length})
+                All Crew ({tasks.length})
               </button>
               {crewMembers.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setAssigneeFilter(String(m.userId))}
-                  className={`px-2 py-1 rounded-xs border transition-colors ${
+                  className={`px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
                     assigneeFilter === String(m.userId)
-                      ? 'bg-primary-soft text-primary border-primary/30 font-bold shadow-2xs'
-                      : 'bg-paper text-muted border-line hover:border-ink'
+                      ? 'bg-primary text-white border-primary font-semibold shadow-xs'
+                      : 'bg-paper text-muted border-line hover:border-line-dark'
                   }`}
                 >
                   {m.name.split(' ')[0]}
@@ -875,13 +971,13 @@ export const KanbanBoardPage: React.FC = () => {
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 sm:flex-initial">
-                <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-3" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search crew tasks..."
-                  className="pl-8 pr-3 py-1.5 bg-paper border border-line focus-ring rounded-sm text-xs outline-none w-full sm:w-48 font-sans"
+                  className="pl-8 pr-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl text-xs outline-none w-full sm:w-48 font-sans transition-all"
                 />
               </div>
 
@@ -890,10 +986,10 @@ export const KanbanBoardPage: React.FC = () => {
                   <button
                     key={p}
                     onClick={() => setPriorityFilter(p)}
-                    className={`px-2 py-1 rounded-xs border text-[10px] transition-colors ${
+                    className={`px-2.5 py-1.5 rounded-xl border text-[11px] transition-all cursor-pointer active:scale-95 ${
                       priorityFilter === p
-                        ? 'bg-primary-soft text-primary border-primary/30 font-bold shadow-2xs'
-                        : 'bg-paper text-muted border-line'
+                        ? 'bg-primary text-white border-primary font-semibold shadow-xs'
+                        : 'bg-paper text-muted border-line hover:border-line-dark'
                     }`}
                   >
                     {p}
@@ -941,7 +1037,7 @@ export const KanbanBoardPage: React.FC = () => {
           </div>
 
           {/* Responsive Engineering Kanban Columns for Lead */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3.5 items-start">
             {COLUMNS.filter((col) => mobileColumnTab === 'ALL' || col.id === mobileColumnTab).map((col) => {
               const colTasks = filteredTasks.filter((t) => {
                 if (col.id === 'BLOCKED') return t.status === 'IN_PROGRESS' && t.labels?.includes('BLOCKED');
@@ -951,28 +1047,29 @@ export const KanbanBoardPage: React.FC = () => {
               return (
                 <div
                   key={col.id}
-                  className="bg-paper-light border border-line rounded-sm flex flex-col min-h-0 md:min-h-[540px]"
+                  className="bg-paper-light border border-line/80 rounded-2xl flex flex-col min-h-0 md:min-h-[540px] overflow-hidden shadow-2xs"
                 >
-                  <div className="p-3 border-b border-line flex items-center justify-between bg-paper">
+                  <div className="p-3.5 border-b border-line flex items-center justify-between bg-paper-light/90">
                     <div className="flex items-center space-x-2">
                       <span className={`w-2 h-2 rounded-full ${col.dotColor}`}></span>
-                      <span className="font-display font-bold text-xs text-ink uppercase">
+                      <span className="font-display font-bold text-xs text-ink uppercase tracking-wider">
                         {col.title}
                       </span>
-                      <span className="font-mono text-[10px] text-muted font-bold">
-                        ({colTasks.length})
+                      <span className="text-[10px] text-muted font-bold px-1.5 py-0.2 rounded-md bg-paper border border-line">
+                        {colTasks.length}
                       </span>
                     </div>
 
                     <button
                       onClick={() => openCreateForColumn(col.id as TaskStatus)}
-                      className="p-1 text-muted hover:text-ink hover:bg-paper-dark rounded-sm"
+                      className="p-1 text-muted hover:text-ink hover:bg-paper rounded-lg transition-colors cursor-pointer"
+                      title="Add Task"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <div className="p-2 space-y-2 flex-1 overflow-y-auto">
+                  <div className="p-2.5 space-y-2.5 flex-1 overflow-y-auto">
                     {colTasks.map((task) => {
                       const nextSt = getNextStatus(task.status);
                       const prevSt = getPrevStatus(task.status);
@@ -982,13 +1079,15 @@ export const KanbanBoardPage: React.FC = () => {
                         <div
                           key={task.id}
                           onClick={() => openTaskDrawer(task)}
-                          className={`p-3 bg-paper border rounded-sm cursor-pointer space-y-2.5 transition-all duration-150 shadow-2xs hover:shadow-xs group ${
-                            isOverdue ? 'border-red-400 bg-red-500/5' : 'border-line hover:border-ink'
+                          className={`p-3.5 bg-paper-light border rounded-xl cursor-pointer space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group ${
+                            isOverdue ? 'border-red-300 bg-red-50/20' : 'border-line/80 hover:border-primary/50'
                           }`}
                         >
-                          <div className="flex items-center justify-between text-[10px] font-mono">
+                          <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center space-x-1.5">
-                              <span className="text-muted font-bold">TASK-{task.id}</span>
+                              <span className="text-muted font-mono font-bold text-[10px] bg-paper px-1.5 py-0.5 rounded-md border border-line">
+                                TASK-{task.id}
+                              </span>
                               {isLead && (
                                 <button
                                   type="button"
@@ -996,17 +1095,17 @@ export const KanbanBoardPage: React.FC = () => {
                                     e.stopPropagation();
                                     setTaskToDelete(task);
                                   }}
-                                  className="opacity-70 md:opacity-0 md:group-hover:opacity-100 hover:!opacity-100 p-0.5 hover:bg-red-500/10 text-muted hover:text-red-600 rounded-xs transition-opacity"
+                                  className="opacity-70 md:opacity-0 md:group-hover:opacity-100 hover:!opacity-100 p-1 hover:bg-red-50 text-muted hover:text-red-600 rounded-md transition-opacity"
                                   title="Delete Task"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-3 h-3" />
                                 </button>
                               )}
                             </div>
                             <StatusBadge type="priority" value={task.priority} />
                           </div>
 
-                          <h3 className="text-xs font-semibold text-ink group-hover:text-amber-700 leading-snug line-clamp-2 transition-colors">
+                          <h3 className="text-xs font-semibold text-ink group-hover:text-primary leading-snug line-clamp-2 transition-colors">
                             {task.title}
                           </h3>
 
@@ -1015,7 +1114,7 @@ export const KanbanBoardPage: React.FC = () => {
                               {task.labels.slice(0, 2).map((l) => (
                                 <span
                                   key={l}
-                                  className="font-mono text-[9px] px-1.5 py-0.2 bg-paper-dark border border-line rounded-xs text-muted font-semibold"
+                                  className="text-[9px] px-1.5 py-0.5 bg-paper border border-line rounded-md text-muted font-medium"
                                 >
                                   {l}
                                 </span>
@@ -1024,22 +1123,22 @@ export const KanbanBoardPage: React.FC = () => {
                           )}
 
                           <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-mono text-muted">
+                            <div className="flex justify-between text-[10px] font-medium text-muted">
                               <span>Progress</span>
-                              <span>{task.progressPct}%</span>
+                              <span className="font-bold text-ink">{task.progressPct}%</span>
                             </div>
                             <ProgressBar progressPct={task.progressPct} />
                           </div>
 
                           {/* Quick Lead Review Actions if in REVIEW column */}
                           {task.status === 'REVIEW' && (
-                            <div className="pt-2 border-t border-line flex items-center space-x-1.5 font-mono text-[10px]">
+                            <div className="pt-2 border-t border-line/60 flex items-center space-x-1.5 text-xs">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleStatusChange(task.id, 'DONE');
                                 }}
-                                className="flex-1 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xs text-center"
+                                className="flex-1 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-center shadow-2xs active:scale-95 transition-all cursor-pointer"
                               >
                                 Approve
                               </button>
@@ -1048,19 +1147,19 @@ export const KanbanBoardPage: React.FC = () => {
                                   e.stopPropagation();
                                   openTaskDrawer(task);
                                 }}
-                                className="py-1 px-2 border border-line hover:bg-paper-dark text-muted font-bold rounded-xs"
+                                className="py-1 px-2.5 border border-line hover:border-line-dark bg-paper text-muted hover:text-ink font-semibold rounded-lg active:scale-95 transition-all cursor-pointer"
                               >
                                 Revise
                               </button>
                             </div>
                           )}
 
-                          <div className="pt-2 border-t border-line flex items-center justify-between text-[10px] font-mono text-muted">
+                          <div className="pt-2 border-t border-line/60 flex items-center justify-between text-xs text-muted">
                             <div className="flex items-center space-x-1.5">
-                              <div className="w-4 h-4 rounded-xs bg-[#2D5A43] text-paper flex items-center justify-center font-bold text-[9px]">
+                              <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
                                 {task.assigneeName ? task.assigneeName.charAt(0) : '?'}
                               </div>
-                              <span className="truncate max-w-[70px] font-semibold text-ink">
+                              <span className="truncate max-w-[80px] font-semibold text-ink text-[11px]">
                                 {task.assigneeName || 'Unassigned'}
                               </span>
                             </div>
@@ -1072,9 +1171,10 @@ export const KanbanBoardPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleStatusChange(task.id, prevSt);
                                   }}
-                                  className="p-1 hover:bg-paper-dark border border-line rounded-xs"
+                                  className="p-1 hover:bg-paper border border-line rounded-md transition-colors cursor-pointer"
+                                  title="Move back"
                                 >
-                                  <ArrowLeft className="w-2.5 h-2.5 text-muted" />
+                                  <ArrowLeft className="w-3 h-3 text-muted" />
                                 </button>
                               )}
                               {nextSt && (
@@ -1083,9 +1183,10 @@ export const KanbanBoardPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleStatusChange(task.id, nextSt);
                                   }}
-                                  className="p-1 hover:bg-amber-500/10 border border-line rounded-xs"
+                                  className="p-1 hover:bg-amber-500/10 border border-amber-300 rounded-md transition-colors cursor-pointer"
+                                  title="Advance status"
                                 >
-                                  <ArrowRight className="w-2.5 h-2.5 text-amber-800" />
+                                  <ArrowRight className="w-3 h-3 text-amber-800" />
                                 </button>
                               )}
                             </div>
@@ -1096,10 +1197,10 @@ export const KanbanBoardPage: React.FC = () => {
 
                     <button
                       onClick={() => openCreateForColumn(col.id as TaskStatus)}
-                      className="w-full py-1.5 border border-dashed border-line hover:border-ink hover:bg-paper rounded-sm text-xs font-mono text-muted hover:text-ink flex items-center justify-center space-x-1 transition-colors"
+                      className="w-full py-2 border border-dashed border-line hover:border-primary/50 hover:bg-paper/50 rounded-xl text-xs font-medium text-muted hover:text-primary flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                     >
-                      <Plus className="w-3 h-3" />
-                      <span>Add item</span>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Task</span>
                     </button>
                   </div>
                 </div>
