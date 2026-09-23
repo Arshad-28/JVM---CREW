@@ -182,7 +182,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
         <button
           type="button"
           onClick={handleClose}
-          className="group flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-all duration-150 shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/20"
+          className="group flex items-center space-x-2 px-3.5 py-1.5 rounded-full border border-slate-200/80 bg-white/90 hover:bg-white text-slate-700 hover:text-slate-900 transition-all duration-150 shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/20"
           title="Return to workspace (Esc)"
           aria-label="Back to Workspace"
         >
@@ -197,7 +197,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
       </header>
 
       {/* 3. CENTER IDENTITY CONTENT */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-8 text-center py-8 max-w-3xl mx-auto w-full">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 sm:px-8 text-center pt-6 sm:pt-10 md:pt-12 pb-6 max-w-3xl mx-auto w-full">
         {/* Official Algorithms365 Logo */}
         <div
           className={`transition-all duration-500 ease-out ${
@@ -286,9 +286,9 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             </p>
           </div>
 
-          {/* Primary Action: ← RETURN TO WORKSPACE */}
+          {/* Primary Action: Return to Workspace */}
           <div
-            className={`mt-7 sm:mt-9 transition-all duration-400 ease-out ${
+            className={`mt-6 sm:mt-8 transition-all duration-400 ease-out ${
               step >= 9 && !isClosing
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-3'
@@ -297,13 +297,10 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="group inline-flex items-center justify-center space-x-3 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#0B4EA2] hover:bg-[#083D82] active:scale-[0.98] text-white font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-md hover:shadow-lg border border-white/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/40"
+              className="inline-flex items-center justify-center space-x-2.5 px-8 py-3 rounded-full bg-[#0B4EA2] hover:bg-[#083D82] active:scale-95 text-white font-sans text-xs sm:text-sm font-semibold tracking-wide transition-all duration-150 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/30"
             >
-              <ArrowLeft className="w-4 h-4 text-white group-hover:-translate-x-1 transition-transform duration-150" />
-              <span>RETURN TO WORKSPACE</span>
-              <span className="font-mono text-[10px] font-bold text-white/90 bg-white/20 px-2 py-0.5 rounded-md border border-white/25">
-                ESC
-              </span>
+              <ArrowLeft className="w-4 h-4 text-white" />
+              <span>Return to Workspace</span>
             </button>
           </div>
         </div>
