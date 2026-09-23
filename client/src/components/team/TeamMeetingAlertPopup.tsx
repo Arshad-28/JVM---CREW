@@ -57,31 +57,39 @@ export const TeamMeetingAlertPopup: React.FC<TeamMeetingAlertPopupProps> = ({ on
       checkUpcomingMeeting();
     };
 
+    const handleMeetingCompleted = (e: any) => {
+      const completedId = e?.detail?.id;
+      if (!completedId || meeting?.id === completedId) {
+        setMeeting(null);
+      }
+      checkUpcomingMeeting();
+    };
+
     window.addEventListener('jvm_meeting_created', handleMeetingCreated);
+    window.addEventListener('jvm_meeting_completed', handleMeetingCompleted);
     window.addEventListener('jvm_notification_received', handleMeetingCreated);
     window.addEventListener('focus', checkUpcomingMeeting);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('jvm_meeting_created', handleMeetingCreated);
+      window.removeEventListener('jvm_meeting_completed', handleMeetingCompleted);
       window.removeEventListener('jvm_notification_received', handleMeetingCreated);
       window.removeEventListener('focus', checkUpcomingMeeting);
     };
-  }, [checkUpcomingMeeting]);
+  }, [checkUpcomingMeeting, meeting?.id]);
 
-  if (!meeting) {
+  if (!meeting || !meeting.isActive) {
+    return null;
+  }
+
+  // If dismissed, hide completely so it doesn't obstruct the user
+  if (dismissedId === meeting.id) {
     return null;
   }
 
   const todayStr = new Date().toISOString().substring(0, 10);
   const isToday = meeting.scheduledDate === todayStr;
-
-  // If dismissed and not today, hide completely. If today, keep as subtle floating live pill.
-  if (dismissedId === meeting.id && !isToday) {
-    return null;
-  }
-
-  const isActuallyMinimized = minimized || dismissedId === meeting.id;
 
   const handleDismiss = () => {
     sessionStorage.setItem(`dismissed_meeting_${meeting.id}`, 'true');
@@ -111,24 +119,21 @@ export const TeamMeetingAlertPopup: React.FC<TeamMeetingAlertPopupProps> = ({ on
   const currentPlatformLabel = platformLabel[meeting.platform] || 'Google Meet';
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm sm:max-w-md w-[calc(100vw-2.5rem)] animate-slide-up pointer-events-auto">
-      {isActuallyMinimized ? (
+    <div className="fixed bottom-14 right-5 sm:bottom-16 sm:right-6 z-40 max-w-sm sm:max-w-md w-[calc(100vw-2.5rem)] animate-slide-up pointer-events-auto">
+      {minimized ? (
         <div
-          onClick={() => {
-            setMinimized(false);
-            setDismissedId(null);
-          }}
-          className="bg-paper border-2 border-rose-500/60 text-ink rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-3 cursor-pointer hover:border-rose-500 hover:scale-[1.02] transition-all backdrop-blur-md bg-paper/95 ring-2 ring-rose-500/20"
+          onClick={() => setMinimized(false)}
+          className="bg-paper border-2 border-primary/50 text-ink rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-3 cursor-pointer hover:border-primary hover:scale-[1.02] transition-all backdrop-blur-md bg-paper/95 ring-2 ring-primary/20"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            <Video className="w-4 h-4 text-rose-600 shrink-0" />
+            <Video className="w-4 h-4 text-primary shrink-0" />
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold truncate text-ink">{meeting.title}</span>
-              <span className="text-[10px] text-muted font-medium">Live Sync • Click to expand & join</span>
+              <span className="text-[10px] text-muted font-medium">Click to expand & join sync</span>
             </div>
           </div>
           <button
@@ -137,8 +142,8 @@ export const TeamMeetingAlertPopup: React.FC<TeamMeetingAlertPopupProps> = ({ on
               e.stopPropagation();
               handleDismiss();
             }}
-            className="p-1 text-muted hover:text-ink rounded-xs transition-colors shrink-0"
-            title="Dismiss"
+            className="p-1 text-muted hover:text-ink rounded-lg transition-colors shrink-0"
+            title="Dismiss popup"
           >
             <X className="w-3.5 h-3.5" />
           </button>

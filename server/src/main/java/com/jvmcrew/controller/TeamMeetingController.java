@@ -53,6 +53,24 @@ public class TeamMeetingController {
         return ResponseEntity.ok(updated);
     }
 
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<TeamMeetingDto> completeMeeting(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id
+    ) {
+        TeamMeetingDto updated = meetingService.completeMeeting(principal, id);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{id}/reopen")
+    public ResponseEntity<TeamMeetingDto> reopenMeeting(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id
+    ) {
+        TeamMeetingDto updated = meetingService.reopenMeeting(principal, id);
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMeeting(
             @AuthenticationPrincipal UserPrincipal principal,

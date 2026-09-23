@@ -1462,6 +1462,32 @@ export const api = {
     return result;
   },
 
+  async completeMeeting(id: number): Promise<TeamMeeting> {
+    const res = await fetch(`${BASE_URL}/meetings/${id}/complete`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok && res.status === 404) {
+      return this.updateMeeting(id, { isActive: false });
+    }
+    const result = await handleResponse<TeamMeeting>(res);
+    cacheStore.invalidate('team_meetings');
+    return result;
+  },
+
+  async reopenMeeting(id: number): Promise<TeamMeeting> {
+    const res = await fetch(`${BASE_URL}/meetings/${id}/reopen`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok && res.status === 404) {
+      return this.updateMeeting(id, { isActive: true });
+    }
+    const result = await handleResponse<TeamMeeting>(res);
+    cacheStore.invalidate('team_meetings');
+    return result;
+  },
+
   async deleteMeeting(id: number): Promise<void> {
     const res = await fetch(`${BASE_URL}/meetings/${id}`, {
       method: 'DELETE',

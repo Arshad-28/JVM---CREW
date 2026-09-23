@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Sparkles,
   Users,
+  CheckCircle2,
+  CalendarCheck,
 } from 'lucide-react';
 
 export const TeamMeetingsSection: React.FC = () => {
@@ -95,6 +97,23 @@ export const TeamMeetingsSection: React.FC = () => {
     }
   };
 
+  const handleToggleComplete = async (meeting: TeamMeeting, completed: boolean) => {
+    try {
+      if (completed) {
+        await api.completeMeeting(meeting.id);
+        showToast('success', 'Meeting Concluded', `"${meeting.title}" marked as completed and moved to Past History.`);
+        window.dispatchEvent(new CustomEvent('jvm_meeting_completed', { detail: { id: meeting.id } }));
+      } else {
+        await api.reopenMeeting(meeting.id);
+        showToast('success', 'Meeting Reopened', `"${meeting.title}" restored to active upcoming syncs.`);
+        window.dispatchEvent(new CustomEvent('jvm_meeting_created', { detail: meeting }));
+      }
+      await fetchMeetings();
+    } catch (err: any) {
+      showToast('error', 'Status Update Failed', err?.message || 'Failed to update meeting status.');
+    }
+  };
+
   const todayStr = new Date().toISOString().substring(0, 10);
   const activeUpcomingMeetings = meetings.filter(
     (m) => m.isActive && (m.scheduledDate >= todayStr || m.isUpcoming)
@@ -104,12 +123,9 @@ export const TeamMeetingsSection: React.FC = () => {
   );
 
   const heroMeeting = activeUpcomingMeetings[0] || null;
-
-  const displayedMeetings = viewFilter === 'UPCOMING'
-    ? activeUpcomingMeetings
-    : viewFilter === 'PAST'
-    ? pastMeetings
-    : meetings;
+  const gridUpcomingMeetings = heroMeeting
+    ? activeUpcomingMeetings.filter((m) => m.id !== heroMeeting.id)
+    : activeUpcomingMeetings;
 
   return (
     <PageContainer width="default" className="space-y-6 sm:space-y-8 font-sans pb-16">
@@ -207,8 +223,8 @@ export const TeamMeetingsSection: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6 sm:space-y-8">
-          {/* 2. UPCOMING HERO MEETING SHOWCASE */}
-          {heroMeeting && (
+          {/* 2. UPCOMING HERO MEETING SHOWCASE OR ALL-CONCLUDED BANNER */}
+          {heroMeeting ? (
             <div className="space-y-3">
               <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -219,10 +235,44 @@ export const TeamMeetingsSection: React.FC = () => {
                 isLead={isLead}
                 onEdit={handleOpenEditModal}
                 onDelete={handleDeleteMeeting}
+                onToggleComplete={handleToggleComplete}
                 isHero={true}
               />
             </div>
-          )}
+          ) : pastMeetings.length > 0 ? (
+            <div className="border border-emerald-500/25 bg-emerald-500/5 rounded-2xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-5 shadow-xs relative overflow-hidden">
+              <div className="flex items-start sm:items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <CalendarCheck className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      All Syncs Concluded
+                    </span>
+                    <span className="text-xs text-muted">Team is all caught up</span>
+                  </div>
+                  <h3 className="font-display text-lg font-bold text-ink">
+                    No Upcoming Meetings Pending
+                  </h3>
+                  <p className="text-xs text-muted max-w-xl">
+                    All scheduled team meetings have concluded. You can review past meeting history below or schedule a new sync anytime.
+                  </p>
+                </div>
+              </div>
+              {isLead && (
+                <button
+                  type="button"
+                  onClick={handleOpenCreateModal}
+                  className="px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 shrink-0 self-start md:self-center cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-emerald-200" />
+                  <span>Schedule Next Sync</span>
+                </button>
+              )}
+            </div>
+          ) : null}
 
           {/* 3. INTERACTIVE VIEW FILTER TABS */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-3">
@@ -262,24 +312,42 @@ export const TeamMeetingsSection: React.FC = () => {
             </div>
 
             <span className="text-xs text-muted font-mono">
-              Showing {displayedMeetings.length} of {meetings.length} meetings
+              Showing {viewFilter === 'UPCOMING' ? (gridUpcomingMeetings.length + (heroMeeting ? 1 : 0)) : viewFilter === 'PAST' ? pastMeetings.length : meetings.length} of {meetings.length} meetings
             </span>
           </div>
 
           {/* 4. MEETINGS GRID */}
-          {displayedMeetings.length === 0 ? (
+          {viewFilter === 'UPCOMING' && gridUpcomingMeetings.length === 0 && heroMeeting ? (
+            <div className="py-8 px-6 bg-paper-light border border-line rounded-2xl text-center space-y-2">
+              <p className="text-xs font-semibold text-ink">
+                The featured sync above is the active upcoming meeting.
+              </p>
+              <p className="text-xs text-muted max-w-md mx-auto">
+                No additional syncs are queued. Switch to{' '}
+                <button
+                  type="button"
+                  onClick={() => setViewFilter('PAST')}
+                  className="text-primary underline font-bold cursor-pointer"
+                >
+                  Past History ({pastMeetings.length})
+                </button>{' '}
+                to review completed syncs.
+              </p>
+            </div>
+          ) : (viewFilter === 'UPCOMING' ? gridUpcomingMeetings : viewFilter === 'PAST' ? pastMeetings : meetings).length === 0 ? (
             <div className="py-12 text-center text-xs text-muted bg-paper-light rounded-xl border border-line">
               No meetings found for this filter.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayedMeetings.map((m) => (
+              {(viewFilter === 'UPCOMING' ? gridUpcomingMeetings : viewFilter === 'PAST' ? pastMeetings : meetings).map((m) => (
                 <TeamMeetingCard
                   key={m.id}
                   meeting={m}
                   isLead={isLead}
                   onEdit={handleOpenEditModal}
                   onDelete={handleDeleteMeeting}
+                  onToggleComplete={handleToggleComplete}
                 />
               ))}
             </div>

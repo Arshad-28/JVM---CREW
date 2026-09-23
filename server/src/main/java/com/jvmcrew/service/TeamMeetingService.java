@@ -171,6 +171,40 @@ public class TeamMeetingService {
                 meetingId, team.getId(), user.getId());
     }
 
+    @Transactional
+    public TeamMeetingDto completeMeeting(UserPrincipal principal, Long meetingId) {
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + principal.getId()));
+        Team team = resolveUserTeam(principal);
+        verifyLeadOrAdmin(user, team);
+
+        TeamMeeting meeting = meetingRepository.findByIdAndTeam(meetingId, team)
+                .orElseThrow(() -> new IllegalArgumentException("Meeting not found with ID " + meetingId + " in your team"));
+
+        meeting.setIsActive(false);
+        meeting.setUpdatedAt(Instant.now());
+        meeting = meetingRepository.save(meeting);
+        log.info("Team meeting ID {} marked as COMPLETED by Lead ID {}", meetingId, user.getId());
+        return mapToDto(meeting, LocalDate.now());
+    }
+
+    @Transactional
+    public TeamMeetingDto reopenMeeting(UserPrincipal principal, Long meetingId) {
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + principal.getId()));
+        Team team = resolveUserTeam(principal);
+        verifyLeadOrAdmin(user, team);
+
+        TeamMeeting meeting = meetingRepository.findByIdAndTeam(meetingId, team)
+                .orElseThrow(() -> new IllegalArgumentException("Meeting not found with ID " + meetingId + " in your team"));
+
+        meeting.setIsActive(true);
+        meeting.setUpdatedAt(Instant.now());
+        meeting = meetingRepository.save(meeting);
+        log.info("Team meeting ID {} REOPENED by Lead ID {}", meetingId, user.getId());
+        return mapToDto(meeting, LocalDate.now());
+    }
+
     private Team resolveUserTeam(UserPrincipal principal) {
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + principal.getId()));

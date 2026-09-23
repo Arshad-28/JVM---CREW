@@ -11,6 +11,8 @@ import {
   Copy,
   Check,
   Sparkles,
+  CheckCircle2,
+  RotateCcw,
 } from 'lucide-react';
 
 interface TeamMeetingCardProps {
@@ -18,6 +20,7 @@ interface TeamMeetingCardProps {
   isLead?: boolean;
   onEdit?: (meeting: TeamMeeting) => void;
   onDelete?: (meeting: TeamMeeting) => void;
+  onToggleComplete?: (meeting: TeamMeeting, completed: boolean) => void;
   isHero?: boolean;
   className?: string;
 }
@@ -75,12 +78,14 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
   isLead = false,
   onEdit,
   onDelete,
+  onToggleComplete,
   isHero = false,
   className = '',
 }) => {
   const [copied, setCopied] = useState(false);
   const platformInfo = getPlatformDetails(meeting.platform);
   const formattedDate = formatMeetingDate(meeting.scheduledDate);
+  const isConcluded = !meeting.isActive;
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -97,22 +102,29 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
   if (isHero) {
     return (
       <div
-        className={`border border-primary/30 bg-paper-light rounded-2xl p-6 sm:p-8 shadow-card space-y-6 transition-all duration-200 relative overflow-hidden ${className}`}
+        className={`border ${isConcluded ? 'border-emerald-500/30 bg-paper-light' : 'border-primary/30 bg-paper-light'} rounded-2xl p-6 sm:p-8 shadow-card space-y-6 transition-all duration-200 relative overflow-hidden ${className}`}
       >
         {/* Ambient decorative glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+        <div className={`absolute top-0 right-0 w-80 h-80 ${isConcluded ? 'bg-emerald-500/5' : 'bg-primary/5'} rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none`} />
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-4 relative z-10">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${platformInfo.iconBg}`}>
-              <Video className="w-5 h-5" />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${isConcluded ? 'bg-emerald-600 text-white' : platformInfo.iconBg}`}>
+              {isConcluded ? <CheckCircle2 className="w-5 h-5" /> : <Video className="w-5 h-5" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider bg-primary/10 border border-primary/25 text-primary px-2.5 py-0.5 rounded-md flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  Next Upcoming Sync
-                </span>
+                {isConcluded ? (
+                  <span className="text-xs font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    Meeting Concluded
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold uppercase tracking-wider bg-primary/10 border border-primary/25 text-primary px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Next Upcoming Sync
+                  </span>
+                )}
                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${platformInfo.badgeBg}`}>
                   {platformInfo.label}
                 </span>
@@ -131,8 +143,13 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
         </div>
 
         <div className="space-y-2 relative z-10">
-          <h2 className="font-display text-xl sm:text-2xl font-bold text-ink tracking-tight">
-            {meeting.title}
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-ink tracking-tight flex items-center gap-2">
+            <span>{meeting.title}</span>
+            {isConcluded && (
+              <span className="text-xs font-semibold font-sans px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Completed
+              </span>
+            )}
           </h2>
           {meeting.description && (
             <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-3xl">
@@ -167,6 +184,31 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
               )}
             </button>
 
+            {isLead && onToggleComplete && (
+              <button
+                type="button"
+                onClick={() => onToggleComplete(meeting, !isConcluded)}
+                className={`px-4 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 ${
+                  isConcluded
+                    ? 'bg-paper hover:bg-paper-dark border border-line text-ink'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                }`}
+                title={isConcluded ? 'Reopen meeting sync' : 'Mark meeting as completed'}
+              >
+                {isConcluded ? (
+                  <>
+                    <RotateCcw className="w-3.5 h-3.5 text-muted" />
+                    <span>Reopen Sync</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Mark Completed</span>
+                  </>
+                )}
+              </button>
+            )}
+
             {isLead && onEdit && (
               <button
                 type="button"
@@ -193,11 +235,15 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
               href={meeting.meetingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer shrink-0"
+              className={`px-5 py-2.5 text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer shrink-0 active:scale-95 ${
+                isConcluded
+                  ? 'bg-paper border border-line hover:border-ink text-ink hover:bg-paper-dark'
+                  : 'bg-primary hover:bg-primary-hover text-white'
+              }`}
             >
-              <Video className="w-4 h-4 text-emerald-200" />
-              <span>JOIN LIVE MEETING</span>
-              <ExternalLink className="w-3.5 h-3.5 text-white/80" />
+              <Video className={`w-4 h-4 ${isConcluded ? 'text-muted' : 'text-emerald-200'}`} />
+              <span>{isConcluded ? 'Rejoin Room' : 'JOIN LIVE MEETING'}</span>
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
             </a>
           </div>
         </div>
@@ -208,7 +254,7 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
   // Standard Meeting Card
   return (
     <div
-      className={`border border-line bg-paper-light hover:border-primary/40 rounded-2xl p-5 transition-all duration-200 shadow-2xs hover:shadow-card-hover space-y-4 hover:-translate-y-1 group flex flex-col justify-between ${className}`}
+      className={`border ${isConcluded ? 'border-line/70 bg-paper-light/60 opacity-90' : 'border-line bg-paper-light hover:border-primary/40'} rounded-2xl p-5 transition-all duration-200 shadow-2xs hover:shadow-card-hover space-y-4 hover:-translate-y-0.5 group flex flex-col justify-between ${className}`}
     >
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
@@ -217,11 +263,16 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${platformInfo.badgeBg}`}>
                 {platformInfo.label}
               </span>
-              {meeting.isUpcoming && (
+              {isConcluded ? (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Completed
+                </span>
+              ) : meeting.isUpcoming ? (
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
                   Upcoming
                 </span>
-              )}
+              ) : null}
             </div>
             <h3 className="font-display text-base font-bold text-ink truncate leading-snug group-hover:text-primary transition-colors">
               {meeting.title}
@@ -229,6 +280,20 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            {isLead && onToggleComplete && (
+              <button
+                type="button"
+                onClick={() => onToggleComplete(meeting, !isConcluded)}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 ${
+                  isConcluded
+                    ? 'text-muted hover:text-ink hover:bg-paper'
+                    : 'text-muted hover:text-emerald-700 hover:bg-emerald-500/10'
+                }`}
+                title={isConcluded ? 'Reopen Meeting' : 'Mark as Completed'}
+              >
+                {isConcluded ? <RotateCcw className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+              </button>
+            )}
             {isLead && onEdit && (
               <button
                 type="button"
@@ -281,9 +346,13 @@ export const TeamMeetingCard: React.FC<TeamMeetingCardProps> = ({
             href={meeting.meetingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 shadow-2xs active:scale-95"
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 active:scale-95 ${
+              isConcluded
+                ? 'bg-paper border border-line hover:border-ink text-muted hover:text-ink'
+                : 'bg-primary hover:bg-primary-hover text-white shadow-2xs'
+            }`}
           >
-            <span>Join</span>
+            <span>{isConcluded ? 'Link' : 'Join'}</span>
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
