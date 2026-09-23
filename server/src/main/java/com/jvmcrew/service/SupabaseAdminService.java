@@ -98,4 +98,59 @@ public class SupabaseAdminService {
 
         return Optional.empty();
     }
+
+    /**
+     * Finds an existing user in Supabase Auth by email via the Admin API.
+     */
+    public Optional<UUID> getAuthUserByEmail(String email) {
+        if (!isConfigured() || !StringUtils.hasText(email)) {
+            return Optional.empty();
+        }
+
+        try {
+            String endpoint = supabaseUrl + "/auth/v1/admin/users?page=1&per_page=50";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .header("apikey", serviceRoleKey)
+                    .header("Authorization", "Bearer " + serviceRoleKey)
+                    .GET()
+                    .timeout(Duration.ofSeconds(10))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode usersNode = root.get("users");
+                if (usersNode != null && usersNode.isArray()) {
+                    String targetEmail = email.trim().toLowerCase();
+                    for (JsonNode uNode : usersNode) {
+                        JsonNode emailNode = uNode.get("email");
+                        if (emailNode != null && targetEmail.equalsIgnoreCase(emailNode.asText())) {
+                            JsonNode idNode = uNode.get("id");
+                            if (idNode != null && StringUtils.hasText(idNode.asText())) {
+                                return Optional.of(UUID.fromString(idNode.asText()));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error looking up existing Supabase user by email {}: {}", email, e.getMessage());
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Attempts to create the user, or if already exists, retrieves their existing Supabase UUID.
+     */
+    public Optional<UUID> createOrGetAuthUser(String email, String password, String name) {
+        Optional<UUID> created = createAuthUser(email, password, name);
+        if (created.isPresent()) {
+            return created;
+        }
+        return getAuthUserByEmail(email);
+    }
 }

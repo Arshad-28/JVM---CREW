@@ -71,14 +71,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen to Supabase Auth state changes (token refresh, signout)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
       if (session?.access_token) {
         localStorage.setItem('jvmcrew_token', session.access_token);
-      } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('jvmcrew_token');
-        localStorage.removeItem('jvmcrew_cached_user');
-        setUser(null);
       }
     });
 
@@ -142,45 +138,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string, onStatus?: (status: string) => void) => {
-    onStatus?.('Authenticating credentials...');
+    onStatus?.('Signing in...');
     const trimmedEmail = email.trim().toLowerCase();
-    let supaToken: string | null = null;
-    let authUser: AuthUser | null = null;
+    const trimmedPassword = password.trim();
 
-    // 1. Attempt Supabase Auth sign-in
-    try {
-      const { data: supaData, error: supaErr } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password: password.trim(),
-      });
+    // Fast-path: Direct backend authentication in 1 round-trip (~100-200ms)
+    const backendPromise = api.login(trimmedEmail, trimmedPassword, onStatus);
 
-      if (!supaErr && supaData?.session?.access_token) {
-        supaToken = supaData.session.access_token;
+    // Concurrently trigger Supabase session in parallel (non-blocking)
+    const supaPromise = (async () => {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: trimmedPassword,
+        });
+        if (!error && data?.session?.access_token) {
+          return data.session.access_token;
+        }
+      } catch {
+        // Non-critical background failure
       }
-    } catch (err) {
-      console.warn('Supabase signInWithPassword exception:', err);
-    }
+      return null;
+    })();
 
-    if (supaToken) {
-      localStorage.setItem('jvmcrew_token', supaToken);
-      onStatus?.('Verifying workspace permissions...');
-      authUser = await api.getCurrentUser();
-    } else {
-      // 2. Fallback to existing application authentication endpoint (for existing legacy users)
-      onStatus?.('Checking workspace credentials...');
-      authUser = await api.login(trimmedEmail, password.trim(), onStatus);
-      if (authUser?.token) {
-        localStorage.setItem('jvmcrew_token', authUser.token);
+    let authUser: AuthUser | null = null;
+    try {
+      authUser = await backendPromise;
+    } catch (backendErr: any) {
+      // If backend login failed (e.g. user updated password in Supabase), check concurrent Supabase Auth
+      const supaToken = await supaPromise;
+      if (supaToken) {
+        localStorage.setItem('jvmcrew_token', supaToken);
+        onStatus?.('Loading workspace profile...');
+        authUser = await api.getCurrentUser();
+      } else {
+        throw backendErr;
       }
     }
 
     if (authUser) {
+      const activeToken = authUser.token || localStorage.getItem('jvmcrew_token');
+      if (activeToken) {
+        localStorage.setItem('jvmcrew_token', activeToken);
+      }
       try {
         localStorage.setItem('jvmcrew_cached_user', JSON.stringify(authUser));
       } catch (e) {
         console.warn('localStorage setItem error:', e);
       }
       setUser(authUser);
+
+      // In the background, if supaPromise succeeds and no token is in storage, keep it updated
+      supaPromise
+        .then((token) => {
+          if (token && !localStorage.getItem('jvmcrew_token')) {
+            localStorage.setItem('jvmcrew_token', token);
+          }
+        })
+        .catch(() => {});
     }
   };
 

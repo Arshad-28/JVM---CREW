@@ -185,8 +185,12 @@ export const LoginPage: React.FC = () => {
                   required
                   disabled={loading}
                   value={email}
+                  autoComplete={isRegister ? 'email' : 'username'}
                   onFocus={api.warmup}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (e.target.value.length === 1) api.warmup();
+                  }}
                   placeholder="name@gmail.com"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -210,8 +214,12 @@ export const LoginPage: React.FC = () => {
                   required
                   disabled={loading}
                   value={password}
+                  autoComplete={isRegister ? 'new-password' : 'current-password'}
                   onFocus={api.warmup}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (e.target.value.length === 1) api.warmup();
+                  }}
                   placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
                   className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
                 />

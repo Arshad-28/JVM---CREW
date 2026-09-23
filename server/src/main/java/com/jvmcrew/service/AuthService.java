@@ -177,18 +177,28 @@ public class AuthService {
                 ? principal.getUser() 
                 : userRepository.findById(principal.getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // If legacy user is missing Supabase authUserId, provision them in Supabase Auth seamlessly
+        // If legacy user is missing Supabase authUserId, provision/link them in Supabase Auth asynchronously in the background
         if (user.getAuthUserId() == null && supabaseAdminService != null && supabaseAdminService.isConfigured()) {
-            try {
-                java.util.Optional<java.util.UUID> createdUuid = supabaseAdminService.createAuthUser(user.getEmail(), request.getPassword(), user.getName());
-                if (createdUuid.isPresent()) {
-                    user.setAuthUserId(createdUuid.get());
-                    userRepository.save(user);
-                    log.info("Auto-provisioned Supabase Auth user for legacy user {} with UUID {}", user.getEmail(), createdUuid.get());
+            final Long userId = user.getId();
+            final String userEmail = user.getEmail();
+            final String userPassword = request.getPassword();
+            final String userName = user.getName();
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    java.util.Optional<java.util.UUID> authIdOpt = supabaseAdminService.createOrGetAuthUser(userEmail, userPassword, userName);
+                    if (authIdOpt.isPresent()) {
+                        userRepository.findById(userId).ifPresent(u -> {
+                            if (u.getAuthUserId() == null) {
+                                u.setAuthUserId(authIdOpt.get());
+                                userRepository.save(u);
+                                log.info("Async auto-provisioned/linked Supabase Auth user for {} with UUID {}", userEmail, authIdOpt.get());
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    log.warn("Async Supabase Auth sync non-critical warning for {}: {}", userEmail, e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("Could not auto-provision Supabase Auth user for {}: {}", user.getEmail(), e.getMessage());
-            }
+            });
         }
 
         TeamMember teamMember = principal.getTeamMember() != null

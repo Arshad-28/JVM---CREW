@@ -299,29 +299,51 @@ export function getLocalTodayDateString(): string {
   return `${year}-${month}-${day}`;
 }
 
+let lastWarmupTimestamp = 0;
+let activeWarmupController: AbortController | null = null;
+
 export const api = {
-  // Non-blocking proactive warmup ping for server / DB pool pre-initialization
+  // Cancel any running warmup to free socket connections for priority requests
+  cancelWarmup(): void {
+    if (activeWarmupController) {
+      try {
+        activeWarmupController.abort();
+      } catch {}
+      activeWarmupController = null;
+    }
+  },
+
+  // Proactive non-blocking warmup ping for server and DB pool pre-initialization
   warmup(): void {
+    const now = Date.now();
+    // Throttle to at most one ping every 12 seconds to prevent connection contention on mobile devices
+    if (now - lastWarmupTimestamp < 12000) {
+      return;
+    }
+    lastWarmupTimestamp = now;
+
     try {
+      if (activeWarmupController) {
+        activeWarmupController.abort();
+      }
+      activeWarmupController = new AbortController();
+      const signal = activeWarmupController.signal;
+
       const host = BASE_URL.replace(/\/api\/?$/, '');
-      const endpoints = Array.from(
-        new Set([
-          `${host}/health`,
-          `${host}/api/health`,
-          `${host}/api/readiness`,
-          'https://jvm-crew.onrender.com/health',
-          '/health',
-          '/api/health',
-        ])
-      );
-      endpoints.forEach((ep) => {
-        fetch(ep, { method: 'GET', mode: 'cors', keepalive: true }).catch(() => {});
-      });
+      const healthEndpoint = host && host.startsWith('http') ? `${host}/health` : '/health';
+
+      fetch(healthEndpoint, {
+        method: 'GET',
+        mode: 'cors',
+        signal,
+        cache: 'no-store',
+      }).catch(() => {});
     } catch (e) {}
   },
 
   // Auth
   async login(email: string, password: string, onStatus?: AuthStatusCallback): Promise<AuthUser> {
+    api.cancelWarmup();
     return executeAuthWithRetry(
       async (statusCb) => {
         const res = await fetchWithAdaptiveTimeout(
@@ -342,6 +364,7 @@ export const api = {
   },
 
   async register(data: { name: string; email: string; password: string; teamName?: string; authUserId?: string }, onStatus?: AuthStatusCallback): Promise<AuthUser> {
+    api.cancelWarmup();
     return executeAuthWithRetry(
       async (statusCb) => {
         const res = await fetchWithAdaptiveTimeout(
