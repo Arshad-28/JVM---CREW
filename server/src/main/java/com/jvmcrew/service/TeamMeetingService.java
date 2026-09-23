@@ -38,6 +38,7 @@ public class TeamMeetingService {
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
     private final LeadershipService leadershipService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<TeamMeetingDto> getTeamMeetings(UserPrincipal principal) {
@@ -98,6 +99,13 @@ public class TeamMeetingService {
         meeting = meetingRepository.save(meeting);
         log.info("Team meeting ID {} ('{}') created for Team ID {} by Lead ID {}",
                 meeting.getId(), meeting.getTitle(), team.getId(), user.getId());
+
+        // Notify teammates across the team
+        try {
+            notificationService.notifyTeamMeetingScheduled(meeting, user);
+        } catch (Exception e) {
+            log.warn("Failed to dispatch meeting notification for meeting {}: {}", meeting.getId(), e.getMessage());
+        }
 
         return mapToDto(meeting, LocalDate.now());
     }

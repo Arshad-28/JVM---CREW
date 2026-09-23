@@ -107,7 +107,7 @@ public class NotificationService {
             case HOMEWORK_PUBLISHED, HOMEWORK_DEADLINE_CHANGED, HOMEWORK_SOLUTION_PUBLISHED -> Boolean.TRUE.equals(pref.getHomeworkPublished());
             case HOMEWORK_REVIEWED -> Boolean.TRUE.equals(pref.getHomeworkReviews());
             case STANDUP_SUBMITTED, STANDUP_ANSWERED, STANDUP_REMINDER -> Boolean.TRUE.equals(pref.getStandupReminders());
-            case TEAM_UPDATE -> Boolean.TRUE.equals(pref.getTeamUpdates());
+            case TEAM_UPDATE, TEAM_MEETING_SCHEDULED -> Boolean.TRUE.equals(pref.getTeamUpdates());
         };
     }
 
@@ -318,6 +318,36 @@ public class NotificationService {
                 standup.getId(),
                 "/home"
         );
+    }
+
+    public void notifyTeamMeetingScheduled(TeamMeeting meeting, User host) {
+        if (meeting == null || meeting.getTeam() == null) return;
+        List<TeamMember> members = teamMemberRepository.findByTeam(meeting.getTeam());
+
+        String hostName = host != null ? host.getName() : "Team Lead";
+        String dateStr = meeting.getScheduledDate() != null ? meeting.getScheduledDate().toString() : "today";
+        String timeStr = meeting.getStartTime() != null ? meeting.getStartTime() : "";
+        String platformName = meeting.getPlatform() != null ? meeting.getPlatform().getDisplayName() : "Video Sync";
+
+        String title = "Team Meeting: " + meeting.getTitle();
+        String message = hostName + " has scheduled a team meeting for " + dateStr + " at " + timeStr + " (" + platformName + ").";
+
+        for (TeamMember tm : members) {
+            if (tm.getUser() == null || !Boolean.TRUE.equals(tm.getIsActive())) continue;
+            // Exclude the lead who created the meeting
+            if (host != null && Objects.equals(tm.getUser().getId(), host.getId())) continue;
+
+            createAndSend(
+                    tm.getUser(),
+                    meeting.getTeam(),
+                    NotificationType.TEAM_MEETING_SCHEDULED,
+                    title,
+                    message,
+                    "TEAM_MEETING",
+                    meeting.getId(),
+                    "/meetings"
+            );
+        }
     }
 
     // ==========================================

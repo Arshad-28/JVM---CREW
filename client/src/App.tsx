@@ -9,6 +9,7 @@ import { DailyStandupModal } from './pages/standup/DailyStandupModal';
 import { LeaveEmailModal } from './components/common/LeaveEmailModal';
 import { ToastContainer } from './components/common/Toast';
 import { RouteProgressBar } from './components/common/RouteProgressBar';
+import { TeamMeetingAlertPopup } from './components/team/TeamMeetingAlertPopup';
 
 const WorkspaceLoadingScreen: React.FC = () => {
   return (
@@ -246,6 +247,9 @@ const MainLayout: React.FC = () => {
         isOpen={globalLeaveEmailOpen}
         onClose={() => setGlobalLeaveEmailOpen(false)}
       />
+
+      {/* Real-Time Lead Meeting Alert Pop-Up */}
+      <TeamMeetingAlertPopup onNavigateTab={handleNavigateTab} />
 
       {/* Global Application Toast Notifications */}
       <ToastContainer />

@@ -334,6 +334,14 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
           />
         </div>
 
+        {/* Automatic Teammate Notification Banner */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-start gap-2.5 text-xs text-ink/80">
+          <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="leading-relaxed text-[11px]">
+            <strong className="font-semibold text-ink">Instant Teammate Alerts:</strong> When you schedule this meeting, all teammates will instantly receive an in-app notification and live top-up popup with your join link.
+          </p>
+        </div>
+
         {/* Modal Actions */}
         <div className="pt-3 border-t border-line flex items-center justify-end gap-3">
           <Button

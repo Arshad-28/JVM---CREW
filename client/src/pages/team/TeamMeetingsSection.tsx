@@ -5,6 +5,7 @@ import { TeamMeeting, CreateTeamMeetingPayload } from '../../types';
 import { TeamMeetingCard } from '../../components/team/TeamMeetingCard';
 import { MeetingModal } from '../../components/team/MeetingModal';
 import { PageContainer } from '../../components/common/PageContainer';
+import { showToast } from '../../components/common/Toast';
 import {
   Video,
   Plus,
@@ -65,8 +66,15 @@ export const TeamMeetingsSection: React.FC = () => {
       setSaving(true);
       if (selectedMeeting) {
         await api.updateMeeting(selectedMeeting.id, payload);
+        showToast('success', 'Meeting Updated', 'Team meeting details have been updated.');
       } else {
         await api.createMeeting(payload);
+        showToast(
+          'success',
+          'Meeting Scheduled & Teammates Notified',
+          'All teammates have received an in-app alert and top-up popup.'
+        );
+        window.dispatchEvent(new CustomEvent('jvm_meeting_created', { detail: payload }));
       }
       await fetchMeetings();
       setModalOpen(false);

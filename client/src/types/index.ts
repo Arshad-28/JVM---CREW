@@ -1013,7 +1013,8 @@ export type NotificationType =
   | 'STANDUP_SUBMITTED'
   | 'STANDUP_ANSWERED'
   | 'STANDUP_REMINDER'
-  | 'TEAM_UPDATE';
+  | 'TEAM_UPDATE'
+  | 'TEAM_MEETING_SCHEDULED';
 
 export interface WorkspaceNotification {
   id: number;

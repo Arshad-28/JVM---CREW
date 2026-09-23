@@ -12,7 +12,8 @@ import {
   Users,
   Settings,
   Loader2,
-  BellRing
+  BellRing,
+  Video,
 } from 'lucide-react';
 
 interface NotificationBellProps {
@@ -108,6 +109,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
         onNavigate('homework', notif.entityId);
       } else if (notif.type.startsWith('STANDUP')) {
         onNavigate('team', notif.entityId);
+      } else if (notif.type.includes('MEETING')) {
+        onNavigate('meetings', notif.entityId);
       } else {
         onNavigate('home', notif.entityId);
       }
@@ -148,6 +151,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
   };
 
   const renderIcon = (type: string) => {
+    if (type.includes('MEETING')) {
+      return <Video className="w-3.5 h-3.5 text-blue-600 shrink-0" />;
+    }
     if (type.startsWith('TASK')) {
       return <CheckSquare className="w-3.5 h-3.5 text-accent shrink-0" />;
     }
