@@ -159,7 +159,7 @@ export const cacheStore = {
 async function fetchWithAdaptiveTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs: number = 25000,
+  timeoutMs: number = 65000,
   onStatusUpdate?: AuthStatusCallback
 ): Promise<Response> {
   const controller = new AbortController();
@@ -168,13 +168,23 @@ async function fetchWithAdaptiveTimeout(
   if (onStatusUpdate) {
     timers.push(
       setTimeout(() => {
-        onStatusUpdate('Signing in...');
-      }, 1500)
+        onStatusUpdate('Connecting to workspace...');
+      }, 2500)
     );
     timers.push(
       setTimeout(() => {
-        onStatusUpdate('Connecting to workspace...');
-      }, 5000)
+        onStatusUpdate('Waking server container...');
+      }, 7000)
+    );
+    timers.push(
+      setTimeout(() => {
+        onStatusUpdate('Initializing database pool...');
+      }, 18000)
+    );
+    timers.push(
+      setTimeout(() => {
+        onStatusUpdate('Almost ready, loading workspace...');
+      }, 35000)
     );
   }
 
@@ -189,7 +199,7 @@ async function fetchWithAdaptiveTimeout(
     return response;
   } catch (err: any) {
     if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
-      throw new ApiError('Sign-in request timed out while connecting to the server.', 408);
+      throw new ApiError('Sign-in request timed out while connecting to the server. Please try again.', 408);
     }
     if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
       throw new ApiError('Unable to reach the server. Please check your connection.', 0);
@@ -353,7 +363,7 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
           },
-          25000,
+          65000,
           statusCb
         );
         return handleResponse<AuthUser>(res);
@@ -374,7 +384,7 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
           },
-          25000,
+          65000,
           statusCb
         );
         return handleResponse<AuthUser>(res);
