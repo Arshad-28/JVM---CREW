@@ -34,28 +34,26 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
     }
   }, []);
 
-  // Handle Opening Lifecycle with Exact Staggered Milestones
+  // Handle Opening Lifecycle with Staggered Milestones
   useEffect(() => {
     if (isOpen) {
       setIsRendered(true);
       setIsClosing(false);
       setStep(0);
 
-      // Trigger physical radial clip-path expansion from origin on next frame
       const frameId = requestAnimationFrame(() => {
         setIsExpanded(true);
       });
 
-      // Staggered Reveal Timeline
-      const tHeader = setTimeout(() => setStep(1), 100);   // Header & Top Nav (0-200ms)
-      const tLogo = setTimeout(() => setStep(2), 240);     // Official Algorithms365 Logo (150-350ms)
-      const tDivider = setTimeout(() => setStep(3), 360);  // Subtle hairline divider (300-450ms)
-      const tBadge = setTimeout(() => setStep(4), 480);    // [ J ] ACTIVE ENGINEERING UNIT (450-650ms)
-      const tTeam = setTimeout(() => setStep(5), 620);     // Hero Team Name (600-850ms)
-      const tOrg = setTimeout(() => setStep(6), 760);      // BY ALGORITHMS365 (750-950ms)
-      const tDesc = setTimeout(() => setStep(7), 880);     // Description (850-1050ms)
-      const tPhoto = setTimeout(() => setStep(8), 980);    // Subtle Integrated Group Photo (950-1250ms)
-      const tBtn = setTimeout(() => setStep(9), 1100);     // Return to Workspace Button (1050-1350ms)
+      const tHeader = setTimeout(() => setStep(1), 60);
+      const tLogo = setTimeout(() => setStep(2), 140);
+      const tDivider = setTimeout(() => setStep(3), 220);
+      const tBadge = setTimeout(() => setStep(4), 300);
+      const tTeam = setTimeout(() => setStep(5), 380);
+      const tOrg = setTimeout(() => setStep(6), 460);
+      const tDesc = setTimeout(() => setStep(7), 540);
+      const tPhoto = setTimeout(() => setStep(8), 620);
+      const tBtn = setTimeout(() => setStep(9), 700);
 
       return () => {
         cancelAnimationFrame(frameId);
@@ -81,20 +79,15 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-
-    if (prefersReducedMotion) {
-      onClose();
-      return;
-    }
-
-    // Surface contracts smoothly back toward the clicked team-logo coordinate
     setIsExpanded(false);
+
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
 
     closeTimerRef.current = setTimeout(() => {
       onClose();
       setIsRendered(false);
       setIsClosing(false);
-    }, 400);
+    }, prefersReducedMotion ? 0 : 220);
   };
 
   // Handle ESC key to cleanly trigger reverse animation
@@ -120,8 +113,8 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
       : displayTeam.charAt(0).toUpperCase();
 
   // Dynamic origin coordinates for physical radial expansion / collapse
-  const origX = origin?.x ?? 48;
-  const origY = origin?.y ?? 28;
+  const origX = origin?.x ?? (typeof window !== 'undefined' ? Math.round(window.innerWidth / 2) : 48);
+  const origY = origin?.y ?? 32;
 
   const clipPathStyle = prefersReducedMotion
     ? {}
@@ -131,64 +124,56 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             ? `circle(160vmax at ${origX}px ${origY}px)`
             : `circle(0px at ${origX}px ${origY}px)`,
         transition: isClosing
-          ? 'clip-path 380ms cubic-bezier(0.4, 0, 0.2, 1)'
-          : 'clip-path 650ms cubic-bezier(0.16, 1, 0.3, 1)',
-        willChange: 'clip-path',
+          ? 'clip-path 220ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out'
+          : 'clip-path 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease-out',
+        willChange: 'clip-path, opacity',
       };
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col justify-between bg-[#FBFBFA] text-slate-900 select-none overflow-y-auto overflow-x-hidden font-sans ${
-        prefersReducedMotion
-          ? isClosing
-            ? 'opacity-0 transition-opacity duration-200'
-            : 'opacity-100 transition-opacity duration-300'
-          : ''
+      className={`fixed inset-0 z-50 flex flex-col justify-between bg-paper text-ink select-none overflow-y-auto overflow-x-hidden font-sans ${
+        isClosing ? 'opacity-0 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-250'
       }`}
       style={clipPathStyle}
       role="dialog"
       aria-modal="true"
       aria-label="Algorithms365 Organization and Team Identity Reveal"
     >
-      {/* ========================================================================= */}
-      {/* 1. INTEGRATED TEAM PHOTOGRAPH (Subtle Background Foundation across teams)  */}
-      {/* ========================================================================= */}
+      {/* 1. INTEGRATED TEAM PHOTOGRAPH (Subtle, balanced contrast, warm tone integration) */}
       <div
-        className={`absolute bottom-0 sm:bottom-2 left-1/2 -translate-x-1/2 w-[92vw] max-w-[1400px] h-[58vh] max-h-[560px] min-h-[320px] pointer-events-none z-0 transition-all duration-1000 ease-out select-none flex items-end justify-center ${
+        className={`absolute bottom-0 sm:bottom-2 left-1/2 -translate-x-1/2 w-[92vw] max-w-[1300px] h-[55vh] max-h-[520px] min-h-[300px] pointer-events-none z-0 transition-all duration-700 ease-out select-none flex items-end justify-center ${
           step >= 8 && !isClosing
-            ? 'opacity-[0.22] sm:opacity-[0.24] md:opacity-[0.25] translate-y-0 scale-100'
+            ? 'opacity-[0.20] sm:opacity-[0.22] translate-y-0 scale-100'
             : 'opacity-0 translate-y-4 scale-[1.015]'
         }`}
         style={{
           maskImage:
-            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 16%, rgba(0,0,0,0.7) 38%, black 65%, transparent 98%), radial-gradient(ellipse 92% 82% at 50% 68%, black 45%, transparent 96%)',
+            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.2) 18%, rgba(0,0,0,0.85) 45%, black 75%, transparent 100%), radial-gradient(ellipse 90% 85% at 50% 65%, black 50%, transparent 95%)',
           WebkitMaskImage:
-            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 16%, rgba(0,0,0,0.7) 38%, black 65%, transparent 98%), radial-gradient(ellipse 92% 82% at 50% 68%, black 45%, transparent 96%)',
+            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.2) 18%, rgba(0,0,0,0.85) 45%, black 75%, transparent 100%), radial-gradient(ellipse 90% 85% at 50% 65%, black 50%, transparent 95%)',
         }}
         aria-hidden="true"
       >
         <img
           src="/brand/jvmcrew-group.jpg"
           alt=""
-          className="w-full h-full object-cover object-center saturate-[0.92] contrast-[1.04] brightness-[1.0]"
+          className="w-full h-full object-cover object-center saturate-[0.88] contrast-[1.02] brightness-[0.98]"
           loading="lazy"
         />
       </div>
 
-      {/* ========================================================================= */}
-      {/* 2. TOP HEADER (Extremely minimal, quiet, balanced padding)                */}
-      {/* ========================================================================= */}
+      {/* 2. TOP HEADER */}
       <header
-        className={`relative z-20 px-6 sm:px-12 md:px-16 pt-6 sm:pt-8 md:pt-10 flex items-center justify-between transition-all duration-500 ease-out ${
+        className={`relative z-20 px-6 sm:px-12 md:px-16 pt-6 sm:pt-8 flex items-center justify-between transition-all duration-400 ease-out ${
           step >= 1 && !isClosing
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 -translate-y-2'
         }`}
       >
-        {/* Left: Understated status label */}
-        <div className="flex items-center space-x-2 text-slate-500">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#0B4EA2] inline-block" />
-          <span className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase">
+        {/* Left: Organization Status Pill */}
+        <div className="flex items-center space-x-2 text-muted">
+          <span className="w-2 h-2 rounded-full bg-primary inline-block animate-pulse" />
+          <span className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-muted">
             ORGANIZATION IDENTITY
           </span>
         </div>
@@ -197,114 +182,110 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
         <button
           type="button"
           onClick={handleClose}
-          className="group flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full border border-slate-200/80 bg-white/90 hover:bg-white hover:border-slate-300 text-slate-600 hover:text-slate-900 transition-all duration-150 shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/20"
+          className="group flex items-center space-x-2 px-3.5 py-1.5 rounded-sm border border-line bg-paper-light hover:bg-paper text-ink transition-all duration-150 shadow-2xs cursor-pointer focus-ring"
           title="Return to workspace (Esc)"
           aria-label="Back to Workspace"
         >
-          <ArrowLeft className="w-3.5 h-3.5 text-[#0B4EA2] group-hover:-translate-x-0.5 transition-transform duration-150" />
-          <span className="font-mono text-xs font-semibold tracking-wider text-slate-700 group-hover:text-slate-900">
+          <ArrowLeft className="w-3.5 h-3.5 text-primary group-hover:-translate-x-0.5 transition-transform duration-150" />
+          <span className="font-mono text-xs font-bold tracking-wider text-ink">
             WORKSPACE
           </span>
-          <span className="font-mono text-[9px] font-bold text-slate-400 group-hover:text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-xs border border-slate-200/60">
+          <span className="font-mono text-[9px] font-bold text-muted bg-paper-dark px-1.5 py-0.5 rounded-xs border border-line">
             ESC
           </span>
         </button>
       </header>
 
-      {/* ========================================================================= */}
-      {/* 3. CENTER IDENTITY CONTENT (Elevated, Balanced Vertical Rhythm)           */}
-      {/* ========================================================================= */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 sm:px-8 text-center pt-8 sm:pt-12 md:pt-14 pb-8 sm:pb-12 max-w-3xl mx-auto w-full">
-        
-        {/* Official Algorithms365 Logo (Authentic Asset, 100% Transparent, High-Res) */}
+      {/* 3. CENTER IDENTITY CONTENT */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-8 text-center py-8 max-w-3xl mx-auto w-full">
+        {/* Official Algorithms365 Logo */}
         <div
-          className={`transition-all duration-600 ease-out flex flex-col items-center ${
+          className={`transition-all duration-500 ease-out ${
             step >= 2 && !isClosing
-              ? 'opacity-100 blur-0 scale-100 translate-y-0'
-              : 'opacity-0 blur-xs scale-95 translate-y-3'
+              ? 'opacity-100 translate-y-0 scale-100'
+              : 'opacity-0 -translate-y-2 scale-98'
           }`}
         >
-          <div className="relative w-[210px] sm:w-[260px] md:w-[290px] flex items-center justify-center select-none">
+          <div className="w-[180px] sm:w-[240px] md:w-[280px] mx-auto filter drop-shadow-2xs">
             <img
-              src="/brand/algorithms365-official-logo.png"
+              src="/brand/algorithms365-logo.png"
               alt="Algorithms 365"
               className="w-full h-auto object-contain select-none pointer-events-none"
             />
           </div>
         </div>
 
-        {/* Single Subtle Hairline Divider (180-250px) */}
+        {/* Single Subtle Hairline Divider */}
         <div
-          className={`w-[180px] sm:w-[220px] md:w-[250px] my-6 sm:my-8 transition-all duration-500 ease-out ${
+          className={`w-[180px] sm:w-[220px] my-5 sm:my-6 transition-all duration-400 ease-out ${
             step >= 3 && !isClosing
               ? 'opacity-100 scale-x-100'
               : 'opacity-0 scale-x-0'
           }`}
         >
-          <div className="h-px bg-slate-200/80 w-full" />
+          <div className="h-px bg-line w-full" />
         </div>
 
         {/* Team Identity Area */}
         <div className="flex flex-col items-center w-full">
-          
           {/* Active Engineering Unit Badge */}
           <div
-            className={`transition-all duration-500 ease-out ${
+            className={`transition-all duration-400 ease-out ${
               step >= 4 && !isClosing
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-2'
             }`}
           >
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-slate-100/95 border border-slate-200/80 text-slate-700 font-mono text-[10px] sm:text-[11px] font-bold tracking-wider uppercase shadow-2xs backdrop-blur-xs">
-              <span className="w-4 h-4 rounded-xs bg-[#0B4EA2] text-white flex items-center justify-center text-[10px] font-black">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-sm bg-paper-light border border-line text-ink font-mono text-[10px] sm:text-[11px] font-bold tracking-wider uppercase shadow-2xs">
+              <span className="w-4 h-4 rounded-xs bg-primary text-white flex items-center justify-center text-[10px] font-black">
                 {displayInitial}
               </span>
               <span>ACTIVE ENGINEERING UNIT</span>
             </div>
           </div>
 
-          {/* Team Name (Hero Element, 18-28px below badge) */}
+          {/* Team Name Hero */}
           <div
-            className={`mt-4 sm:mt-5 transition-all duration-600 ease-out ${
+            className={`mt-3 sm:mt-4 transition-all duration-500 ease-out ${
               step >= 5 && !isClosing
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-3'
             }`}
           >
-            <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-slate-900 tracking-tight uppercase leading-none drop-shadow-xs">
+            <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-ink tracking-tight uppercase leading-none">
               {displayTeam}
             </h1>
           </div>
 
-          {/* BY ALGORITHMS365 (18-25px below team name) */}
+          {/* BY ALGORITHMS365 */}
           <div
-            className={`mt-4 sm:mt-5 transition-all duration-500 ease-out ${
+            className={`mt-2.5 sm:mt-3 transition-all duration-400 ease-out ${
               step >= 6 && !isClosing
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-2'
             }`}
           >
-            <p className="font-mono text-xs sm:text-sm font-bold tracking-wider text-[#0B4EA2] uppercase">
+            <p className="font-mono text-xs sm:text-sm font-bold tracking-widest text-primary uppercase">
               BY ALGORITHMS365
             </p>
           </div>
 
-          {/* Short Organization / Team Description (25-35px below attribution) */}
+          {/* Short Organization Description */}
           <div
-            className={`mt-5 sm:mt-7 transition-all duration-500 ease-out ${
+            className={`mt-4 sm:mt-5 transition-all duration-400 ease-out ${
               step >= 7 && !isClosing
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-2'
             }`}
           >
-            <p className="text-xs sm:text-sm text-slate-500 font-sans max-w-md mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-muted font-sans max-w-md mx-auto leading-relaxed">
               Enterprise Engineering Suite · High-Performance Concurrency & Architecture Systems.
             </p>
           </div>
 
-          {/* Primary Action: ← RETURN TO WORKSPACE (45-60px below description) */}
+          {/* Primary Action: ← RETURN TO WORKSPACE (Clean, high-contrast, premium engineering button) */}
           <div
-            className={`mt-8 sm:mt-11 transition-all duration-500 ease-out ${
+            className={`mt-7 sm:mt-9 transition-all duration-400 ease-out ${
               step >= 9 && !isClosing
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-3'
@@ -313,9 +294,9 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] h-[48px] sm:h-[52px] rounded-full bg-[#0B4EA2] hover:bg-[#093D80] active:scale-95 text-white font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/30"
+              className="w-full max-w-[280px] sm:max-w-[320px] py-3 px-6 rounded-sm bg-ink hover:bg-ink-light active:scale-[0.98] text-paper font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-sm hover:shadow-card-hover hover-lift flex items-center justify-center space-x-2.5 cursor-pointer focus-ring"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 text-paper/80 group-hover:-translate-x-0.5 transition-transform" />
               <span>RETURN TO WORKSPACE</span>
             </button>
           </div>
