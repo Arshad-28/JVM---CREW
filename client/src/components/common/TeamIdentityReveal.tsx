@@ -171,9 +171,9 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
         }`}
       >
         {/* Left: Organization Status Pill */}
-        <div className="flex items-center space-x-2 text-muted">
-          <span className="w-2 h-2 rounded-full bg-primary inline-block animate-pulse" />
-          <span className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-muted">
+        <div className="flex items-center space-x-2 text-slate-500">
+          <span className="w-2 h-2 rounded-full bg-[#0B4EA2] inline-block animate-pulse" />
+          <span className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-slate-500">
             ORGANIZATION IDENTITY
           </span>
         </div>
@@ -182,15 +182,15 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
         <button
           type="button"
           onClick={handleClose}
-          className="group flex items-center space-x-2 px-3.5 py-1.5 rounded-sm border border-line bg-paper-light hover:bg-paper text-ink transition-all duration-150 shadow-2xs cursor-pointer focus-ring"
+          className="group flex items-center space-x-2 px-3.5 py-1.5 rounded-full border border-slate-200/80 bg-white/90 hover:bg-white text-slate-700 hover:text-slate-900 transition-all duration-150 shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/20"
           title="Return to workspace (Esc)"
           aria-label="Back to Workspace"
         >
-          <ArrowLeft className="w-3.5 h-3.5 text-primary group-hover:-translate-x-0.5 transition-transform duration-150" />
-          <span className="font-mono text-xs font-bold tracking-wider text-ink">
+          <ArrowLeft className="w-3.5 h-3.5 text-[#0B4EA2] group-hover:-translate-x-0.5 transition-transform duration-150" />
+          <span className="font-mono text-xs font-semibold tracking-wider text-slate-700 group-hover:text-slate-900">
             WORKSPACE
           </span>
-          <span className="font-mono text-[9px] font-bold text-muted bg-paper-dark px-1.5 py-0.5 rounded-xs border border-line">
+          <span className="font-mono text-[9px] font-bold text-slate-400 group-hover:text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-xs border border-slate-200/60">
             ESC
           </span>
         </button>
@@ -206,9 +206,12 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
               : 'opacity-0 -translate-y-2 scale-98'
           }`}
         >
-          <div className="w-[180px] sm:w-[240px] md:w-[280px] mx-auto filter drop-shadow-2xs">
+          <div className="w-[200px] sm:w-[260px] md:w-[300px] mx-auto filter drop-shadow-2xs">
             <img
-              src="/brand/algorithms365-logo.png"
+              src="/brand/algorithms365-official-logo.png"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/brand/algorithms365-transparent.png';
+              }}
               alt="Algorithms 365"
               className="w-full h-auto object-contain select-none pointer-events-none"
             />
@@ -223,7 +226,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
               : 'opacity-0 scale-x-0'
           }`}
         >
-          <div className="h-px bg-line w-full" />
+          <div className="h-px bg-slate-200/80 w-full" />
         </div>
 
         {/* Team Identity Area */}
@@ -236,8 +239,8 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
                 : 'opacity-0 translate-y-2'
             }`}
           >
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-sm bg-paper-light border border-line text-ink font-mono text-[10px] sm:text-[11px] font-bold tracking-wider uppercase shadow-2xs">
-              <span className="w-4 h-4 rounded-xs bg-primary text-white flex items-center justify-center text-[10px] font-black">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-slate-700 font-mono text-[10px] sm:text-[11px] font-bold tracking-wider uppercase shadow-2xs">
+              <span className="w-4 h-4 rounded-xs bg-[#0B4EA2] text-white flex items-center justify-center text-[10px] font-black">
                 {displayInitial}
               </span>
               <span>ACTIVE ENGINEERING UNIT</span>
@@ -252,7 +255,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
                 : 'opacity-0 translate-y-3'
             }`}
           >
-            <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-ink tracking-tight uppercase leading-none">
+            <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-slate-900 tracking-tight uppercase leading-none">
               {displayTeam}
             </h1>
           </div>
@@ -265,7 +268,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
                 : 'opacity-0 translate-y-2'
             }`}
           >
-            <p className="font-mono text-xs sm:text-sm font-bold tracking-widest text-primary uppercase">
+            <p className="font-mono text-xs sm:text-sm font-bold tracking-widest text-[#0B4EA2] uppercase">
               BY ALGORITHMS365
             </p>
           </div>
@@ -278,12 +281,12 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
                 : 'opacity-0 translate-y-2'
             }`}
           >
-            <p className="text-xs sm:text-sm text-muted font-sans max-w-md mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 font-sans max-w-md mx-auto leading-relaxed">
               Enterprise Engineering Suite · High-Performance Concurrency & Architecture Systems.
             </p>
           </div>
 
-          {/* Primary Action: ← RETURN TO WORKSPACE (Clean, high-contrast, premium engineering button) */}
+          {/* Primary Action: ← RETURN TO WORKSPACE */}
           <div
             className={`mt-7 sm:mt-9 transition-all duration-400 ease-out ${
               step >= 9 && !isClosing
@@ -294,9 +297,9 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="w-full max-w-[280px] sm:max-w-[320px] py-3 px-6 rounded-sm bg-ink hover:bg-ink-light active:scale-[0.98] text-paper font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-sm hover:shadow-card-hover hover-lift flex items-center justify-center space-x-2.5 cursor-pointer focus-ring"
+              className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] h-[48px] sm:h-[50px] rounded-full bg-[#0B4EA2] hover:bg-[#083D82] active:scale-95 text-white font-mono text-xs sm:text-sm font-bold tracking-wider transition-all duration-150 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B4EA2]/30"
             >
-              <ArrowLeft className="w-4 h-4 text-paper/80 group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-4 h-4 text-white group-hover:-translate-x-0.5 transition-transform" />
               <span>RETURN TO WORKSPACE</span>
             </button>
           </div>

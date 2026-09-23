@@ -164,19 +164,23 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
       {/* ========================================================================= */}
       {/* 1. EXECUTIVE HERO BAR (Clean, modern, uncluttered header)                  */}
       {/* ========================================================================= */}
-      <div className="bg-paper border border-line rounded-md p-5 sm:p-6 shadow-2xs space-y-4 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-gradient-to-br from-paper-light via-paper to-paper-dark/40 border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 relative overflow-hidden transition-all duration-300 hover:shadow-card-hover group">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/6 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4 group-hover:scale-105 transition-transform duration-700" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           {/* Left: Greeting & Context */}
-          <div className="space-y-1.5 min-w-0">
+          <div className="space-y-2 min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-              <span className="font-bold px-2 py-0.5 rounded-xs bg-paper-dark border border-line text-ink">
+              <span className="font-bold px-2.5 py-0.5 rounded-md bg-paper border border-line text-ink shadow-2xs">
                 {user.serialNumber || data.serialNumber || 'MEMBER'}
               </span>
-              <span className="text-muted">·</span>
-              <span className="text-muted">{user.position || data.position || 'SDE Intern'}</span>
-              <span className="text-muted">·</span>
-              <span className="text-ink font-semibold">{data.teamName}</span>
-              <span className="text-muted">·</span>
+              <span className="text-muted/60">·</span>
+              <span className="text-muted font-medium">{user.position || data.position || 'SDE Intern'}</span>
+              <span className="text-muted/60">·</span>
+              <span className="text-ink font-semibold px-2 py-0.5 rounded-md bg-paper-dark/60 border border-line/50">
+                {data.teamName}
+              </span>
+              <span className="text-muted/60">·</span>
               <span className="text-muted">{fullTitle}</span>
             </div>
 
@@ -184,14 +188,17 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               {greetingTitle}
             </h1>
 
-            <div className="flex items-center space-x-2 text-xs font-mono text-muted pt-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0 animate-pulse" />
+            <div className="inline-flex items-center space-x-2 text-xs font-mono text-muted bg-paper-light/90 border border-line/70 px-3 py-1 rounded-full shadow-2xs">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
               <span className="truncate">{dailyContext}</span>
             </div>
           </div>
 
           {/* Right: Primary Fast Actions */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {!isSubmittedToday ? (
               <button
                 onClick={() => {
@@ -200,9 +207,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   setStandupModalMode('WRITE');
                   setStandupModalOpen(true);
                 }}
-                className="px-4 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-[0.99] rounded-md font-mono text-xs font-bold transition-all flex items-center space-x-2 shadow-xs hover-lift"
+                className="px-4.5 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-95 rounded-lg font-mono text-xs font-bold transition-all duration-150 flex items-center space-x-2 shadow-sm hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-paper/80" />
+                <Sparkles className="w-4 h-4 text-paper/90 animate-pulse" />
                 <span>Submit Daily Standup</span>
               </button>
             ) : (
@@ -213,7 +220,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   setStandupModalMode('VIEW');
                   setStandupModalOpen(true);
                 }}
-                className="px-3.5 py-2 bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 hover:bg-emerald-500/15 rounded-md font-mono text-xs font-semibold transition-all flex items-center space-x-1.5"
+                className="px-3.5 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/15 active:scale-95 rounded-lg font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-2 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Standup Recorded ✓</span>
@@ -223,7 +230,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             {!isCurrentLead && (
               <button
                 onClick={() => setAskLeadOpen(true)}
-                className="px-3.5 py-2 bg-paper-light hover:bg-paper-dark border border-line text-ink rounded-md font-mono text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-2xs hover-lift"
+                className="px-3.5 py-2 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-ink rounded-lg font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-1.5 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
                 title="Send a quick question to your Team Lead"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-primary" />
@@ -233,7 +240,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
             <button
               onClick={() => setLeaveModalOpen(true)}
-              className="p-2 bg-paper-light hover:bg-paper-dark border border-line text-muted hover:text-ink rounded-md transition-all shadow-2xs"
+              className="p-2.5 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-muted hover:text-ink rounded-lg transition-all duration-150 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
               title="Generate Leave Request Email"
               aria-label="Generate Leave Request Email"
             >
@@ -261,70 +268,124 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             }
             setStandupModalOpen(true);
           }}
-          className={`p-4 rounded-md border transition-all cursor-pointer shadow-2xs hover-lift flex flex-col justify-between ${
+          className={`p-4.5 rounded-xl border transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group ${
             isSubmittedToday
               ? 'bg-emerald-500/5 border-emerald-500/30 hover:border-emerald-600'
-              : 'bg-paper border-line hover:border-primary/40'
+              : 'bg-paper border-line hover:border-amber-500/50'
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Daily Standup</span>
-            <Calendar className={`w-4 h-4 ${isSubmittedToday ? 'text-emerald-600' : 'text-muted'}`} />
-          </div>
-          <div className="py-2">
-            <span className={`font-mono text-lg font-black block leading-none ${
-              isSubmittedToday ? 'text-emerald-700' : 'text-amber-700'
+            <div className={`p-2 rounded-lg transition-all duration-200 ${
+              isSubmittedToday
+                ? 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white'
+                : 'bg-amber-500/10 text-amber-600 group-hover:bg-amber-500 group-hover:text-white'
             }`}>
-              {isSubmittedToday ? 'DONE ✓' : 'PENDING'}
-            </span>
+              <Calendar className="w-4 h-4" />
+            </div>
           </div>
-          <span className="font-mono text-[10px] text-muted truncate">
-            {isSubmittedToday && todayStandup?.submittedAt
-              ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
-              : 'Action required today'}
-          </span>
+          
+          <div className="py-2.5">
+            <div className="flex items-center space-x-1.5">
+              <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+              <span className={`font-mono text-xl font-black block leading-none tracking-tight ${
+                isSubmittedToday ? 'text-emerald-700' : 'text-amber-700'
+              }`}>
+                {isSubmittedToday ? 'DONE ✓' : 'PENDING'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 pt-1 border-t border-line/60">
+            <span className="font-mono text-[10px] text-muted truncate block">
+              {isSubmittedToday && todayStandup?.submittedAt
+                ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
+                : 'Action required today'}
+            </span>
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isSubmittedToday ? 'w-full bg-emerald-500' : 'w-1/4 bg-amber-500'
+                }`}
+              />
+            </div>
+          </div>
         </div>
 
         {/* CARD 2: MY TASKS */}
         <div
           onClick={() => onNavigateTab('tasks')}
-          className="p-4 bg-paper border border-line hover:border-primary/40 rounded-md transition-all cursor-pointer shadow-2xs hover-lift flex flex-col justify-between group"
+          className="p-4.5 bg-paper border border-line hover:border-primary/50 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">My Tasks</span>
-            <CheckSquare className="w-4 h-4 text-muted group-hover:text-primary transition-colors" />
+            <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-200">
+              <CheckSquare className="w-4 h-4" />
+            </div>
           </div>
-          <div className="py-2">
-            <span className="font-mono text-2xl font-black text-ink block leading-none">
+          
+          <div className="py-2.5">
+            <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
               {data.openTasksCount}
             </span>
           </div>
-          <span className="font-mono text-[10px] text-muted truncate">
-            {data.tasksDueTodayCount > 0
-              ? `${data.tasksDueTodayCount} due today`
-              : `${data.lifetimeCompletedTasks} completed lifetime`}
-          </span>
+
+          <div className="space-y-1.5 pt-1 border-t border-line/60">
+            <div className="flex items-center justify-between font-mono text-[10px] text-muted">
+              <span className="truncate">
+                {data.tasksDueTodayCount > 0
+                  ? `${data.tasksDueTodayCount} due today`
+                  : `${data.lifetimeCompletedTasks} completed lifetime`}
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{
+                  width: `${Math.min(100, Math.max(10, ((data.lifetimeCompletedTasks || 0) / Math.max(1, (data.lifetimeCompletedTasks || 0) + (data.openTasksCount || 0))) * 100))}%`
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* CARD 3: HOMEWORK */}
         <div
           onClick={() => onNavigateTab('homework')}
-          className="p-4 bg-paper border border-line hover:border-primary/40 rounded-md transition-all cursor-pointer shadow-2xs hover-lift flex flex-col justify-between group"
+          className="p-4.5 bg-paper border border-line hover:border-ochre/50 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Homework</span>
-            <Sparkles className="w-4 h-4 text-muted group-hover:text-primary transition-colors" />
+            <div className="p-2 rounded-lg bg-ochre/15 text-ochre group-hover:bg-ochre group-hover:text-white transition-all duration-200">
+              <Sparkles className="w-4 h-4" />
+            </div>
           </div>
-          <div className="py-2">
-            <span className="font-mono text-2xl font-black text-ink block leading-none">
+
+          <div className="py-2.5">
+            <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
               {data.pendingHomeworkCount}
             </span>
           </div>
-          <span className="font-mono text-[10px] text-muted truncate">
-            {data.totalHomeworkCount > 0
-              ? `${data.totalHomeworkCount - data.pendingHomeworkCount}/${data.totalHomeworkCount} assignments turned in`
-              : 'No assignments due'}
-          </span>
+
+          <div className="space-y-1.5 pt-1 border-t border-line/60">
+            <div className="flex items-center justify-between font-mono text-[10px] text-muted">
+              <span className="truncate">
+                {data.totalHomeworkCount > 0
+                  ? `${data.totalHomeworkCount - data.pendingHomeworkCount}/${data.totalHomeworkCount} assignments turned in`
+                  : 'No assignments due'}
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-ochre transition-all duration-500"
+                style={{
+                  width: `${data.totalHomeworkCount > 0 ? Math.min(100, Math.max(8, ((data.totalHomeworkCount - data.pendingHomeworkCount) / data.totalHomeworkCount) * 100)) : 100}%`
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* CARD 4: BLOCKERS */}
@@ -334,26 +395,43 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               setAskLeadOpen(true);
             }
           }}
-          className={`p-4 rounded-md border transition-all shadow-2xs flex flex-col justify-between ${
+          className={`p-4.5 rounded-xl border transition-all duration-200 shadow-2xs flex flex-col justify-between ${
             data.openBlockersCount > 0
-              ? 'bg-rose-500/5 border-rose-500/30 hover:border-rose-500 cursor-pointer hover-lift'
+              ? 'bg-rose-500/5 border-rose-500/30 hover:border-rose-500 cursor-pointer hover:shadow-card-hover hover:-translate-y-1 group'
               : 'bg-paper border-line'
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Blockers</span>
-            <Shield className={`w-4 h-4 ${data.openBlockersCount > 0 ? 'text-rose-600' : 'text-muted'}`} />
+            <div className={`p-2 rounded-lg transition-all duration-200 ${
+              data.openBlockersCount > 0
+                ? 'bg-rose-500/10 text-rose-600 group-hover:bg-rose-500 group-hover:text-white'
+                : 'bg-paper-dark text-muted'
+            }`}>
+              <Shield className="w-4 h-4" />
+            </div>
           </div>
-          <div className="py-2">
-            <span className={`font-mono text-2xl font-black block leading-none ${
+
+          <div className="py-2.5">
+            <span className={`font-mono text-3xl font-black block leading-none tracking-tight ${
               data.openBlockersCount > 0 ? 'text-rose-700' : 'text-ink'
             }`}>
               {data.openBlockersCount}
             </span>
           </div>
-          <span className="font-mono text-[10px] text-muted truncate">
-            {data.openBlockersCount > 0 ? 'Requires Lead assistance' : 'No blockers flagged ✓'}
-          </span>
+
+          <div className="space-y-1.5 pt-1 border-t border-line/60">
+            <span className="font-mono text-[10px] text-muted truncate block">
+              {data.openBlockersCount > 0 ? 'Requires Lead assistance' : 'No blockers flagged ✓'}
+            </span>
+            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-emerald-500/50'
+                }`}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -389,47 +467,61 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         <div className="lg:col-span-7 space-y-6">
           
           {/* SECTION A: YOUR FOCUS TODAY */}
-          <div className="bg-paper border border-line rounded-md p-5 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between border-b border-line pb-2.5">
-              <div className="flex items-center space-x-2">
-                <Zap className="w-4 h-4 text-primary" />
+          <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 transition-all duration-200 hover:shadow-card-hover">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-md">
+                  <Zap className="w-4 h-4" />
+                </div>
                 <h2 className="font-display text-sm font-bold text-ink uppercase tracking-wider">
                   Your Focus Today
                 </h2>
               </div>
-              <span className="font-mono text-[10px] text-muted font-semibold">
+              <span className="font-mono text-[10px] text-muted font-bold px-2 py-0.5 rounded-full bg-paper-dark border border-line/60">
                 {data.focusItems?.length || 0} Priority Items
               </span>
             </div>
 
             {(!data.focusItems || data.focusItems.length === 0) ? (
-              <div className="py-7 px-4 text-center space-y-1.5 bg-paper-light rounded-sm border border-line/50">
-                <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
+              <div className="py-8 px-4 text-center space-y-2 bg-paper-light/70 rounded-lg border border-line/60">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
                 <h3 className="font-display text-sm font-bold text-ink">
-                  Your focus board is clear.
+                  Your focus board is clear
                 </h3>
                 <p className="font-mono text-xs text-muted max-w-sm mx-auto">
                   No urgent deadlines or blockers right now. Work through your sprint tasks or practice in the Interview Lab.
                 </p>
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {data.focusItems.map((item, idx) => {
                   const isOverdue = item.type === 'OVERDUE_TASK';
                   const isDueToday = item.type === 'TASK_DUE_TODAY';
                   const isHomework = item.type === 'HOMEWORK_DUE';
                   const isBlocker = item.type === 'BLOCKER';
 
+                  let borderAccent = 'border-l-primary';
                   let badgeStyle = 'bg-paper-dark border-line text-ink';
-                  if (isOverdue) badgeStyle = 'bg-rose-500/10 border-rose-500/30 text-rose-800';
-                  else if (isDueToday) badgeStyle = 'bg-amber-500/10 border-amber-500/30 text-amber-800';
-                  else if (isHomework) badgeStyle = 'bg-primary-soft border-primary/20 text-primary';
-                  else if (isBlocker) badgeStyle = 'bg-rose-500/10 border-rose-500/30 text-rose-800';
+                  if (isOverdue) {
+                    borderAccent = 'border-l-rose-500';
+                    badgeStyle = 'bg-rose-500/10 border-rose-500/30 text-rose-800';
+                  } else if (isDueToday) {
+                    borderAccent = 'border-l-amber-500';
+                    badgeStyle = 'bg-amber-500/10 border-amber-500/30 text-amber-800';
+                  } else if (isHomework) {
+                    borderAccent = 'border-l-ochre';
+                    badgeStyle = 'bg-ochre-soft/60 border-ochre/30 text-ochre';
+                  } else if (isBlocker) {
+                    borderAccent = 'border-l-rose-600';
+                    badgeStyle = 'bg-rose-500/10 border-rose-500/30 text-rose-800';
+                  }
 
                   return (
                     <div
                       key={item.id || idx}
-                      className="p-3 bg-paper-light border border-line hover:border-primary/40 rounded-sm transition-all flex items-center justify-between gap-3 shadow-2xs"
+                      className={`p-3.5 bg-paper-light border border-line hover:border-line-dark border-l-4 ${borderAccent} rounded-lg transition-all duration-200 flex items-center justify-between gap-3 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 group`}
                     >
                       <div className="min-w-0 space-y-1">
                         <div className="flex items-center space-x-2">
@@ -440,7 +532,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                             {item.dueInfo}
                           </span>
                         </div>
-                        <h4 className="font-sans text-xs font-semibold text-ink truncate">
+                        <h4 className="font-sans text-xs font-semibold text-ink truncate group-hover:text-primary transition-colors">
                           {item.title}
                         </h4>
                       </div>
@@ -451,10 +543,10 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                           else if (isBlocker) setAskLeadOpen(true);
                           else onNavigateTab('tasks');
                         }}
-                        className="shrink-0 px-3 py-1.5 bg-paper hover:bg-paper-dark border border-line font-mono text-xs font-bold text-ink rounded-xs transition-colors flex items-center space-x-1"
+                        className="shrink-0 px-3 py-1.5 bg-paper hover:bg-paper-dark border border-line font-mono text-xs font-bold text-ink rounded-md transition-all duration-150 flex items-center space-x-1.5 shadow-2xs hover:shadow-xs cursor-pointer"
                       >
                         <span>{item.actionLabel}</span>
-                        <ArrowRight className="w-3 h-3 text-muted" />
+                        <ArrowRight className="w-3 h-3 text-muted group-hover:translate-x-0.5 transition-transform" />
                       </button>
                     </div>
                   );
@@ -464,25 +556,27 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
           </div>
 
           {/* SECTION B: ACTIVE ASSIGNED TASKS */}
-          <div className="bg-paper border border-line rounded-md p-5 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between border-b border-line pb-2.5">
-              <div className="flex items-center space-x-2">
-                <CheckSquare className="w-4 h-4 text-primary" />
+          <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 transition-all duration-200 hover:shadow-card-hover">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-md">
+                  <CheckSquare className="w-4 h-4" />
+                </div>
                 <h2 className="font-display text-sm font-bold text-ink uppercase tracking-wider">
                   Active Tasks
                 </h2>
               </div>
               <button
                 onClick={() => onNavigateTab('tasks')}
-                className="font-mono text-xs font-bold text-primary hover:underline flex items-center space-x-1"
+                className="font-mono text-xs font-bold text-primary hover:text-primary-hover flex items-center space-x-1.5 group cursor-pointer"
               >
                 <span>Kanban Board</span>
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
 
             {(!data.myTasks || data.myTasks.length === 0) ? (
-              <div className="py-7 px-4 text-center space-y-1 bg-paper-light rounded-sm border border-line/50">
+              <div className="py-8 px-4 text-center space-y-1.5 bg-paper-light/70 rounded-lg border border-line/60">
                 <p className="font-display text-sm font-bold text-ink">
                   No active tasks assigned
                 </p>
@@ -491,29 +585,29 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-line">
+              <div className="divide-y divide-line/60">
                 {data.myTasks.slice(0, 4).map((task) => (
                   <div
                     key={task.id}
-                    className="py-3 flex items-center justify-between gap-3 hover:bg-paper-light px-2 rounded-xs transition-colors"
+                    className="py-3 px-2 flex items-center justify-between gap-3 hover:bg-paper-light rounded-lg transition-all duration-150 group cursor-default"
                   >
-                    <div className="flex items-center space-x-2.5 min-w-0">
+                    <div className="flex items-center space-x-3 min-w-0">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${
-                        task.status === 'DONE' ? 'bg-emerald-500' : task.status === 'IN_PROGRESS' ? 'bg-primary' : 'bg-line-dark'
+                        task.status === 'DONE' ? 'bg-emerald-500' : task.status === 'IN_PROGRESS' ? 'bg-primary animate-pulse' : 'bg-line-dark'
                       }`} />
                       <div className="min-w-0">
-                        <span className={`font-sans text-xs font-medium block truncate ${
+                        <span className={`font-sans text-xs font-medium block truncate group-hover:text-primary transition-colors ${
                           task.status === 'DONE' ? 'line-through text-muted' : 'text-ink'
                         }`}>
                           {task.title}
                         </span>
                         <span className="font-mono text-[10px] text-muted">
-                          Priority: {task.priority} {task.deadline ? `· Due: ${task.deadline}` : ''}
+                          Priority: <strong className="text-ink-secondary">{task.priority}</strong> {task.deadline ? `· Due: ${task.deadline}` : ''}
                         </span>
                       </div>
                     </div>
 
-                    <span className={`shrink-0 font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs border uppercase ${
+                    <span className={`shrink-0 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase shadow-2xs ${
                       task.status === 'DONE'
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800'
                         : task.status === 'IN_PROGRESS'
@@ -535,27 +629,33 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         <div className="lg:col-span-5 space-y-6">
 
           {/* STANDUP HUB (Your Standup & Lead's Update in 1 sleek container) */}
-          <div className="bg-paper border border-line rounded-md p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-line pb-2.5">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-primary" />
+          <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 transition-all duration-200 hover:shadow-card-hover">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-md">
+                  <Calendar className="w-4 h-4" />
+                </div>
                 <h2 className="font-display text-sm font-bold text-ink uppercase tracking-wider">
                   Today's Standups
                 </h2>
               </div>
-              <span className="font-mono text-[10px] text-muted">
-                {isSubmittedToday ? 'Updated' : 'Pending'}
+              <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                isSubmittedToday
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-800'
+              }`}>
+                {isSubmittedToday ? 'Updated ✓' : 'Pending Action'}
               </span>
             </div>
 
             {/* PART 1: YOUR STANDUP */}
-            <div className={`p-4 rounded-sm border space-y-2.5 ${
-              isSubmittedToday ? 'bg-emerald-500/5 border-emerald-500/25' : 'bg-paper-light border-line'
+            <div className={`p-4 rounded-lg border space-y-3 transition-all duration-200 ${
+              isSubmittedToday ? 'bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40' : 'bg-paper-light border-line hover:border-line-dark'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-600' : 'bg-amber-500'}`} />
-                  <span>My Standup</span>
+                <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-600' : 'bg-amber-500 animate-pulse'}`} />
+                  <span>My Daily Briefing</span>
                 </span>
                 <span className="font-mono text-[10px] text-muted">
                   {isSubmittedToday && todayStandup?.submittedAt
@@ -565,7 +665,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               </div>
 
               {!isSubmittedToday ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <p className="text-xs text-muted font-sans leading-relaxed">
                     Share your yesterday progress and blockers with the team in 2 minutes.
                   </p>
@@ -577,9 +677,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('WRITE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-1.5 px-3 bg-paper border border-line hover:border-ink font-mono text-xs font-semibold text-ink rounded-xs transition-colors flex items-center justify-center space-x-1"
+                      className="flex-1 py-2 px-3 bg-paper hover:bg-paper-dark border border-line hover:border-ink font-mono text-xs font-semibold text-ink rounded-lg transition-all duration-150 flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
                     >
-                      <PenTool className="w-3 h-3 text-primary" />
+                      <PenTool className="w-3.5 h-3.5 text-primary" />
                       <span>Write</span>
                     </button>
                     <button
@@ -589,18 +689,18 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('VOICE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-1.5 px-3 bg-primary text-paper hover:bg-primary-hover font-mono text-xs font-semibold rounded-xs transition-colors flex items-center justify-center space-x-1"
+                      className="flex-1 py-2 px-3 bg-primary text-paper hover:bg-primary-hover font-mono text-xs font-semibold rounded-lg transition-all duration-150 flex items-center justify-center space-x-1.5 shadow-xs hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer"
                     >
-                      <Mic className="w-3 h-3 text-paper/80" />
+                      <Mic className="w-3.5 h-3.5 text-paper/90" />
                       <span>Record Voice</span>
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {todayStandup?.yesterday && (
-                    <p className="text-xs text-muted line-clamp-2 font-sans">
-                      <strong className="text-ink font-medium">Done:</strong> {todayStandup.yesterday}
+                    <p className="text-xs text-muted line-clamp-2 font-sans bg-paper-light/60 p-2.5 rounded-md border border-line/40">
+                      <strong className="text-ink font-semibold">Done:</strong> {todayStandup.yesterday}
                     </p>
                   )}
 
@@ -614,7 +714,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-line/60">
+                  <div className="flex items-center justify-between pt-2 border-t border-line/50">
                     <button
                       onClick={() => {
                         setStandupModalViewOnly(false);
@@ -622,11 +722,10 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode(todayStandup?.hasVoiceRecording || todayStandup?.submissionType === 'VOICE' ? 'VOICE' : 'WRITE');
                         setStandupModalOpen(true);
                       }}
-                      className="text-xs font-mono text-muted hover:text-ink font-medium"
+                      className="text-xs font-mono text-muted hover:text-ink font-medium cursor-pointer transition-colors"
                     >
                       Edit Standup
                     </button>
-                    <span className="text-muted text-xs">·</span>
                     <button
                       onClick={() => {
                         setStandupModalViewOnly(true);
@@ -634,9 +733,10 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('VIEW');
                         setStandupModalOpen(true);
                       }}
-                      className="text-xs font-mono text-primary hover:underline font-semibold"
+                      className="text-xs font-mono text-primary hover:text-primary-hover font-semibold flex items-center space-x-1 cursor-pointer"
                     >
-                      View Details →
+                      <span>View Details</span>
+                      <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
@@ -645,20 +745,20 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
             {/* PART 2: TEAM LEAD'S STANDUP */}
             {!isCurrentLead && (
-              <div className="p-4 rounded-sm border border-line bg-paper-light space-y-2">
+              <div className="p-4 rounded-lg border border-line bg-paper-light space-y-2.5 transition-all duration-200 hover:border-line-dark">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-primary" />
                     <span>Lead Standup</span>
                   </span>
-                  <span className="font-mono text-[10px] text-muted">
+                  <span className="font-mono text-[10px] text-muted font-medium px-2 py-0.5 rounded-full bg-paper border border-line/60">
                     {data.teamLead ? data.teamLead.name : 'Team Lead'}
                   </span>
                 </div>
 
                 {data.teamLeadStandup ? (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted line-clamp-2 font-sans">
+                  <div className="space-y-2.5">
+                    <p className="text-xs text-muted line-clamp-2 font-sans bg-paper p-2.5 rounded-md border border-line/50">
                       {data.teamLeadStandup.today || data.teamLeadStandup.yesterday || 'Lead daily briefing posted.'}
                     </p>
 
@@ -679,7 +779,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                           setViewStandupTitle(`${data.teamLead?.name || 'Team Lead'}'s Daily Standup`);
                           setViewStandupModalOpen(true);
                         }}
-                        className="text-xs font-mono text-primary hover:underline font-semibold flex items-center space-x-1"
+                        className="text-xs font-mono text-primary hover:text-primary-hover font-semibold flex items-center space-x-1 cursor-pointer"
                       >
                         <span>Listen / Read Lead Standup</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -687,7 +787,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                     </div>
                   </div>
                 ) : (
-                  <p className="font-mono text-xs text-muted italic">
+                  <p className="font-mono text-xs text-muted italic py-1">
                     Lead daily update has not been submitted yet today.
                   </p>
                 )}
@@ -696,14 +796,14 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
           </div>
 
           {/* STANDUP HISTORY & DIRECT MESSAGES (Tabs: Recent logs + messages) */}
-          <div className="bg-paper border border-line rounded-md p-5 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between border-b border-line pb-2">
-              <div className="flex items-center space-x-1 bg-paper-dark p-0.5 rounded-xs border border-line font-mono text-[11px]">
+          <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 transition-all duration-200 hover:shadow-card-hover">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center space-x-1 bg-paper-dark/80 p-1 rounded-lg border border-line font-mono text-[11px]">
                 <button
                   onClick={() => setActiveCommsTab('STANDUPS')}
-                  className={`px-2.5 py-1 rounded-xs font-bold transition-all ${
+                  className={`px-3 py-1 rounded-md font-bold transition-all duration-150 cursor-pointer ${
                     activeCommsTab === 'STANDUPS'
-                      ? 'bg-paper text-primary shadow-2xs'
+                      ? 'bg-paper text-primary shadow-xs'
                       : 'text-muted hover:text-ink'
                   }`}
                 >
@@ -711,9 +811,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                 </button>
                 <button
                   onClick={() => setActiveCommsTab('MESSAGES')}
-                  className={`px-2.5 py-1 rounded-xs font-bold transition-all ${
+                  className={`px-3 py-1 rounded-md font-bold transition-all duration-150 cursor-pointer ${
                     activeCommsTab === 'MESSAGES'
-                      ? 'bg-paper text-primary shadow-2xs'
+                      ? 'bg-paper text-primary shadow-xs'
                       : 'text-muted hover:text-ink'
                   }`}
                 >
@@ -727,9 +827,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             {activeCommsTab === 'STANDUPS' ? (
-              <div className="divide-y divide-line text-xs font-mono">
+              <div className="divide-y divide-line/60 text-xs font-mono">
                 {history.filter((h) => h.date !== localToday).length === 0 ? (
-                  <p className="text-muted text-xs py-4 text-center">
+                  <p className="text-muted text-xs py-5 text-center">
                     No past standup history yet.
                   </p>
                 ) : (
@@ -744,52 +844,54 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                           setViewStandupTitle(`Standup Log · ${h.date}`);
                           setViewStandupModalOpen(true);
                         }}
-                        className="py-2.5 px-1.5 flex items-center justify-between hover:bg-paper-light rounded-xs transition-colors cursor-pointer group"
+                        className="py-2.5 px-2 flex items-center justify-between hover:bg-paper-light rounded-lg transition-all duration-150 cursor-pointer group"
                       >
-                        <div className="flex items-center space-x-2">
-                          <span className="font-bold text-ink">{h.date}</span>
-                          <span className="text-muted">·</span>
-                          <span className="text-emerald-700">✓ Done</span>
+                        <div className="flex items-center space-x-2.5">
+                          <span className="font-bold text-ink group-hover:text-primary transition-colors">{h.date}</span>
+                          <span className="text-muted/60">·</span>
+                          <span className="text-emerald-700 font-semibold">✓ Done</span>
                           {h.hasVoiceRecording && (
                             <Mic className="w-3 h-3 text-primary shrink-0" />
                           )}
                         </div>
-                        <span className="text-muted group-hover:text-primary transition-colors text-[11px]">
-                          View →
+                        <span className="text-muted group-hover:text-primary group-hover:translate-x-0.5 transition-all text-[11px] flex items-center space-x-1">
+                          <span>View</span>
+                          <ArrowRight className="w-3 h-3" />
                         </span>
                       </div>
                     ))
                 )}
               </div>
             ) : (
-              <div className="text-xs font-sans space-y-2">
+              <div className="text-xs font-sans space-y-2.5">
                 {(!data.directMessages || data.directMessages.length === 0) ? (
-                  <div className="py-4 text-center space-y-1">
+                  <div className="py-5 text-center space-y-2">
                     <p className="font-mono text-xs text-muted">
                       No questions asked to Lead yet.
                     </p>
                     <button
                       onClick={() => setAskLeadOpen(true)}
-                      className="font-mono text-xs text-primary hover:underline font-semibold"
+                      className="font-mono text-xs text-primary hover:text-primary-hover font-semibold inline-flex items-center space-x-1 cursor-pointer"
                     >
-                      Ask Lead a question →
+                      <span>Ask Lead a question</span>
+                      <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-line space-y-2">
+                  <div className="divide-y divide-line/60 space-y-2.5">
                     {data.directMessages.slice(0, 3).map((msg) => (
-                      <div key={msg.id} className="pt-2 space-y-1">
+                      <div key={msg.id} className="pt-2.5 space-y-1.5">
                         <div className="flex items-center justify-between text-[10px] font-mono">
-                          <span className="text-muted font-semibold">{msg.relatedTopic || 'Question'}</span>
+                          <span className="text-muted font-bold">{msg.relatedTopic || 'Question'}</span>
                           <span className={msg.status === 'ANSWERED' ? 'text-emerald-700 font-bold' : 'text-amber-700 font-medium'}>
                             {msg.status === 'ANSWERED' ? 'Answered ✓' : 'Awaiting response'}
                           </span>
                         </div>
-                        <p className="text-ink text-xs line-clamp-1">
+                        <p className="text-ink text-xs line-clamp-2 bg-paper-light p-2 rounded-md border border-line/40">
                           "{msg.message}"
                         </p>
                         {msg.leadResponse && (
-                          <div className="p-2 bg-paper-light border border-line rounded-xs text-[11px]">
+                          <div className="p-2.5 bg-paper-light border border-line rounded-md text-[11px] space-y-1">
                             <span className="font-bold text-primary font-mono block text-[10px]">Lead Reply:</span>
                             <p className="text-ink">{msg.leadResponse}</p>
                           </div>
