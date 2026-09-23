@@ -6,30 +6,25 @@ import { Task, TaskComment, TaskHistoryItem, TaskPriority, TaskStatus } from '..
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ProgressBar } from '../../components/common/ProgressBar';
 import { PageContainer } from '../../components/common/PageContainer';
+import { Modal } from '../../components/common/Modal';
 import { PersonalMissionControl } from './PersonalMissionControl';
+import { CreateTaskModal } from './CreateTaskModal';
+import { TaskDetailModal } from './TaskDetailModal';
 import {
   Plus,
-  MessageSquare,
-  History,
-  X,
-  Send,
   Search,
   ArrowRight,
   ArrowLeft,
-  Calendar,
   Users,
   AlertCircle,
   AlertTriangle,
-  Tag,
   CheckCircle2,
-  RotateCcw,
   FileCheck,
-  ShieldAlert,
-  ExternalLink,
   Trash2,
   Layers,
   Target,
   Check,
+  X,
 } from 'lucide-react';
 
 const COLUMNS: {
@@ -41,8 +36,8 @@ const COLUMNS: {
   { id: 'TODO', title: 'Assigned', dotColor: 'bg-ink' },
   { id: 'IN_PROGRESS', title: 'In Progress', dotColor: 'bg-attention' },
   { id: 'BLOCKED', title: 'Blocked', dotColor: 'bg-red-500' },
-  { id: 'REVIEW', title: 'Submitted / Review', dotColor: 'bg-amber-500' },
-  { id: 'DONE', title: 'Approved / Completed', dotColor: 'bg-emerald-600' },
+  { id: 'REVIEW', title: 'In Review', dotColor: 'bg-amber-500' },
+  { id: 'DONE', title: 'Completed', dotColor: 'bg-emerald-600' },
 ];
 
 export interface LabelCategory {
@@ -65,8 +60,6 @@ export const LABEL_CATEGORIES: LabelCategory[] = [
   },
 ];
 
-type AssignmentMode = 'INDIVIDUAL' | 'MULTIPLE' | 'ENTIRE_CREW';
-
 export const KanbanBoardPage: React.FC = () => {
   const { user } = useAuth();
   const cachedTasks = cacheStore.get<Task[]>('tasks_list');
@@ -79,40 +72,183 @@ export const KanbanBoardPage: React.FC = () => {
     }
     return [];
   });
-  const [loading, setLoading] = useState(!cachedTasks);
+  const [, setLoading] = useState(!cachedTasks);
+
+  // Selected task detail state
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskComments, setTaskComments] = useState<TaskComment[]>([]);
   const [taskHistory, setTaskHistory] = useState<TaskHistoryItem[]>([]);
-  const [newComment, setNewComment] = useState('');
+
+  // Modal open states
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [createModalStatus, setCreateModalStatus] = useState<TaskStatus>('TODO');
+  const [createModalAssigneeId, setCreateModalAssigneeId] = useState<number | undefined>(undefined);
+
+  // Filters state
   const [assigneeFilter, setAssigneeFilter] = useState<string>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [attentionFilter, setAttentionFilter] = useState<string | null>(null);
+  const [attentionFilter, setAttentionFilter] = useState<'OVERDUE' | 'REVIEW' | 'BLOCKED' | null>(null);
   const [mobileColumnTab, setMobileColumnTab] = useState<'ALL' | TaskStatus | 'BLOCKED'>('ALL');
-
-  // Review Feedback Note state
-  const [revisionFeedback, setRevisionFeedback] = useState<string>('');
-
-  // Enhanced Assignment Mode State
-  const [assignmentMode, setAssignmentMode] = useState<AssignmentMode>('INDIVIDUAL');
-  const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
-  const [validationError, setValidationError] = useState<string>('');
-
-  // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<TaskPriority>('MED');
-  const [status, setStatus] = useState<TaskStatus>('TODO');
-  const [deadline, setDeadline] = useState('');
-  const [estHours, setEstHours] = useState('4.0');
-  const [selectedLabels, setSelectedLabels] = useState<string[]>(['Java', 'Core Java']);
-  const [isLabelPickerOpen, setIsLabelPickerOpen] = useState<boolean>(false);
 
   // Task Deletion State
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isDeletingTask, setIsDeletingTask] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const fetchTasks = async () => {
+    try {
+      if (!tasks.length && !cacheStore.get<Task[]>('tasks_list')) {
+        setLoading(true);
+      }
+      const [tasksData, teamData] = await Promise.all([
+        api.getTasks(),
+        api.getMyTeam().catch(() => null),
+      ]);
+      setTasks(tasksData);
+      if (teamData && teamData.members && teamData.members.length > 0) {
+        setCrewMembers(teamData.members.map(mapTeamMemberToCrewProfile));
+      } else if (user) {
+        setCrewMembers([
+          {
+            id: user.id,
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role === 'LEAD' ? 'LEAD' : 'MEMBER',
+            serialNumber: user.serialNumber || 'CREW-001',
+            roleTitle: user.position || 'SDE Intern',
+            identityTitle: user.role === 'LEAD' ? 'CURRENT LEAD' : 'MEMBER',
+            characterClass: user.role === 'LEAD' ? 'LEADERSHIP' : 'ENGINEERING',
+            symbol: user.name ? user.name.charAt(0).toUpperCase() : 'M',
+            isCurrentLead: user.role === 'LEAD',
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error('Failed to load tasks / team:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const openTaskDrawer = async (task: Task) => {
+    setSelectedTask(task);
+    try {
+      const [comments, history] = await Promise.all([
+        api.getTaskComments(task.id),
+        api.getTaskHistory(task.id),
+      ]);
+      setTaskComments(comments);
+      setTaskHistory(history);
+    } catch (err) {
+      console.error('Failed to load task details:', err);
+    }
+  };
+
+  const handleStatusChange = async (taskId: number, newStatus: TaskStatus) => {
+    try {
+      const updated = await api.updateTaskStatus(taskId, { status: newStatus });
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+      if (selectedTask?.id === taskId) {
+        setSelectedTask(updated);
+        const history = await api.getTaskHistory(taskId);
+        setTaskHistory(history);
+      }
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+    }
+  };
+
+  const handleProgressChange = async (taskId: number, progressPct: number) => {
+    try {
+      const updated = await api.updateTaskStatus(taskId, { progressPct });
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+      if (selectedTask?.id === taskId) {
+        setSelectedTask(updated);
+        const history = await api.getTaskHistory(taskId);
+        setTaskHistory(history);
+      }
+    } catch (err) {
+      console.error('Failed to update task progress:', err);
+    }
+  };
+
+  const handleReassignTask = async (taskId: number, newAssigneeId: number) => {
+    try {
+      const updated = await api.updateTask(taskId, { assigneeId: newAssigneeId });
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+      if (selectedTask?.id === taskId) {
+        setSelectedTask(updated);
+        const history = await api.getTaskHistory(taskId);
+        setTaskHistory(history);
+      }
+    } catch (err) {
+      console.error('Failed to reassign task:', err);
+    }
+  };
+
+  const handleRequestRevisions = async (taskId: number, feedback: string) => {
+    try {
+      await api.addTaskComment(taskId, `[REVISION REQUESTED]: ${feedback}`);
+      const updated = await api.updateTaskStatus(taskId, { status: 'IN_PROGRESS' });
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+      if (selectedTask?.id === taskId) {
+        setSelectedTask(updated);
+        const [comments, history] = await Promise.all([
+          api.getTaskComments(taskId),
+          api.getTaskHistory(taskId),
+        ]);
+        setTaskComments(comments);
+        setTaskHistory(history);
+      }
+    } catch (err) {
+      console.error('Failed to request revisions:', err);
+    }
+  };
+
+  const handleAddComment = async (comment: string) => {
+    if (!selectedTask || !comment.trim()) return;
+    try {
+      await api.addTaskComment(selectedTask.id, comment.trim());
+      const comments = await api.getTaskComments(selectedTask.id);
+      setTaskComments(comments);
+      fetchTasks();
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+  };
+
+  const handleCreateTask = async (taskData: {
+    title: string;
+    description: string;
+    priority: TaskPriority;
+    status: TaskStatus;
+    targetAssigneeIds: number[];
+    deadline?: string;
+    estHours?: number;
+    labels: string[];
+  }) => {
+    await Promise.all(
+      taskData.targetAssigneeIds.map((memberUserId) =>
+        api.createTask({
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          status: taskData.status,
+          assigneeId: memberUserId,
+          deadline: taskData.deadline,
+          estHours: taskData.estHours,
+          labels: taskData.labels,
+        })
+      )
+    );
+    fetchTasks();
+  };
 
   const handleConfirmDeleteTask = async () => {
     if (!taskToDelete) return;
@@ -132,291 +268,48 @@ export const KanbanBoardPage: React.FC = () => {
     }
   };
 
-  const fetchTasks = async () => {
-    try {
-      if (!tasks.length && !cacheStore.get<Task[]>('tasks_list')) {
-        setLoading(true);
-      }
-      const [tasksData, teamData] = await Promise.all([
-        api.getTasks(),
-        api.getMyTeam().catch(() => null),
-      ]);
-      setTasks(tasksData);
-      if (teamData && teamData.members && teamData.members.length > 0) {
-        setCrewMembers(teamData.members.map(mapTeamMemberToCrewProfile));
-      } else if (user) {
-        setCrewMembers([mapTeamMemberToCrewProfile({
-          membershipId: 1,
-          userId: user.id,
-          name: user.name,
-          email: user.email,
-          serialNumber: user.serialNumber || 'MEMBER',
-          position: user.position || 'SDE Intern',
-          role: (user.role === 'ADMIN' ? 'LEAD' : user.role) as 'LEAD' | 'MEMBER',
-          isCurrentLead: Boolean(user.isCurrentLead),
-          joinedAt: new Date().toISOString(),
-          isActive: true,
-        })]);
-      }
-    } catch (err) {
-      console.error('Failed to load tasks:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, [user]);
-
-  // ESC Key Handler to close centered modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedTask) {
-        setSelectedTask(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTask]);
-
-  if (!user) return null;
-
-  const isLead = user.role === 'LEAD' || user.role === 'ADMIN';
-
-  // EXPLICIT ROLE SEPARATION: Non-Lead Member Accounts for member workload cards
-  const memberAccounts = crewMembers.filter((m) => m.role === 'MEMBER');
-
-  const memberProfile = crewMembers.find((m) => {
-    if (m.email.toLowerCase().trim() === user.email.toLowerCase().trim()) return true;
-    if (m.userId === user.id) return true;
-    if (user.name && m.name.toLowerCase().includes(user.name.toLowerCase().split(' ')[0])) return true;
-    return false;
-  }) || null;
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-8 py-16">
-        <div className="flex items-center justify-center py-20 text-muted font-mono text-xs animate-pulse">
-          Loading engineering tasks...
-        </div>
-      </div>
-    );
-  }
-
-  const openTaskDrawer = async (task: Task) => {
-    setSelectedTask(task);
-    setRevisionFeedback('');
-    try {
-      const [comments, history] = await Promise.all([
-        api.getTaskComments(task.id),
-        api.getTaskHistory(task.id),
-      ]);
-      setTaskComments(comments);
-      setTaskHistory(history);
-    } catch (err) {
-      console.error('Failed to fetch task details:', err);
-    }
-  };
-
-  const handleStatusChange = async (taskId: number, newStatus: TaskStatus) => {
-    try {
-      const updated = await api.updateTaskStatus(taskId, {
-        status: newStatus,
-        progressPct: newStatus === 'DONE' ? 100 : undefined,
-      });
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-      if (selectedTask?.id === taskId) {
-        setSelectedTask(updated);
-        const history = await api.getTaskHistory(taskId);
-        setTaskHistory(history);
-      }
-    } catch (err) {
-      console.error('Failed to update task status:', err);
-    }
-  };
-
-  const handleRequestRevision = async (taskId: number) => {
-    try {
-      if (revisionFeedback.trim()) {
-        await api.addTaskComment(taskId, `[Lead Review Feedback]: ${revisionFeedback.trim()}`);
-      }
-      const updated = await api.updateTaskStatus(taskId, { status: 'IN_PROGRESS' });
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-      if (selectedTask?.id === taskId) {
-        setSelectedTask(updated);
-        const [comments, history] = await Promise.all([
-          api.getTaskComments(taskId),
-          api.getTaskHistory(taskId),
-        ]);
-        setTaskComments(comments);
-        setTaskHistory(history);
-      }
-      setRevisionFeedback('');
-    } catch (err) {
-      console.error('Failed to request revisions:', err);
-    }
-  };
-
-  const handleReassignTask = async (taskId: number, newAssigneeId: number) => {
-    try {
-      const updated = await api.updateTask(taskId, { assigneeId: newAssigneeId });
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-      if (selectedTask?.id === taskId) {
-        setSelectedTask(updated);
-        const history = await api.getTaskHistory(taskId);
-        setTaskHistory(history);
-      }
-    } catch (err) {
-      console.error('Failed to reassign task:', err);
-    }
-  };
-
-  const handleProgressChange = async (taskId: number, progressPct: number) => {
-    try {
-      const updated = await api.updateTaskStatus(taskId, { progressPct });
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-      if (selectedTask?.id === taskId) {
-        setSelectedTask(updated);
-        const history = await api.getTaskHistory(taskId);
-        setTaskHistory(history);
-      }
-    } catch (err) {
-      console.error('Failed to update task progress:', err);
-    }
-  };
-
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTask || !newComment.trim()) return;
-
-    try {
-      await api.addTaskComment(selectedTask.id, newComment.trim());
-      setNewComment('');
-      const comments = await api.getTaskComments(selectedTask.id);
-      setTaskComments(comments);
-      fetchTasks();
-    } catch (err) {
-      console.error('Failed to add comment:', err);
-    }
-  };
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setValidationError('');
-
-    let targetIds: number[] = [];
-
-    if (assignmentMode === 'INDIVIDUAL') {
-      if (selectedMemberIds.length === 0) {
-        setValidationError('Please select a member to assign this mission.');
-        return;
-      }
-      targetIds = [selectedMemberIds[0]];
-    } else if (assignmentMode === 'MULTIPLE') {
-      if (selectedMemberIds.length === 0) {
-        setValidationError('Please select at least one crew member.');
-        return;
-      }
-      targetIds = selectedMemberIds;
-    } else if (assignmentMode === 'ENTIRE_CREW') {
-      targetIds = memberAccounts.map((m) => m.userId);
-    }
-
-    try {
-      // Create an individual task instance for each targeted member
-      await Promise.all(
-        targetIds.map((memberUserId) =>
-          api.createTask({
-            title,
-            description,
-            priority,
-            status,
-            assigneeId: memberUserId,
-            deadline: deadline || undefined,
-            estHours: estHours ? parseFloat(estHours) : undefined,
-            labels: selectedLabels,
-          })
-        )
-      );
-
-      setIsCreatingTask(false);
-      setTitle('');
-      setDescription('');
-      setSelectedMemberIds([]);
-      setSelectedLabels(['Java', 'Core Java']);
-      setIsLabelPickerOpen(false);
-      setValidationError('');
-      fetchTasks();
-    } catch (err) {
-      console.error('Failed to create task:', err);
-    }
-  };
-
   const openCreateForColumn = (colId: TaskStatus) => {
-    setStatus(colId);
-    setAssignmentMode('INDIVIDUAL');
-    setSelectedMemberIds(memberAccounts[0] ? [memberAccounts[0].userId] : []);
-    setSelectedLabels(['Java', 'Core Java']);
-    setIsLabelPickerOpen(false);
+    setCreateModalStatus(colId);
+    setCreateModalAssigneeId(undefined);
     setIsCreatingTask(true);
   };
 
-  // Metrics Calculations for Lead Dashboard
+  // Metrics Calculations
+  const isLead = user?.role === 'LEAD' || user?.role === 'ADMIN';
+  const memberProfile = crewMembers.find((m) => m.userId === user?.id) || null;
+  const memberAccounts = crewMembers.filter((m) => m.role !== 'LEAD');
+
   const todayStr = new Date().toISOString().substring(0, 10);
   const totalActiveCount = tasks.filter((t) => t.status !== 'DONE').length;
-  const assignedCount = tasks.filter((t) => t.status === 'TODO').length;
-  const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
   const reviewTasks = tasks.filter((t) => t.status === 'REVIEW');
   const reviewCount = reviewTasks.length;
   const completedCount = tasks.filter((t) => t.status === 'DONE').length;
   const blockedTasks = tasks.filter((t) => t.labels?.includes('BLOCKED'));
   const blockedCount = blockedTasks.length;
 
-  const overdueTasks = tasks.filter((t) => t.status !== 'DONE' && t.deadline && t.deadline < todayStr);
-  const dueSoonTasks = tasks.filter((t) => t.status !== 'DONE' && t.deadline && t.deadline >= todayStr);
+  const overdueTasks = tasks.filter(
+    (t) => t.status !== 'DONE' && t.deadline && t.deadline < todayStr
+  );
 
   const overallTeamPct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  // Target Assignee calculations for Summary
-  let targetMemberNames: string[] = [];
-  if (assignmentMode === 'INDIVIDUAL') {
-    const m = crewMembers.find((cm) => cm.userId === selectedMemberIds[0]);
-    if (m) targetMemberNames = [m.name];
-  } else if (assignmentMode === 'MULTIPLE') {
-    targetMemberNames = selectedMemberIds
-      .map((id) => crewMembers.find((cm) => cm.userId === id)?.name)
-      .filter((n): n is string => Boolean(n));
-  } else if (assignmentMode === 'ENTIRE_CREW') {
-    targetMemberNames = memberAccounts.map((m) => m.name);
-  }
-
-  // Filter tasks for Lead view
-  const filteredTasks = tasks.filter((t) => {
+  // Filtered Tasks for Board
+  const filteredTasks = tasks.filter((task) => {
+    if (assigneeFilter !== 'ALL' && task.assigneeId !== Number(assigneeFilter)) return false;
+    if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false;
     if (attentionFilter === 'OVERDUE') {
-      if (t.status === 'DONE' || !t.deadline || t.deadline >= todayStr) return false;
-    } else if (attentionFilter === 'REVIEW') {
-      if (t.status !== 'REVIEW') return false;
-    } else if (attentionFilter === 'DUE_SOON') {
-      if (t.status === 'DONE' || !t.deadline || t.deadline < todayStr) return false;
+      const isOverdue = task.status !== 'DONE' && task.deadline && task.deadline < todayStr;
+      if (!isOverdue) return false;
     }
+    if (attentionFilter === 'REVIEW' && task.status !== 'REVIEW') return false;
+    if (attentionFilter === 'BLOCKED' && !task.labels?.includes('BLOCKED')) return false;
 
-    if (assigneeFilter !== 'ALL') {
-      if (assigneeFilter === 'ME') {
-        if (t.assigneeId !== user?.id) return false;
-      } else if (String(t.assigneeId) !== assigneeFilter) {
-        return false;
-      }
-    }
-    if (priorityFilter !== 'ALL' && t.priority !== priorityFilter) {
-      return false;
-    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchTitle = t.title.toLowerCase().includes(q);
-      const matchDesc = t.description?.toLowerCase().includes(q);
-      const matchLabels = t.labels?.some((l) => l.toLowerCase().includes(q));
-      if (!matchTitle && !matchDesc && !matchLabels) return false;
+      const matchTitle = task.title.toLowerCase().includes(q);
+      const matchAssignee = task.assigneeName?.toLowerCase().includes(q);
+      const matchLabel = task.labels?.some((l) => l.toLowerCase().includes(q));
+      if (!matchTitle && !matchAssignee && !matchLabel) return false;
     }
     return true;
   });
@@ -444,239 +337,247 @@ export const KanbanBoardPage: React.FC = () => {
           onOpenTask={openTaskDrawer}
           onStatusChange={handleStatusChange}
           onCreateTask={() => {
-            setStatus('TODO');
-            setAssignmentMode('INDIVIDUAL');
-            setSelectedMemberIds([user.id]);
-            setSelectedLabels(['Java', 'Core Java']);
-            setIsLabelPickerOpen(false);
+            setCreateModalStatus('TODO');
+            setCreateModalAssigneeId(user?.id);
             setIsCreatingTask(true);
           }}
         />
       ) : (
-        /* CONDITION B: LEAD ROLE -> CREW COMMAND CENTER */
-        <div className="space-y-7 animate-fade-in font-sans">
-          {/* 1. CREW TASK CONTROL (Top Dashboard Banner) */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-paper-light via-surface to-paper border border-line/80 rounded-2xl p-6 sm:p-7 shadow-xs">
-            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-44 h-44 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        /* CONDITION B: LEAD ROLE -> REFINED CREW COMMAND CENTER */
+        <div className="space-y-6 animate-fade-in font-sans">
+          {/* 1. STREAMLINED EXECUTIVE LEAD COMMAND HEADER */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-paper-light via-surface to-paper border border-line/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-900 border border-amber-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    CREW TASK CONTROL
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-900 border border-amber-500/20">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    CREW SPRINT COMMAND
                   </span>
                   <span className="text-muted/40">·</span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-paper-dark border border-line text-muted">
-                    {user.serialNumber || 'LEAD'}
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-paper border border-line text-muted">
+                    {user?.serialNumber || 'LEAD'}
                   </span>
                   <span className="text-muted/40">·</span>
-                  <span className="text-xs text-muted font-medium">
-                    {user.position || 'Team Lead'}
-                  </span>
+                  <span className="text-xs text-muted font-medium">Sprint Leader</span>
                 </div>
 
-                <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-                  Engineering Task Command Center
-                </h1>
-                <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-2xl">
-                  Team-wide engineering task orchestration, member workload monitoring, and review queue approvals.
+                <div className="flex items-baseline gap-3">
+                  <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+                    Task Command Center
+                  </h1>
+                  <span className="text-xs font-semibold text-muted bg-paper-dark/60 px-2 py-0.5 rounded-full">
+                    {tasks.length} missions
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
+                  Orchestrate crew velocity, manage member workloads, and review completed deliverables.
                 </p>
               </div>
 
-              <button
-                onClick={() => {
-                  setStatus('TODO');
-                  setAssignmentMode('INDIVIDUAL');
-                  setSelectedMemberIds(memberAccounts[0] ? [memberAccounts[0].userId] : []);
-                  setSelectedLabels(['Java', 'Core Java']);
-                  setIsLabelPickerOpen(false);
-                  setIsCreatingTask(true);
-                }}
-                className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer self-start md:self-auto shrink-0"
-              >
-                <Plus className="w-4 h-4 text-amber-200 group-hover:rotate-90 transition-transform duration-200" />
-                <span>Assign New Task</span>
-              </button>
-            </div>
-          </div>
-
-          {/* 2. DEDICATED LEAD COMMAND STATUS & KPI METRIC CARDS */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-paper-light border border-line/80 rounded-2xl">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/20 text-amber-800 rounded-xl flex items-center justify-center font-bold font-display text-base shadow-2xs">
-                  {user.name.charAt(0)}
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-ink font-display text-sm sm:text-base">{user.name}</span>
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                      LEAD
-                    </span>
+              {/* Header Right: Stats pill & CTA */}
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-paper border border-line rounded-xl text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted block">Engineers</span>
+                    <span className="font-display text-sm font-bold text-ink">{memberAccounts.length} Active</span>
                   </div>
-                  <span className="text-xs text-muted font-sans">Active Sprint Leader</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <div className="px-3 py-1.5 bg-paper border border-line rounded-xl text-xs font-semibold text-ink">
-                  Active Engineers: <span className="font-bold text-primary">{memberAccounts.length}</span>
-                </div>
-                <div className="px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-semibold">
-                  Team Progress: <span className="font-bold text-emerald-700">{overallTeamPct}%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 6 Executive KPI Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Active</span>
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Target className="w-4 h-4" />
+                  <div className="w-px h-6 bg-line" />
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted block">Sprint Progress</span>
+                    <span className="font-display text-sm font-bold text-emerald-700">{overallTeamPct}%</span>
                   </div>
                 </div>
-                <span className="font-display text-xl sm:text-2xl font-black text-ink">{totalActiveCount}</span>
-                <span className="block text-[10px] text-muted">in progress</span>
-              </div>
 
-              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">In Review</span>
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <FileCheck className="w-4 h-4" />
-                  </div>
-                </div>
-                <span className="font-display text-xl sm:text-2xl font-black text-amber-700">{reviewCount}</span>
-                <span className="block text-[10px] text-muted">needs signoff</span>
-              </div>
-
-              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Blocked</span>
-                  <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <AlertCircle className="w-4 h-4" />
-                  </div>
-                </div>
-                <span className="font-display text-xl sm:text-2xl font-black text-red-700">{blockedCount}</span>
-                <span className="block text-[10px] text-muted">needs help</span>
-              </div>
-
-              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Completed</span>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
-                </div>
-                <span className="font-display text-xl sm:text-2xl font-black text-emerald-700">{completedCount}</span>
-                <span className="block text-[10px] text-muted">signed off</span>
-              </div>
-
-              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Overdue</span>
-                  <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 text-red-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                </div>
-                <span className="font-display text-xl sm:text-2xl font-black text-red-700">{overdueTasks.length}</span>
-                <span className="block text-[10px] text-muted">past deadline</span>
-              </div>
-
-              <div className="p-4 bg-paper-light border border-line/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Total</span>
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                </div>
-                <span className="font-display text-xl sm:text-2xl font-black text-ink">{tasks.length}</span>
-                <span className="block text-[10px] text-muted">crew missions</span>
+                <button
+                  onClick={() => {
+                    setCreateModalStatus('TODO');
+                    setCreateModalAssigneeId(memberAccounts[0]?.userId);
+                    setIsCreatingTask(true);
+                  }}
+                  className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-amber-200 group-hover:rotate-90 transition-transform duration-200" />
+                  <span>Assign New Task</span>
+                </button>
               </div>
             </div>
           </div>
 
-          {/* 3. WORKFLOW STAGE DISTRIBUTION PIPELINE */}
-          <div className="p-4 sm:p-5 bg-paper-light border border-line/80 rounded-2xl space-y-3 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-primary" />
-                Workflow Pipeline Distribution
-              </span>
-              <span className="text-xs text-muted font-medium">Sprint Cycle Flow</span>
-            </div>
+          {/* 2. CLICKABLE EXECUTIVE KPI METRIC STRIP (Instant Board Filters) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Active Missions */}
+            <button
+              onClick={() => {
+                setAttentionFilter(null);
+                setPriorityFilter('ALL');
+              }}
+              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+                !attentionFilter && priorityFilter === 'ALL'
+                  ? 'bg-paper-light border-primary/50 ring-1 ring-primary/20 shadow-xs'
+                  : 'bg-paper-light/90 border-line hover:border-line-dark'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Active</span>
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Target className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <span className="font-display text-xl sm:text-2xl font-black text-ink">{totalActiveCount}</span>
+              <span className="block text-[10px] text-muted">in flight</span>
+            </button>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="px-3 py-1 bg-paper border border-line rounded-xl font-semibold text-ink">
-                Assigned ({assignedCount})
-              </span>
-              <span className="text-muted/60">→</span>
-              <span className="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl font-semibold">
-                In Progress ({inProgressCount})
-              </span>
-              <span className="text-muted/60">→</span>
-              <span className="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl font-semibold">
-                Submitted / Review ({reviewCount})
-              </span>
-              <span className="text-muted/60">→</span>
-              <span className="px-3 py-1 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl font-semibold">
-                Approved / Done ({completedCount})
-              </span>
-            </div>
+            {/* In Review */}
+            <button
+              onClick={() => setAttentionFilter(attentionFilter === 'REVIEW' ? null : 'REVIEW')}
+              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+                attentionFilter === 'REVIEW'
+                  ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
+                  : 'bg-paper-light/90 border-line hover:border-line-dark'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Review Queue</span>
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <FileCheck className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <span className="font-display text-xl sm:text-2xl font-black text-amber-700">{reviewCount}</span>
+              <span className="block text-[10px] text-muted">needs signoff</span>
+            </button>
+
+            {/* Blocked */}
+            <button
+              onClick={() => setAttentionFilter(attentionFilter === 'BLOCKED' ? null : 'BLOCKED')}
+              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+                attentionFilter === 'BLOCKED'
+                  ? 'bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-xs'
+                  : 'bg-paper-light/90 border-line hover:border-line-dark'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-red-800 tracking-wider">Blocked</span>
+                <div className="w-7 h-7 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <span className="font-display text-xl sm:text-2xl font-black text-red-700">{blockedCount}</span>
+              <span className="block text-[10px] text-muted">needs help</span>
+            </button>
+
+            {/* Overdue */}
+            <button
+              onClick={() => setAttentionFilter(attentionFilter === 'OVERDUE' ? null : 'OVERDUE')}
+              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+                attentionFilter === 'OVERDUE'
+                  ? 'bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-xs'
+                  : 'bg-paper-light/90 border-line hover:border-line-dark'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-red-800 tracking-wider">Overdue</span>
+                <div className="w-7 h-7 rounded-lg bg-red-500/10 text-red-700 flex items-center justify-center">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <span className="font-display text-xl sm:text-2xl font-black text-red-700">{overdueTasks.length}</span>
+              <span className="block text-[10px] text-muted">past deadline</span>
+            </button>
+
+            {/* Completed */}
+            <button
+              onClick={() => {
+                setAttentionFilter(null);
+                setPriorityFilter('ALL');
+                setMobileColumnTab('DONE');
+              }}
+              className="p-3.5 rounded-2xl border bg-paper-light/90 border-line hover:border-line-dark text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Completed</span>
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <span className="font-display text-xl sm:text-2xl font-black text-emerald-700">{completedCount}</span>
+              <span className="block text-[10px] text-muted">signed off</span>
+            </button>
+
+            {/* Total */}
+            <button
+              onClick={() => {
+                setAttentionFilter(null);
+                setPriorityFilter('ALL');
+                setAssigneeFilter('ALL');
+                setMobileColumnTab('ALL');
+                setSearchQuery('');
+              }}
+              className="p-3.5 rounded-2xl border bg-paper-light/90 border-line hover:border-line-dark text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Total</span>
+                <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <span className="font-display text-xl sm:text-2xl font-black text-ink">{tasks.length}</span>
+              <span className="block text-[10px] text-muted">all missions</span>
+            </button>
           </div>
 
-          {/* 4. REVIEW QUEUE (Top Priority Lead Section) */}
+          {/* 3. REVIEW QUEUE HERO BANNER (Shown when reviewCount > 0) */}
           {reviewCount > 0 && (
-            <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-paper-light to-amber-500/5 border border-amber-500/30 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-paper-light to-amber-500/5 border border-amber-500/30 rounded-2xl p-5 shadow-xs space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
                   <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-800 flex items-center justify-center">
                     <FileCheck className="w-4 h-4" />
                   </div>
-                  <span>Review Queue • {reviewCount} Submissions Awaiting Your Approval</span>
+                  <span>Review Queue · {reviewCount} Submissions Awaiting Sign-off</span>
                 </div>
-                <span className="text-xs text-amber-800 font-medium">Review & Sign Off</span>
+                <span className="text-xs text-amber-800 font-semibold">1-Click Sign-off</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-sans">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-sans">
                 {reviewTasks.map((rt) => (
                   <div
                     key={rt.id}
-                    className="p-4 bg-paper-light border border-amber-300/80 rounded-2xl space-y-3 shadow-2xs hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between"
+                    className="p-3.5 bg-paper border border-amber-300/80 rounded-xl space-y-2.5 shadow-2xs hover:shadow-card transition-all flex flex-col justify-between"
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-mono text-[11px] font-bold text-muted bg-paper px-2 py-0.5 rounded-md border border-line">
+                        <span className="font-mono text-[10px] font-bold text-muted bg-paper-dark px-1.5 py-0.5 rounded border border-line">
                           TASK-{rt.id}
                         </span>
                         <span className="text-amber-800 font-bold bg-amber-100/80 border border-amber-200 px-2 py-0.5 rounded-full text-[10px]">
-                          Submitted
+                          Needs Review
                         </span>
                       </div>
 
-                      <h4 className="font-display font-bold text-ink truncate text-sm">
+                      <h4 className="font-display font-bold text-ink truncate text-xs sm:text-sm">
                         {rt.title}
                       </h4>
 
-                      <div className="text-xs text-muted flex items-center justify-between">
+                      <div className="text-[11px] text-muted flex items-center justify-between">
                         <span>{rt.assigneeName || 'Unassigned'}</span>
-                        <span className="font-bold text-emerald-700">{rt.progressPct}%</span>
+                        <span className="font-bold text-emerald-700">{rt.progressPct}% done</span>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-line/60 flex items-center space-x-2 text-xs">
                       <button
                         onClick={() => handleStatusChange(rt.id, 'DONE')}
-                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-center shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-center shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>Approve</span>
                       </button>
                       <button
                         onClick={() => openTaskDrawer(rt)}
-                        className="py-1.5 px-3 border border-line hover:border-line-dark bg-paper text-ink font-semibold rounded-xl active:scale-95 transition-all cursor-pointer"
+                        className="py-1.5 px-3 border border-line hover:border-line-dark bg-paper text-ink font-semibold rounded-lg active:scale-95 transition-all cursor-pointer"
                       >
                         Details
                       </button>
@@ -687,269 +588,89 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
           )}
 
-          {/* 5. ATTENTION REQUIRED BANNER */}
-          {(overdueTasks.length > 0 || dueSoonTasks.length > 0) && (
-            <div className="border border-red-300/80 bg-red-50/20 p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center space-x-2.5 text-red-900 font-bold uppercase tracking-wider">
-                <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-700 shrink-0">
-                  <AlertTriangle className="w-4 h-4" />
-                </div>
-                <span>Attention Required • Deadlines & Bottlenecks</span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {overdueTasks.length > 0 && (
-                  <button
-                    onClick={() => setAttentionFilter(attentionFilter === 'OVERDUE' ? null : 'OVERDUE')}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
-                      attentionFilter === 'OVERDUE'
-                        ? 'bg-red-700 text-white border-red-800 shadow-xs'
-                        : 'bg-paper text-red-900 border-red-300 hover:bg-red-50'
-                    }`}
-                  >
-                    {overdueTasks.length} Overdue
-                  </button>
-                )}
-
-                {dueSoonTasks.length > 0 && (
-                  <button
-                    onClick={() => setAttentionFilter(attentionFilter === 'DUE_SOON' ? null : 'DUE_SOON')}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
-                      attentionFilter === 'DUE_SOON'
-                        ? 'bg-ink text-white border-ink shadow-xs'
-                        : 'bg-paper text-ink border-line hover:bg-paper-dark'
-                    }`}
-                  >
-                    {dueSoonTasks.length} Due Soon
-                  </button>
-                )}
-
-                {attentionFilter && (
-                  <button
-                    onClick={() => setAttentionFilter(null)}
-                    className="text-xs text-muted hover:text-ink underline ml-1 cursor-pointer"
-                  >
-                    Clear Filter
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 6. CREW WORKLOAD OVERVIEW (NON-LEAD MEMBERS) */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-line pb-3">
+          {/* 4. CREW WORKLOAD OVERVIEW (Compact, Elegant Cards) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-line pb-2.5">
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="font-display text-base font-bold text-ink">
-                    Crew Workload Overview
-                  </h2>
-                  <p className="text-xs text-muted">
-                    Workload, active tasks, and status for all {memberAccounts.length} team members
-                  </p>
-                </div>
+                <Users className="w-4 h-4 text-primary" />
+                <h2 className="font-display text-sm font-bold text-ink">
+                  Crew Workload Overview ({memberAccounts.length} Engineers)
+                </h2>
               </div>
+              <span className="text-xs text-muted">Click an engineer to filter the board</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {memberAccounts
-                .sort((a, b) => {
-                  const aTasks = tasks.filter((t) => t.assigneeId === a.userId);
-                  const bTasks = tasks.filter((t) => t.assigneeId === b.userId);
-                  const aNeedsAtt = aTasks.some((t) => t.status === 'REVIEW' || (t.deadline && t.deadline < todayStr) || t.labels?.includes('BLOCKED'));
-                  const bNeedsAtt = bTasks.some((t) => t.status === 'REVIEW' || (t.deadline && t.deadline < todayStr) || t.labels?.includes('BLOCKED'));
-                  if (aNeedsAtt && !bNeedsAtt) return -1;
-                  if (!aNeedsAtt && bNeedsAtt) return 1;
-                  return 0;
-                })
-                .map((cm) => {
-                  const cmTasks = tasks.filter((t) => t.assigneeId === cm.userId);
-                  const cmActive = cmTasks.filter((t) => t.status !== 'DONE');
-                  const cmReview = cmTasks.filter((t) => t.status === 'REVIEW');
-                  const cmDone = cmTasks.filter((t) => t.status === 'DONE');
-                  const cmBlocked = cmTasks.filter((t) => t.labels?.includes('BLOCKED'));
-                  const cmOverdue = cmActive.filter((t) => t.deadline && t.deadline < todayStr);
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {memberAccounts.map((cm) => {
+                const cmTasks = tasks.filter((t) => t.assigneeId === cm.userId);
+                const cmActive = cmTasks.filter((t) => t.status !== 'DONE');
+                const cmReview = cmTasks.filter((t) => t.status === 'REVIEW');
+                const cmDone = cmTasks.filter((t) => t.status === 'DONE');
+                const isSelected = assigneeFilter === String(cm.userId);
 
-                  const featuredTask = cmActive[0] || cmTasks[0] || null;
-
-                  // Dynamic Member Status Calculation
-                  let memberStatus: 'BLOCKED' | 'WAITING FOR REVIEW' | 'OVERDUE' | 'COMPLETED' | 'ON TRACK' = 'ON TRACK';
-                  let statusBg = 'bg-paper text-ink border-line';
-
-                  if (cmBlocked.length > 0) {
-                    memberStatus = 'BLOCKED';
-                    statusBg = 'bg-red-50 text-red-800 border-red-200';
-                  } else if (cmReview.length > 0) {
-                    memberStatus = 'WAITING FOR REVIEW';
-                    statusBg = 'bg-amber-50 text-amber-900 border-amber-200';
-                  } else if (cmOverdue.length > 0) {
-                    memberStatus = 'OVERDUE';
-                    statusBg = 'bg-red-50 text-red-800 border-red-200';
-                  } else if (cmActive.length === 0 && cmDone.length > 0) {
-                    memberStatus = 'COMPLETED';
-                    statusBg = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-                  } else {
-                    memberStatus = 'ON TRACK';
-                    statusBg = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-                  }
-
-                  const needsAttention = memberStatus === 'BLOCKED' || memberStatus === 'WAITING FOR REVIEW' || memberStatus === 'OVERDUE';
-                  const isSelected = assigneeFilter === String(cm.userId);
-
-                  return (
-                    <div
-                      key={cm.id}
-                      onClick={() => setAssigneeFilter(isSelected ? 'ALL' : String(cm.userId))}
-                      className={`p-5 bg-paper-light border rounded-2xl cursor-pointer space-y-3.5 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover group flex flex-col justify-between ${
-                        isSelected
-                          ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md bg-amber-50/10'
-                          : 'border-line/80 hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="space-y-3">
-                        {/* Card Header */}
-                        <div className="flex items-center justify-between pb-2 border-b border-line/60">
-                          <div className="flex items-center space-x-2.5">
-                            <div className="w-8 h-8 bg-paper border border-line rounded-xl flex items-center justify-center font-bold text-ink text-xs shadow-2xs">
-                              {cm.name.charAt(0)}
-                            </div>
-                            <div>
-                              <span className="font-bold text-ink block font-display text-sm leading-snug">{cm.name}</span>
-                              <span className="text-[10px] text-muted font-mono">{cm.serialNumber}</span>
-                            </div>
-                          </div>
-
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusBg}`}>
-                            {memberStatus}
-                          </span>
+                return (
+                  <div
+                    key={cm.id}
+                    onClick={() => setAssigneeFilter(isSelected ? 'ALL' : String(cm.userId))}
+                    className={`p-3.5 bg-paper-light border rounded-2xl cursor-pointer space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card group ${
+                      isSelected
+                        ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-xs bg-amber-50/10'
+                        : 'border-line/80 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-7 h-7 bg-paper border border-line rounded-lg flex items-center justify-center font-bold text-ink text-xs shadow-2xs">
+                          {cm.name.charAt(0)}
                         </div>
-
-                        {/* Needs Attention Alert */}
-                        {needsAttention && (
-                          <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl flex items-center space-x-1.5 text-amber-900 font-semibold text-[10px]">
-                            <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                            <span>Needs Attention</span>
-                          </div>
-                        )}
-
-                        {/* Current Mission Spotlight */}
-                        {featuredTask ? (
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center text-[10px]">
-                              <span className="text-muted font-bold uppercase tracking-wider">Current Focus:</span>
-                              <span className="font-semibold text-amber-800 text-[10px] bg-paper px-2 py-0.5 rounded-md border border-line">
-                                {featuredTask.status}
-                              </span>
-                            </div>
-
-                            <div className="font-semibold text-ink truncate text-xs">
-                              {featuredTask.title}
-                            </div>
-
-                            <div className="space-y-1 pt-1">
-                              <div className="flex justify-between text-[10px]">
-                                <span className="text-muted">Progress</span>
-                                <span className="font-bold text-ink">{featuredTask.progressPct}%</span>
-                              </div>
-                              <ProgressBar progressPct={featuredTask.progressPct} />
-                            </div>
-
-                            <div className="flex justify-between text-[10px] text-muted pt-1">
-                              <span>Due: {featuredTask.deadline || 'Today'}</span>
-                              <span>Est: {featuredTask.estHours || 4.0}h</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-muted italic text-xs py-3 text-center border border-dashed border-line rounded-xl bg-paper/50">
-                            No active missions.
-                          </div>
-                        )}
+                        <div>
+                          <span className="font-bold text-ink block font-display text-xs leading-snug truncate max-w-[120px]">
+                            {cm.name}
+                          </span>
+                          <span className="text-[10px] text-muted font-mono">{cm.serialNumber}</span>
+                        </div>
                       </div>
 
-                      {/* Member Metrics & Dynamic Action Button */}
-                      <div className="space-y-3 pt-2 border-t border-line/60">
-                        <div className="grid grid-cols-3 gap-1 text-[11px] text-center py-2 bg-paper rounded-xl border border-line">
-                          <div>
-                            <span className="block font-bold text-ink">{cmActive.length}</span>
-                            <span className="text-[10px] text-muted">Active</span>
-                          </div>
-                          <div>
-                            <span className="block font-bold text-amber-700">{cmReview.length}</span>
-                            <span className="text-[10px] text-muted">Review</span>
-                          </div>
-                          <div>
-                            <span className="block font-bold text-emerald-700">{cmDone.length}</span>
-                            <span className="text-[10px] text-muted">Done</span>
-                          </div>
-                        </div>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        cmReview.length > 0
+                          ? 'bg-amber-50 text-amber-900 border-amber-200'
+                          : cmActive.length === 0
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : 'bg-paper text-ink border-line'
+                      }`}>
+                        {cmReview.length > 0 ? 'Review' : cmActive.length === 0 ? 'All Done' : 'On Track'}
+                      </span>
+                    </div>
 
-                        <div>
-                          {memberStatus === 'WAITING FOR REVIEW' ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (featuredTask) openTaskDrawer(featuredTask);
-                              }}
-                              className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
-                            >
-                              <FileCheck className="w-3.5 h-3.5" />
-                              <span>Review Submission</span>
-                            </button>
-                          ) : memberStatus === 'BLOCKED' ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (featuredTask) openTaskDrawer(featuredTask);
-                              }}
-                              className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
-                            >
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              <span>View Blocked Task</span>
-                            </button>
-                          ) : memberStatus === 'COMPLETED' ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (featuredTask) openTaskDrawer(featuredTask);
-                              }}
-                              className="w-full py-2 bg-paper border border-line hover:border-ink/50 text-ink font-semibold text-xs rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>View Details</span>
-                            </button>
-                          ) : featuredTask ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openTaskDrawer(featuredTask);
-                              }}
-                              className="w-full py-2 bg-primary hover:bg-primary-hover text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-1 active:scale-95 transition-all cursor-pointer"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5 text-emerald-300" />
-                              <span>View Task</span>
-                            </button>
-                          ) : null}
-                        </div>
+                    <div className="grid grid-cols-3 gap-1 text-[10px] text-center py-1.5 bg-paper rounded-xl border border-line">
+                      <div>
+                        <span className="block font-bold text-ink">{cmActive.length}</span>
+                        <span className="text-muted">Active</span>
+                      </div>
+                      <div>
+                        <span className="block font-bold text-amber-700">{cmReview.length}</span>
+                        <span className="text-muted">Review</span>
+                      </div>
+                      <div>
+                        <span className="block font-bold text-emerald-700">{cmDone.length}</span>
+                        <span className="text-muted">Done</span>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* 7. LEAD FILTER BAR & SEARCH */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-paper-light border border-line/80 rounded-2xl text-xs">
+          {/* 5. TOOLBAR: SEARCH & FILTERS */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-paper-light border border-line rounded-2xl text-xs shadow-2xs">
             <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span className="text-muted font-bold mr-1">Filter Member:</span>
               <button
                 onClick={() => setAssigneeFilter('ALL')}
-                className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer text-xs font-semibold ${
                   assigneeFilter === 'ALL'
-                    ? 'bg-primary text-white border-primary font-semibold shadow-xs'
-                    : 'bg-paper text-muted border-line hover:border-line-dark'
+                    ? 'bg-primary text-white border-primary shadow-xs'
+                    : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
                 }`}
               >
                 All Crew ({tasks.length})
@@ -958,10 +679,10 @@ export const KanbanBoardPage: React.FC = () => {
                 <button
                   key={m.id}
                   onClick={() => setAssigneeFilter(String(m.userId))}
-                  className={`px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                  className={`px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer text-xs font-semibold ${
                     assigneeFilter === String(m.userId)
-                      ? 'bg-primary text-white border-primary font-semibold shadow-xs'
-                      : 'bg-paper text-muted border-line hover:border-line-dark'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
                   }`}
                 >
                   {m.name.split(' ')[0]}
@@ -971,25 +692,33 @@ export const KanbanBoardPage: React.FC = () => {
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 sm:flex-initial">
-                <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-3" />
+                <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search crew tasks..."
-                  className="pl-8 pr-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl text-xs outline-none w-full sm:w-48 font-sans transition-all"
+                  placeholder="Filter tasks..."
+                  className="pl-8 pr-3 py-1.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl text-xs outline-none w-full sm:w-44 font-sans transition-all"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-ink text-xs"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </div>
 
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 {['ALL', 'HIGH', 'MED', 'LOW'].map((p) => (
                   <button
                     key={p}
                     onClick={() => setPriorityFilter(p)}
-                    className={`px-2.5 py-1.5 rounded-xl border text-[11px] transition-all cursor-pointer active:scale-95 ${
+                    className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
                       priorityFilter === p
-                        ? 'bg-primary text-white border-primary font-semibold shadow-xs'
-                        : 'bg-paper text-muted border-line hover:border-line-dark'
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
                     }`}
                   >
                     {p}
@@ -999,44 +728,7 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Mobile Column Quick Filter Tab Bar (Hidden on desktop md:) */}
-          <div className="md:hidden flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1 border-b border-line font-mono text-xs">
-            <button
-              type="button"
-              onClick={() => setMobileColumnTab('ALL')}
-              className={`px-3 py-1.5 rounded-xs font-bold whitespace-nowrap transition-colors ${
-                mobileColumnTab === 'ALL'
-                  ? 'bg-primary-soft text-primary border border-primary/30 shadow-2xs'
-                  : 'bg-paper border border-line text-muted hover:text-ink'
-              }`}
-            >
-              All Columns
-            </button>
-            {COLUMNS.map((c) => {
-              const count = filteredTasks.filter((t) => {
-                if (c.id === 'BLOCKED') return t.status === 'IN_PROGRESS' && t.labels?.includes('BLOCKED');
-                return t.status === c.id;
-              }).length;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setMobileColumnTab(c.id)}
-                  className={`px-2.5 py-1.5 rounded-xs font-bold whitespace-nowrap transition-colors flex items-center space-x-1 ${
-                    mobileColumnTab === c.id
-                      ? 'bg-primary-soft text-primary border border-primary/30 shadow-2xs'
-                      : 'bg-paper border border-line text-muted hover:text-ink'
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${c.dotColor}`} />
-                  <span>{c.title}</span>
-                  <span>({count})</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Responsive Engineering Kanban Columns for Lead */}
+          {/* 6. RESPONSIVE KANBAN COLUMNS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3.5 items-start">
             {COLUMNS.filter((col) => mobileColumnTab === 'ALL' || col.id === mobileColumnTab).map((col) => {
               const colTasks = filteredTasks.filter((t) => {
@@ -1047,11 +739,11 @@ export const KanbanBoardPage: React.FC = () => {
               return (
                 <div
                   key={col.id}
-                  className="bg-paper-light border border-line/80 rounded-2xl flex flex-col min-h-0 md:min-h-[540px] overflow-hidden shadow-2xs"
+                  className="bg-paper-light/70 border border-line/80 rounded-2xl flex flex-col min-h-0 md:min-h-[520px] overflow-hidden shadow-2xs"
                 >
-                  <div className="p-3.5 border-b border-line flex items-center justify-between bg-paper-light/90">
+                  <div className="p-3.5 border-b border-line flex items-center justify-between bg-paper-light">
                     <div className="flex items-center space-x-2">
-                      <span className={`w-2 h-2 rounded-full ${col.dotColor}`}></span>
+                      <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`}></span>
                       <span className="font-display font-bold text-xs text-ink uppercase tracking-wider">
                         {col.title}
                       </span>
@@ -1079,7 +771,7 @@ export const KanbanBoardPage: React.FC = () => {
                         <div
                           key={task.id}
                           onClick={() => openTaskDrawer(task)}
-                          className={`p-3.5 bg-paper-light border rounded-xl cursor-pointer space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover group ${
+                          className={`p-3.5 bg-paper border rounded-xl cursor-pointer space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card group ${
                             isOverdue ? 'border-red-300 bg-red-50/20' : 'border-line/80 hover:border-primary/50'
                           }`}
                         >
@@ -1088,19 +780,17 @@ export const KanbanBoardPage: React.FC = () => {
                               <span className="text-muted font-mono font-bold text-[10px] bg-paper px-1.5 py-0.5 rounded-md border border-line">
                                 TASK-{task.id}
                               </span>
-                              {isLead && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTaskToDelete(task);
-                                  }}
-                                  className="opacity-70 md:opacity-0 md:group-hover:opacity-100 hover:!opacity-100 p-1 hover:bg-red-50 text-muted hover:text-red-600 rounded-md transition-opacity"
-                                  title="Delete Task"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTaskToDelete(task);
+                                }}
+                                className="opacity-70 md:opacity-0 md:group-hover:opacity-100 hover:!opacity-100 p-1 hover:bg-red-50 text-muted hover:text-red-600 rounded-md transition-opacity"
+                                title="Delete Task"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
                             </div>
                             <StatusBadge type="priority" value={task.priority} />
                           </div>
@@ -1114,7 +804,7 @@ export const KanbanBoardPage: React.FC = () => {
                               {task.labels.slice(0, 2).map((l) => (
                                 <span
                                   key={l}
-                                  className="text-[9px] px-1.5 py-0.5 bg-paper border border-line rounded-md text-muted font-medium"
+                                  className="text-[9px] px-1.5 py-0.5 bg-paper-dark border border-line rounded-md text-muted font-medium"
                                 >
                                   {l}
                                 </span>
@@ -1197,10 +887,10 @@ export const KanbanBoardPage: React.FC = () => {
 
                     <button
                       onClick={() => openCreateForColumn(col.id as TaskStatus)}
-                      className="w-full py-2 border border-dashed border-line hover:border-primary/50 hover:bg-paper/50 rounded-xl text-xs font-medium text-muted hover:text-primary flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+                      className="w-full py-2 border border-dashed border-line hover:border-primary/50 hover:bg-paper/50 rounded-xl text-xs font-semibold text-muted hover:text-primary flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Task</span>
+                      <span>Add Mission</span>
                     </button>
                   </div>
                 </div>
@@ -1210,780 +900,86 @@ export const KanbanBoardPage: React.FC = () => {
         </div>
       )}
 
-      {/* LARGE CENTERED TASK DETAILS MODAL OVERLAY */}
-      {selectedTask && (
-        <div
-          className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fade-in font-sans"
-          onClick={() => setSelectedTask(null)}
-        >
-          <div
-            className="bg-paper border border-line w-full sm:max-w-4xl max-h-[92vh] sm:max-h-[88vh] rounded-t-lg sm:rounded-sm shadow-2xl flex flex-col my-auto overflow-hidden animate-scale-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* MODAL HEADER */}
-            <div className="p-4 border-b border-line bg-paper-dark flex items-center justify-between font-mono text-xs">
-              <div className="flex items-center space-x-3">
-                <span className="font-bold text-ink text-sm font-display">TASK-{selectedTask.id}</span>
-                <StatusBadge type="priority" value={selectedTask.priority} />
-                <StatusBadge type="status" value={selectedTask.status} />
-              </div>
-              <div className="flex items-center space-x-2">
-                {isLead && (
-                  <button
-                    onClick={() => setTaskToDelete(selectedTask)}
-                    className="p-1 text-muted hover:text-red-600 hover:bg-red-500/10 rounded-sm transition-colors"
-                    title="Delete Task"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedTask(null)}
-                  className="p-1 text-muted hover:text-ink rounded-sm transition-colors"
-                  title="Close Modal (Esc)"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+      {/* 7. DEDICATED CREATE TASK MODAL */}
+      <CreateTaskModal
+        isOpen={isCreatingTask}
+        onClose={() => setIsCreatingTask(false)}
+        crewMembers={crewMembers}
+        memberAccounts={memberAccounts}
+        initialStatus={createModalStatus}
+        initialAssigneeId={createModalAssigneeId}
+        onSubmit={handleCreateTask}
+      />
 
-            {/* MODAL TITLE & DESCRIPTION */}
-            <div className="p-6 border-b border-line bg-paper space-y-2">
-              <h2 className="font-display text-xl font-black text-ink uppercase tracking-tight leading-snug">
-                {selectedTask.title}
-              </h2>
-              <p className="text-xs text-muted leading-relaxed whitespace-pre-wrap font-sans">
-                {selectedTask.description || 'No description provided.'}
-              </p>
-            </div>
+      {/* 8. DEDICATED TASK DETAIL MODAL */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        isLead={isLead}
+        crewMembers={crewMembers}
+        taskComments={taskComments}
+        taskHistory={taskHistory}
+        onStatusChange={handleStatusChange}
+        onProgressChange={handleProgressChange}
+        onReassignTask={handleReassignTask}
+        onRequestRevisions={handleRequestRevisions}
+        onAddComment={handleAddComment}
+        onDeleteTask={(t) => setTaskToDelete(t)}
+      />
 
-            {/* MODAL BODY (SCROLLABLE CONTENT) */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* 1. HORIZONTAL WORKFLOW STAGE PIPELINE */}
-              <div className="p-4 border border-line bg-paper-dark/30 rounded-sm space-y-2.5 font-mono text-xs">
-                <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">
-                  TASK WORKFLOW PIPELINE
-                </span>
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status !== 'BACKLOG' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30 font-bold' : 'bg-paper text-muted border-line'}`}>
-                    ✓ ASSIGNED
-                  </span>
-                  <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'TODO' ? 'bg-amber-500/20 text-amber-900 border-amber-500/40 font-bold shadow-2xs' : selectedTask.status !== 'BACKLOG' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
-                    {selectedTask.status === 'TODO' ? '→ TO DO' : '✓ TO DO'}
-                  </span>
-                  <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-900 border-amber-500/40 font-bold shadow-2xs' : selectedTask.status === 'REVIEW' || selectedTask.status === 'DONE' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
-                    {selectedTask.status === 'IN_PROGRESS' ? '→ IN PROGRESS' : selectedTask.status === 'REVIEW' || selectedTask.status === 'DONE' ? '✓ IN PROGRESS' : '○ IN PROGRESS'}
-                  </span>
-                  <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'REVIEW' ? 'bg-amber-500/30 text-amber-900 border-amber-500/50 font-bold animate-pulse shadow-2xs' : selectedTask.status === 'DONE' ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30' : 'bg-paper text-muted border-line'}`}>
-                    {selectedTask.status === 'REVIEW' ? '→ SUBMITTED / REVIEW' : selectedTask.status === 'DONE' ? '✓ SUBMITTED' : '○ SUBMITTED'}
-                  </span>
-                  <span className="text-muted font-bold">→</span>
-                  <span className={`px-2.5 py-1 rounded-xs border font-semibold ${selectedTask.status === 'DONE' ? 'bg-emerald-700 text-white border-emerald-800 font-bold shadow-xs' : 'bg-paper text-muted border-line'}`}>
-                    {selectedTask.status === 'DONE' ? '✓ APPROVED / COMPLETED' : '○ APPROVED'}
-                  </span>
-                </div>
-              </div>
-
-              {/* 2. COMPLETION PROGRESS */}
-              <div className="p-4 border border-line rounded-sm bg-paper space-y-2 font-mono text-xs">
-                <div className="flex justify-between text-xs items-center">
-                  <span className="text-muted font-bold uppercase text-[10px]">COMPLETION</span>
-                  <span className="font-bold text-ink text-sm">{selectedTask.progressPct}%</span>
-                </div>
-                <ProgressBar progressPct={selectedTask.progressPct} />
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={selectedTask.progressPct}
-                  onChange={(e) => handleProgressChange(selectedTask.id, parseInt(e.target.value))}
-                  className="w-full accent-accent cursor-pointer mt-1"
-                />
-              </div>
-
-              {/* 3. TASK INFORMATION 2-COLUMN GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                {/* ASSIGNEE & REASSIGNMENT */}
-                <div className="p-4 border border-line rounded-sm bg-paper space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-bold text-muted">ASSIGNEE</span>
-                    <span className="font-bold text-ink font-sans text-sm">
-                      {selectedTask.assigneeName || 'Unassigned'}
-                    </span>
-                  </div>
-                  {isLead && (
-                    <div className="pt-2 border-t border-line">
-                      <label className="block text-[10px] text-muted font-bold mb-1 uppercase">Reassign Member:</label>
-                      <select
-                        value={selectedTask.assigneeId || ''}
-                        onChange={(e) => {
-                          const newId = Number(e.target.value);
-                          if (newId) handleReassignTask(selectedTask.id, newId);
-                        }}
-                        className="w-full px-3 py-1.5 bg-paper-dark border border-line focus:border-ink rounded-xs text-xs font-mono outline-none"
-                      >
-                        <option value="">Select Assignee...</option>
-                        {crewMembers.map((cm) => (
-                          <option key={cm.id} value={cm.userId}>
-                            {cm.name} ({cm.serialNumber})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                {/* DEADLINE & STATUS */}
-                <div className="p-4 border border-line rounded-sm bg-paper space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-bold text-muted">DEADLINE</span>
-                    <div className="flex items-center space-x-1.5 text-ink font-bold text-xs">
-                      <Calendar className="w-3.5 h-3.5 text-muted" />
-                      <span>{selectedTask.deadline || 'No deadline set'}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-line flex justify-between items-center text-[10px]">
-                    <span className="text-muted uppercase font-bold">STATUS INDICATOR:</span>
-                    {selectedTask.status !== 'DONE' && selectedTask.deadline && selectedTask.deadline < todayStr ? (
-                      <span className="font-bold text-red-700 bg-red-500/10 px-2 py-0.5 rounded-xs border border-red-500/30">
-                        OVERDUE BY {Math.ceil((new Date(todayStr).getTime() - new Date(selectedTask.deadline).getTime()) / (1000 * 3600 * 24))} DAY(S)
-                      </span>
-                    ) : selectedTask.deadline === todayStr ? (
-                      <span className="font-bold text-amber-800 bg-amber-500/20 px-2 py-0.5 rounded-xs border border-amber-500/30">
-                        DUE TODAY
-                      </span>
-                    ) : (
-                      <span className="font-bold text-emerald-800 bg-emerald-500/10 px-2 py-0.5 rounded-xs">
-                        ON TRACK
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. PROMINENT LEAD REVIEW AREA */}
-              {selectedTask.status === 'REVIEW' && isLead && (
-                <div className="p-5 border border-amber-500/40 bg-amber-500/10 rounded-sm space-y-3 font-mono text-xs">
-                  <div className="flex items-center space-x-2 text-amber-900 font-bold uppercase">
-                    <FileCheck className="w-4 h-4 text-amber-700" />
-                    <span>AWAITING LEAD REVIEW • Review submission before approval</span>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] uppercase font-bold text-muted">
-                      Review Feedback Notes (Required for Revisions):
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={revisionFeedback}
-                      onChange={(e) => setRevisionFeedback(e.target.value)}
-                      placeholder="e.g. Withdrawal validation is missing the insufficient-balance case."
-                      className="w-full px-3 py-2 bg-paper border border-line focus:border-ink rounded-xs outline-none font-sans text-xs"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-3 pt-1">
-                    <button
-                      onClick={() => handleStatusChange(selectedTask.id, 'DONE')}
-                      className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xs flex items-center justify-center space-x-1.5 shadow-xs transition-colors"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>✓ APPROVE TASK</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleRequestRevision(selectedTask.id)}
-                      className="py-2.5 px-4 border border-line hover:bg-paper-dark text-ink font-bold rounded-xs flex items-center space-x-1 transition-colors"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 text-muted" />
-                      <span>↻ REQUEST CHANGES</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {selectedTask.status === 'DONE' && (
-                <div className="p-4 border border-emerald-500/30 bg-emerald-500/10 rounded-xs font-mono text-xs text-emerald-900 space-y-1">
-                  <div className="font-bold flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                    <span>APPROVED BY: {user.name} (LEAD)</span>
-                  </div>
-                  <div className="text-[11px] text-emerald-800">
-                    STATUS: TASK COMPLETED & FULLY VERIFIED BY LEAD
-                  </div>
-                </div>
-              )}
-
-              {/* 5. TASK LABELS */}
-              {selectedTask.labels && selectedTask.labels.length > 0 && (
-                <div className="space-y-1.5 font-mono text-xs">
-                  <span className="text-[10px] uppercase font-bold text-muted block tracking-wider">LABELS</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedTask.labels.map((l) => (
-                      <span key={l} className="text-xs px-2.5 py-0.5 bg-paper-dark border border-line rounded-xs text-ink font-semibold">
-                        {l}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 6. DISCUSSION */}
-              <div className="space-y-3 pt-4 border-t border-line font-mono text-xs">
-                <div className="flex items-center space-x-1.5">
-                  <MessageSquare className="w-4 h-4 text-muted" />
-                  <span className="font-display font-bold text-ink uppercase">
-                    Discussion ({taskComments.length})
-                  </span>
-                </div>
-
-                <div className="space-y-2 font-sans">
-                  {taskComments.map((c) => (
-                    <div key={c.id} className="p-3 bg-paper border border-line rounded-sm space-y-1 font-mono text-xs">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-ink">{c.user.name}</span>
-                        <span className="text-[10px] text-muted">{c.createdAt.substring(0, 10)}</span>
-                      </div>
-                      <p className="text-xs text-ink leading-relaxed font-sans">{c.body}</p>
-                    </div>
-                  ))}
-
-                  {taskComments.length === 0 && (
-                    <p className="text-xs font-mono text-muted py-3 text-center border border-dashed border-line rounded-sm">
-                      No discussion notes yet.
-                    </p>
-                  )}
-                </div>
-
-                <form onSubmit={handleAddComment} className="flex space-x-2 pt-1 font-sans">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 py-2 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-ink text-paper hover:bg-ink/90 rounded-sm text-xs font-mono font-bold transition-colors"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </form>
-              </div>
-
-              {/* 7. ACTIVITY HISTORY */}
-              <div className="space-y-3 pt-4 border-t border-line font-mono text-xs">
-                <div className="flex items-center space-x-1.5">
-                  <History className="w-4 h-4 text-muted" />
-                  <span className="font-display font-bold text-ink uppercase">Activity Audit History</span>
-                </div>
-
-                <div className="space-y-1.5 text-[11px]">
-                  {taskHistory.map((h) => (
-                    <div key={h.id} className="p-2 border border-line bg-paper-light rounded-xs flex items-center justify-between">
-                      <div>
-                        <span className="font-bold text-ink">{h.changedByName}</span>
-                        <span className="text-muted"> changed </span>
-                        <span className="text-emerald-700 font-bold">{h.fieldChanged}</span>
-                        <span className="text-ink"> to {h.newValue}</span>
-                      </div>
-                      <span className="text-[10px] text-muted">{h.changedAt.substring(11, 16)} UTC</span>
-                    </div>
-                  ))}
-
-                  {taskHistory.length === 0 && (
-                    <div className="p-2 border border-line bg-paper-light rounded-xs text-muted text-[10px]">
-                      Task initialized and assigned.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* MODAL FOOTER */}
-            <div className="p-4 border-t border-line bg-paper-dark flex items-center justify-between font-mono text-xs">
-              {isLead ? (
-                <button
-                  type="button"
-                  onClick={() => setTaskToDelete(selectedTask)}
-                  className="px-3.5 py-1.5 border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-red-700 font-bold rounded-sm transition-colors flex items-center space-x-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                  <span>Delete Task</span>
-                </button>
-              ) : (
-                <div />
-              )}
-              <button
-                type="button"
-                onClick={() => setSelectedTask(null)}
-                className="px-4 py-1.5 bg-paper border border-line hover:border-ink rounded-sm font-bold text-ink transition-colors"
-              >
-                Close
-              </button>
-            </div>
+      {/* 9. DELETE TASK CONFIRMATION MODAL */}
+      <Modal
+        isOpen={!!taskToDelete}
+        onClose={() => {
+          setTaskToDelete(null);
+          setDeleteError(null);
+        }}
+        size="sm"
+        kicker="DANGER ZONE"
+        title="Delete Task Mission?"
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <button
+              type="button"
+              disabled={isDeletingTask}
+              onClick={() => {
+                setTaskToDelete(null);
+                setDeleteError(null);
+              }}
+              className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-paper-dark/70 rounded-xl transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDeletingTask}
+              onClick={handleConfirmDeleteTask}
+              className="px-5 py-2 text-xs font-semibold bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeletingTask ? 'Deleting...' : 'Delete Mission'}</span>
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <div className="space-y-3 text-xs">
+          <p className="text-muted leading-relaxed">
+            Are you sure you want to permanently delete{' '}
+            <strong className="text-ink font-bold">
+              TASK-{taskToDelete?.id}: {taskToDelete?.title}
+            </strong>
+            ? All discussion notes and audit history will be permanently erased.
+          </p>
 
-      {/* DELETE TASK CONFIRMATION MODAL */}
-      {taskToDelete && (
-        <div className="fixed inset-0 z-60 bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
-          <div className="bg-paper border border-line w-full max-w-md rounded-sm shadow-xl p-6 space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-600 shrink-0">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-display text-base font-bold text-ink">
-                  Delete Task?
-                </h3>
-                <p className="text-xs text-muted leading-relaxed">
-                  Are you sure you want to delete <strong className="text-ink">TASK-{taskToDelete.id}: {taskToDelete.title}</strong>? All comments and audit history will be permanently removed. This action cannot be undone.
-                </p>
-              </div>
+          {deleteError && (
+            <div className="p-3 border border-red-300 bg-red-50 text-red-900 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{deleteError}</span>
             </div>
-
-            {deleteError && (
-              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{deleteError}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-line font-mono text-xs">
-              <button
-                type="button"
-                disabled={isDeletingTask}
-                onClick={() => {
-                  setTaskToDelete(null);
-                  setDeleteError(null);
-                }}
-                className="px-4 py-2 bg-paper border border-line hover:border-ink rounded-sm font-bold text-ink transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeletingTask}
-                onClick={handleConfirmDeleteTask}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-sm font-bold transition-colors flex items-center space-x-1.5 shadow-xs disabled:opacity-50"
-              >
-                {isDeletingTask ? (
-                  <span>Deleting...</span>
-                ) : (
-                  <>
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete Task</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Upgraded 3-Mode Task Creation Modal */}
-      {isCreatingTask && (
-        <div className="fixed inset-0 z-50 bg-ink/40 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in font-sans">
-          <div className="bg-paper border border-line w-full sm:max-w-lg rounded-t-lg sm:rounded-sm shadow-xl p-4 sm:p-6 space-y-4 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-line">
-              <h2 className="font-display text-sm font-bold text-ink uppercase">Create Engineering Mission</h2>
-              <button onClick={() => setIsCreatingTask(false)} className="p-1 text-muted hover:text-ink rounded-sm">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Validation Error Message */}
-            {validationError && (
-              <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-800 rounded-sm font-mono text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{validationError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-ink mb-1">Task Title *</label>
-                <input
-                  required
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Implement Custom Thread Pool with Rejection Handler"
-                  className="w-full px-3 py-2 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-ink mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Technical acceptance criteria & Next action notes..."
-                  className="w-full px-3 py-2 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none resize-none font-sans"
-                />
-              </div>
-
-              {/* UPGRADED ASSIGN TO SECTION (3 MODES) */}
-              <div className="p-4 border border-line bg-paper-dark/20 rounded-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-ink uppercase">ASSIGN TO</span>
-                  <span className="font-mono text-[10px] text-muted">
-                    {assignmentMode === 'INDIVIDUAL' && 'Single Assignee'}
-                    {assignmentMode === 'MULTIPLE' && 'Multi-Select Picker'}
-                    {assignmentMode === 'ENTIRE_CREW' && 'Individual Task for Every Active Member'}
-                  </span>
-                </div>
-
-                {/* 3-Mode Selector Buttons */}
-                <div className="grid grid-cols-3 gap-1.5 font-mono text-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssignmentMode('INDIVIDUAL');
-                      setSelectedMemberIds(memberAccounts[0] ? [memberAccounts[0].userId] : []);
-                      setValidationError('');
-                    }}
-                    className={`py-2 px-2 border rounded-xs font-bold transition-all text-center ${
-                      assignmentMode === 'INDIVIDUAL'
-                        ? 'bg-ink text-paper border-ink shadow-xs'
-                        : 'bg-paper text-muted border-line hover:border-ink'
-                    }`}
-                  >
-                    INDIVIDUAL
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssignmentMode('MULTIPLE');
-                      setSelectedMemberIds(memberAccounts.slice(0, 2).map((m) => m.userId));
-                      setValidationError('');
-                    }}
-                    className={`py-2 px-2 border rounded-xs font-bold transition-all text-center ${
-                      assignmentMode === 'MULTIPLE'
-                        ? 'bg-ink text-paper border-ink shadow-xs'
-                        : 'bg-paper text-muted border-line hover:border-ink'
-                    }`}
-                  >
-                    MULTIPLE
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssignmentMode('ENTIRE_CREW');
-                      setSelectedMemberIds(memberAccounts.map((m) => m.userId));
-                      setValidationError('');
-                    }}
-                    className={`py-2 px-2 border rounded-xs font-bold transition-all text-center ${
-                      assignmentMode === 'ENTIRE_CREW'
-                        ? 'bg-amber-500 text-paper border-amber-500 shadow-xs'
-                        : 'bg-paper text-muted border-line hover:border-ink'
-                    }`}
-                  >
-                    ENTIRE CREW
-                  </button>
-                </div>
-
-                {/* MODE 1: INDIVIDUAL SELECTOR */}
-                {assignmentMode === 'INDIVIDUAL' && (
-                  <div className="space-y-1.5 pt-1">
-                    <label className="block font-mono text-xs text-muted font-bold">Select Member:</label>
-                    <select
-                      value={selectedMemberIds[0] || ''}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        setSelectedMemberIds(val ? [val] : []);
-                        setValidationError('');
-                      }}
-                      className="w-full px-3 py-2 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none"
-                    >
-                      {crewMembers.map((cm) => (
-                        <option key={cm.id} value={cm.userId}>
-                          {cm.name} · {cm.serialNumber} · {cm.role}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* MODE 2: MULTIPLE MEMBERS SELECTOR */}
-                {assignmentMode === 'MULTIPLE' && (
-                  <div className="space-y-2 pt-1 font-mono text-xs">
-                    <span className="text-muted font-bold block">Select Crew Members:</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {crewMembers.map((cm) => {
-                        const checked = selectedMemberIds.includes(cm.userId);
-                        return (
-                          <label
-                            key={cm.id}
-                            className={`flex items-center space-x-2 p-2 border rounded-xs cursor-pointer transition-colors ${
-                              checked ? 'bg-amber-500/10 border-amber-500 text-ink font-bold' : 'bg-paper border-line text-muted'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => {
-                                setValidationError('');
-                                if (checked) {
-                                  setSelectedMemberIds(selectedMemberIds.filter((id) => id !== cm.userId));
-                                } else {
-                                  setSelectedMemberIds([...selectedMemberIds, cm.userId]);
-                                }
-                              }}
-                              className="accent-amber-600 rounded-xs"
-                            />
-                            <span className="truncate">{cm.name.split(' ')[0]} ({cm.serialNumber})</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-
-                    {/* Selected Chips */}
-                    {selectedMemberIds.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-2 border-t border-line">
-                        {selectedMemberIds.map((id) => {
-                          const cm = crewMembers.find((m) => m.userId === id);
-                          if (!cm) return null;
-                          return (
-                            <span
-                              key={id}
-                              className="inline-flex items-center space-x-1 font-mono text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-900 border border-amber-500/40 rounded-xs font-bold"
-                            >
-                              <span>{cm.name.split(' ')[0]}</span>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedMemberIds(selectedMemberIds.filter((mId) => mId !== id))}
-                                className="hover:text-red-700 ml-1"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* MODE 3: ENTIRE CREW CONFIRMATION */}
-                {assignmentMode === 'ENTIRE_CREW' && (
-                  <div className="p-4 border border-amber-500/40 bg-amber-500/10 rounded-sm space-y-1 font-mono text-xs">
-                    <div className="flex items-center space-x-2 text-amber-900 font-bold uppercase">
-                      <Users className="w-4 h-4 text-amber-700" />
-                      <span>CREW-WIDE INDIVIDUAL TASKS</span>
-                    </div>
-                    <p className="text-muted text-[11px] font-sans">
-                      This task will create an individual task instance for every active crew member so that progress, submission, review, and approval are tracked independently.
-                    </p>
-                    <div className="text-ink font-bold text-[12px] pt-1">
-                      {memberAccounts.length} individual member tasks will be created.
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Task Attributes */}
-              <div className="grid grid-cols-2 gap-3 font-mono text-xs">
-                <div>
-                  <label className="block font-bold text-ink mb-1">Priority</label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                    className="w-full px-2.5 py-1.5 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none"
-                  >
-                    <option value="LOW">Low</option>
-                    <option value="MED">Medium</option>
-                    <option value="HIGH">High</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-ink mb-1">Initial Column</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                    className="w-full px-2 py-1.5 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none"
-                  >
-                    <option value="BACKLOG">Backlog</option>
-                    <option value="TODO">Assigned</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="REVIEW">Submitted / Review</option>
-                    <option value="DONE">Completed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-ink mb-1">Deadline</label>
-                  <input
-                    type="date"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                    className="w-full px-2 py-1.5 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-ink mb-1">Est. Hours</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={estHours}
-                    onChange={(e) => setEstHours(e.target.value)}
-                    placeholder="4.0"
-                    className="w-full px-2 py-1.5 bg-paper border border-line focus:border-ink rounded-sm text-xs outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* ENHANCED CATEGORICAL TASK LABELS SECTION */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-ink uppercase tracking-tight">TASK LABELS</label>
-                  <span className="font-mono text-[10px] text-muted">{selectedLabels.length} selected</span>
-                </div>
-
-                <div className="p-3 border border-line bg-paper rounded-sm space-y-2 font-mono text-xs">
-                  {selectedLabels.length === 0 ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted italic text-[11px]">No labels selected</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsLabelPickerOpen(!isLabelPickerOpen)}
-                        className="px-2.5 py-1 bg-paper-dark border border-line hover:border-ink rounded-xs font-bold text-ink transition-colors flex items-center space-x-1"
-                      >
-                        <Plus className="w-3 h-3 text-emerald-700" />
-                        <span>Add Label</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {selectedLabels.map((lbl) => (
-                        <span
-                          key={lbl}
-                          className="inline-flex items-center space-x-1 px-2 py-0.5 bg-paper-dark border border-line rounded-xs text-ink font-semibold text-[11px]"
-                        >
-                          <Tag className="w-2.5 h-2.5 text-muted" />
-                          <span>{lbl}</span>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedLabels(selectedLabels.filter((l) => l !== lbl))}
-                            className="text-muted hover:text-red-700 ml-1 font-bold"
-                            title={`Remove ${lbl}`}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={() => setIsLabelPickerOpen(!isLabelPickerOpen)}
-                        className="px-2.5 py-1 bg-paper-dark border border-line hover:border-ink rounded-xs font-bold text-ink transition-colors flex items-center space-x-1 text-[11px]"
-                      >
-                        <Plus className="w-3 h-3 text-emerald-700" />
-                        <span>Add Label</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Grouped Category Label Selector Popover */}
-                  {isLabelPickerOpen && (
-                    <div className="pt-3 border-t border-line mt-2 space-y-3 bg-paper-dark/40 p-3 rounded-xs animate-fade-in">
-                      <div className="flex items-center justify-between font-bold uppercase text-[10px] text-muted">
-                        <span>SELECT ENGINEERING LABELS</span>
-                        <button
-                          type="button"
-                          onClick={() => setIsLabelPickerOpen(false)}
-                          className="text-muted hover:text-ink font-bold"
-                        >
-                          Done
-                        </button>
-                      </div>
-
-                      {LABEL_CATEGORIES.map((cat) => (
-                        <div key={cat.name} className="space-y-1">
-                          <span className="font-mono text-[10px] font-bold text-muted uppercase block">
-                            {cat.name}
-                          </span>
-                          <div className="flex flex-wrap gap-1">
-                            {cat.labels.map((lbl) => {
-                              const isSelected = selectedLabels.includes(lbl);
-                              return (
-                                <button
-                                  key={lbl}
-                                  type="button"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setSelectedLabels(selectedLabels.filter((l) => l !== lbl));
-                                    } else {
-                                      setSelectedLabels([...selectedLabels, lbl]);
-                                    }
-                                  }}
-                                  className={`px-2 py-0.5 rounded-xs border text-[10px] font-mono transition-colors ${
-                                    isSelected
-                                      ? 'bg-ink text-paper border-ink font-bold shadow-2xs'
-                                      : 'bg-paper text-ink border-line hover:border-ink'
-                                  }`}
-                                >
-                                  {isSelected ? `✓ ${lbl}` : `+ ${lbl}`}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* TASK PREVIEW ASSIGNMENT SUMMARY */}
-              <div className="p-3.5 border border-line bg-paper-dark/40 rounded-sm font-mono text-xs space-y-1">
-                <div className="flex justify-between items-center text-muted font-bold text-[10px] uppercase">
-                  <span>ASSIGNMENT SUMMARY</span>
-                  <span>{targetMemberNames.length} INDIVIDUAL TASK{targetMemberNames.length === 1 ? '' : 'S'}</span>
-                </div>
-                <div className="font-bold text-ink truncate">
-                  Task: {title || 'Untitled Engineering Mission'}
-                </div>
-                <div className="text-amber-900 font-bold text-[11px]">
-                  Assigned to: {targetMemberNames.length > 0 ? targetMemberNames.join(', ') : 'None selected'}
-                </div>
-                <div className="text-muted text-[10px] truncate">
-                  Labels: {selectedLabels.length > 0 ? selectedLabels.join(' · ') : 'None'}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-line flex justify-end space-x-2 font-mono text-xs">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingTask(false)}
-                  className="px-3 py-1.5 border border-line hover:border-line-dark rounded-sm text-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-ink hover:bg-ink/90 text-paper rounded-sm font-bold shadow-xs"
-                >
-                  Create Mission
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   );
 };

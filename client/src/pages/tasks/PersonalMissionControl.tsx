@@ -3,6 +3,7 @@ import { Task, TaskStatus } from '../../types';
 import { CrewMemberProfile } from '../../services/crewService';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ProgressBar } from '../../components/common/ProgressBar';
+import { Modal } from '../../components/common/Modal';
 import {
   CheckCircle2,
   Plus,
@@ -112,125 +113,154 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in font-sans pb-12">
-      {/* 1. CLEAN MODERN HEADER BAR */}
-      <div className="bg-paper-light border border-line rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {memberProfile?.serialNumber || user?.serialNumber || 'CREW MEMBER'}
-            </span>
-            <span className="text-muted/40">·</span>
-            <span className="text-xs font-medium text-muted">
-              {memberProfile?.internshipRole || user?.position || 'SDE Intern'}
-            </span>
+      {/* 1. HERO HEADER: CLEAN, INSPIRING & MODERN */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-paper-light via-surface to-paper border border-line/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+        {/* Subtle radial ambient highlight */}
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {memberProfile?.serialNumber || user?.serialNumber || 'CREW MEMBER'}
+              </span>
+              <span className="text-muted/40">·</span>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-paper border border-line text-muted">
+                {memberProfile?.internshipRole || user?.position || 'Software Engineering Intern'}
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-3">
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+                {user.name}’s Mission Control
+              </h1>
+              <span className="text-xs font-semibold text-muted bg-paper-dark/60 px-2 py-0.5 rounded-full">
+                {totalCount} {totalCount === 1 ? 'task' : 'tasks'}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
+              Track your daily engineering deliverables, submit completed work for lead review, and keep momentum high.
+            </p>
           </div>
 
-          <div className="flex items-baseline gap-3">
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-              {user.name}’s Missions
-            </h1>
-            <span className="text-xs font-semibold text-muted">
-              ({totalCount} {totalCount === 1 ? 'task' : 'tasks'} assigned)
-            </span>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={onCreateTask}
+              className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-emerald-300 group-hover:rotate-90 transition-transform duration-200" />
+              <span>Create Mission</span>
+            </button>
           </div>
-          <p className="text-xs text-muted leading-relaxed">
-            Manage your daily tasks, submit work for lead review, and track your sprint velocity.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={onCreateTask}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-all duration-200 cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-emerald-300" />
-            <span>New Mission</span>
-          </button>
         </div>
       </div>
 
-      {/* 2. COMPACT INTERACTIVE METRIC STRIP (Non-Messy Filter Pills) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {/* All Tasks */}
+      {/* 2. INTERACTIVE METRIC STRIP (Attractive Clickable Filter Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {/* All Missions */}
         <button
           onClick={() => setStatusFilter('ALL')}
-          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
             statusFilter === 'ALL'
-              ? 'bg-primary/5 border-primary ring-2 ring-primary/20 text-primary'
-              : 'bg-paper-light border-line hover:border-line-dark'
+              ? 'bg-paper-light border-primary ring-2 ring-primary/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted">All Missions</span>
-            <Target className="w-4 h-4 text-primary" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-ink transition-colors">
+              All Missions
+            </span>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+              statusFilter === 'ALL' ? 'bg-primary text-white' : 'bg-paper border border-line text-primary'
+            }`}>
+              <Target className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-black text-ink">{totalCount}</span>
-            <span className="text-[11px] text-muted font-medium">total</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-ink">{totalCount}</span>
+            <span className="text-xs text-muted font-medium">total assigned</span>
           </div>
         </button>
 
         {/* In Progress */}
         <button
           onClick={() => setStatusFilter('IN_PROGRESS')}
-          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
             statusFilter === 'IN_PROGRESS'
-              ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20 text-amber-700'
-              : 'bg-paper-light border-line hover:border-line-dark'
+              ? 'bg-amber-500/5 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted">In Progress</span>
-            <Flame className="w-4 h-4 text-amber-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-amber-800 transition-colors">
+              In Progress
+            </span>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+              statusFilter === 'IN_PROGRESS' ? 'bg-amber-600 text-white' : 'bg-paper border border-line text-amber-600'
+            }`}>
+              <Flame className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-black text-amber-600">{inProgressTasks.length}</span>
-            <span className="text-[11px] text-muted font-medium">active now</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-amber-600">{inProgressTasks.length}</span>
+            <span className="text-xs text-muted font-medium">active sprint</span>
           </div>
         </button>
 
         {/* In Review */}
         <button
           onClick={() => setStatusFilter('REVIEW')}
-          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
             statusFilter === 'REVIEW'
-              ? 'bg-purple-500/10 border-purple-500 ring-2 ring-purple-500/20 text-purple-700'
-              : 'bg-paper-light border-line hover:border-line-dark'
+              ? 'bg-purple-500/5 border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted">In Review</span>
-            <FileCheck className="w-4 h-4 text-purple-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-purple-800 transition-colors">
+              In Review
+            </span>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+              statusFilter === 'REVIEW' ? 'bg-purple-600 text-white' : 'bg-paper border border-line text-purple-600'
+            }`}>
+              <FileCheck className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-black text-purple-600">{reviewTasks.length}</span>
-            <span className="text-[11px] text-muted font-medium">awaiting lead</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-purple-600">{reviewTasks.length}</span>
+            <span className="text-xs text-muted font-medium">with lead</span>
           </div>
         </button>
 
         {/* Completed */}
         <button
           onClick={() => setStatusFilter('DONE')}
-          className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
             statusFilter === 'DONE'
-              ? 'bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/20 text-emerald-700'
-              : 'bg-paper-light border-line hover:border-line-dark'
+              ? 'bg-emerald-500/5 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Completed</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-emerald-800 transition-colors">
+              Completed
+            </span>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+              statusFilter === 'DONE' ? 'bg-emerald-600 text-white' : 'bg-paper border border-line text-emerald-600'
+            }`}>
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-black text-emerald-600">{completedTasks.length}</span>
-            <span className="text-[11px] text-muted font-medium font-mono">{momentumPct}% done</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-emerald-600">{completedTasks.length}</span>
+            <span className="text-xs text-muted font-medium font-mono">{momentumPct}% rate</span>
           </div>
         </button>
       </div>
 
-      {/* 3. TOOLBAR (Search, View Toggle, Filter Tag) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-paper-light border border-line p-2.5 rounded-xl">
+      {/* 3. TOOLBAR: SEARCH, VIEW SWITCHER & FILTER BADGES */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-paper-light border border-line p-3 rounded-2xl shadow-2xs">
         {/* Search Input */}
         <div className="relative flex-1 max-w-sm">
           <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
@@ -238,13 +268,13 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by mission title or tag..."
-            className="w-full pl-9 pr-3 py-1.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-xs outline-none text-ink placeholder:text-muted/60 transition-colors"
+            placeholder="Filter by mission title, description, or tag..."
+            className="w-full pl-9 pr-8 py-2 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink text-xs"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink text-xs p-1 rounded-md"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -252,12 +282,12 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
         </div>
 
         {/* Segmented View Switcher */}
-        <div className="flex items-center gap-1 bg-paper border border-line p-1 rounded-lg self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-paper border border-line p-1 rounded-xl self-start sm:self-auto">
           <button
             onClick={() => setViewMode('BOARD')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === 'BOARD'
-                ? 'bg-primary text-white shadow-xs font-semibold'
+                ? 'bg-primary text-white shadow-xs font-bold'
                 : 'text-muted hover:text-ink'
             }`}
             title="Kanban Board View"
@@ -268,9 +298,9 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
           <button
             onClick={() => setViewMode('LIST')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === 'LIST'
-                ? 'bg-primary text-white shadow-xs font-semibold'
+                ? 'bg-primary text-white shadow-xs font-bold'
                 : 'text-muted hover:text-ink'
             }`}
             title="Clean List View"
@@ -281,29 +311,29 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
           <button
             onClick={() => setViewMode('FOCUS')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === 'FOCUS'
-                ? 'bg-primary text-white shadow-xs font-semibold'
+                ? 'bg-primary text-white shadow-xs font-bold'
                 : 'text-muted hover:text-ink'
             }`}
             title="Focus Spotlight View"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Focus</span>
+            <span>Focus Mode</span>
           </button>
         </div>
       </div>
 
-      {/* 4. MAIN CONTENT AREA BASED ON VIEW MODE */}
+      {/* 4. MAIN WORKSPACE CONTENT */}
 
-      {/* VIEW A: BOARD VIEW (Clean 4-column modern Kanban) */}
+      {/* VIEW A: BOARD VIEW (Modern, calm, 4 columns) */}
       {viewMode === 'BOARD' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
-          {/* Column 1: To Do / Assigned */}
-          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
+          {/* Column 1: To Do / Backlog */}
+          <div className="bg-paper-light/70 border border-line rounded-2xl p-4 space-y-3.5">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                 <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">To Do</h3>
               </div>
               <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
@@ -313,7 +343,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
             <div className="space-y-3">
               {todoTasks.length === 0 ? (
-                <p className="text-center py-6 text-xs text-muted italic">No tasks to do.</p>
+                <div className="py-8 text-center text-xs text-muted space-y-1">
+                  <p className="font-medium text-ink/70">No pending missions</p>
+                  <p className="text-[11px]">All assigned tasks have been started.</p>
+                </div>
               ) : (
                 todoTasks.map((task) => (
                   <TaskCard
@@ -329,10 +362,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
           </div>
 
           {/* Column 2: In Progress */}
-          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
+          <div className="bg-paper-light/70 border border-line rounded-2xl p-4 space-y-3.5">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
                 <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">In Progress</h3>
               </div>
               <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
@@ -342,7 +375,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
             <div className="space-y-3">
               {inProgressTasks.length === 0 ? (
-                <p className="text-center py-6 text-xs text-muted italic">No active missions.</p>
+                <div className="py-8 text-center text-xs text-muted space-y-1">
+                  <p className="font-medium text-ink/70">No active work in progress</p>
+                  <p className="text-[11px]">Click 'Start' on a To Do task to begin.</p>
+                </div>
               ) : (
                 inProgressTasks.map((task) => (
                   <TaskCard
@@ -358,10 +394,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
           </div>
 
           {/* Column 3: In Review */}
-          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
+          <div className="bg-paper-light/70 border border-line rounded-2xl p-4 space-y-3.5">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
                 <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">In Review</h3>
               </div>
               <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
@@ -371,7 +407,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
             <div className="space-y-3">
               {reviewTasks.length === 0 ? (
-                <p className="text-center py-6 text-xs text-muted italic">No tasks in review.</p>
+                <div className="py-8 text-center text-xs text-muted space-y-1">
+                  <p className="font-medium text-ink/70">No tasks in review</p>
+                  <p className="text-[11px]">Submit completed missions for approval.</p>
+                </div>
               ) : (
                 reviewTasks.map((task) => (
                   <TaskCard
@@ -387,10 +426,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
           </div>
 
           {/* Column 4: Completed */}
-          <div className="bg-paper-light/60 border border-line rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
+          <div className="bg-paper-light/70 border border-line rounded-2xl p-4 space-y-3.5">
+            <div className="flex items-center justify-between pb-2.5 border-b border-line">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                 <h3 className="font-display text-xs font-bold text-ink uppercase tracking-wider">Done</h3>
               </div>
               <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -400,7 +439,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
             <div className="space-y-3">
               {completedTasks.length === 0 ? (
-                <p className="text-center py-6 text-xs text-muted italic">No completed tasks yet.</p>
+                <div className="py-8 text-center text-xs text-muted space-y-1">
+                  <p className="font-medium text-ink/70">No completed tasks yet</p>
+                  <p className="text-[11px]">Lead-approved missions will appear here.</p>
+                </div>
               ) : (
                 completedTasks.map((task) => (
                   <TaskCard
@@ -421,10 +463,10 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
       {viewMode === 'LIST' && (
         <div className="bg-paper-light border border-line rounded-2xl overflow-hidden shadow-xs divide-y divide-line">
           {filteredTasks.length === 0 ? (
-            <div className="p-10 text-center text-muted text-xs space-y-2">
+            <div className="p-12 text-center text-muted text-xs space-y-2">
               <Rocket className="w-8 h-8 mx-auto text-muted/60" />
-              <p className="font-semibold text-ink">No tasks match your criteria.</p>
-              <p>Adjust your search or filter pills above.</p>
+              <p className="font-bold text-ink text-sm">No missions match your filters</p>
+              <p>Try clearing your search query or selecting a different status filter.</p>
             </div>
           ) : (
             filteredTasks.map((task) => (
@@ -471,7 +513,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                           e.stopPropagation();
                           onStatusChange(task.id, 'IN_PROGRESS');
                         }}
-                        className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                        className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
                       >
                         Start
                       </button>
@@ -482,7 +524,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                             e.stopPropagation();
                             handleOpenUpdateModal(task);
                           }}
-                          className="px-2.5 py-1.5 bg-paper hover:bg-paper-dark border border-line text-xs font-medium rounded-lg text-ink active:scale-95 transition-all"
+                          className="px-3 py-1.5 bg-paper hover:bg-paper-dark border border-line text-xs font-medium rounded-xl text-ink active:scale-95 transition-all cursor-pointer"
                         >
                           Log
                         </button>
@@ -491,7 +533,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                             e.stopPropagation();
                             onStatusChange(task.id, 'REVIEW');
                           }}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
                         >
                           Review
                         </button>
@@ -511,11 +553,11 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
       {viewMode === 'FOCUS' && (
         <div className="space-y-6 max-w-3xl mx-auto">
           {featuredTask ? (
-            <div className="bg-paper-light border-2 border-primary/30 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="bg-paper-light border-2 border-primary/20 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
                   <Flame className="w-4 h-4 text-amber-600" />
-                  Current Focus Mission
+                  Sprint Focus Mission
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold text-muted bg-paper px-2 py-0.5 rounded border border-line">
@@ -530,7 +572,7 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                   {featuredTask.title}
                 </h2>
                 {featuredTask.description && (
-                  <p className="text-sm text-muted leading-relaxed">
+                  <p className="text-xs sm:text-sm text-muted leading-relaxed">
                     {featuredTask.description}
                   </p>
                 )}
@@ -538,19 +580,19 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
 
               <div className="p-4 bg-paper rounded-xl border border-line space-y-2">
                 <div className="flex justify-between text-xs font-semibold text-ink">
-                  <span>Completion Status</span>
+                  <span>Sprint Completion</span>
                   <span className="text-primary font-bold">{featuredTask.progressPct || 0}%</span>
                 </div>
                 <ProgressBar progressPct={featuredTask.progressPct || 0} />
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-line">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-line">
                 <div className="flex items-center gap-4 text-xs text-muted">
-                  <span className="flex items-center gap-1 font-mono">
+                  <span className="flex items-center gap-1.5 font-mono">
                     <Clock className="w-4 h-4 text-muted/70" />
-                    Est: {featuredTask.estHours || 4.0} hrs
+                    Est: {featuredTask.estHours || 4.0}h
                   </span>
-                  <span className="flex items-center gap-1 font-mono">
+                  <span className="flex items-center gap-1.5 font-mono">
                     <Calendar className="w-4 h-4 text-muted/70" />
                     Due: {featuredTask.deadline || 'Today'}
                   </span>
@@ -560,40 +602,40 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
                   {featuredTask.status === 'TODO' ? (
                     <button
                       onClick={() => onStatusChange(featuredTask.id, 'IN_PROGRESS')}
-                      className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
+                      className="px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Rocket className="w-3.5 h-3.5" />
+                      <Rocket className="w-4 h-4" />
                       <span>Start Working</span>
                     </button>
                   ) : featuredTask.status === 'IN_PROGRESS' ? (
                     <>
                       <button
                         onClick={() => handleOpenUpdateModal(featuredTask)}
-                        className="px-3.5 py-2 bg-paper hover:bg-paper-dark border border-line text-ink text-xs font-semibold rounded-xl active:scale-95 transition-all flex items-center gap-1.5"
+                        className="px-4 py-2 bg-paper hover:bg-paper-dark border border-line text-ink text-xs font-semibold rounded-xl active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5 text-muted" />
-                        <span>Update Log</span>
+                        <span>Update Progress</span>
                       </button>
                       <button
                         onClick={() => onStatusChange(featuredTask.id, 'REVIEW')}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Send className="w-3.5 h-3.5" />
+                        <Send className="w-4 h-4" />
                         <span>Submit for Lead Review</span>
                       </button>
                     </>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      {featuredTask.status === 'REVIEW' ? 'Waiting for Lead Approval' : 'Mission Completed'}
+                      {featuredTask.status === 'REVIEW' ? 'Awaiting Lead Approval' : 'Mission Approved'}
                     </span>
                   )}
 
                   <button
                     onClick={() => onOpenTask(featuredTask)}
-                    className="px-3.5 py-2 border border-line hover:border-ink bg-paper text-ink text-xs font-semibold rounded-xl active:scale-95 transition-all"
+                    className="px-4 py-2 border border-line hover:border-ink bg-paper text-ink text-xs font-semibold rounded-xl active:scale-95 transition-all cursor-pointer"
                   >
-                    Details
+                    View Details
                   </button>
                 </div>
               </div>
@@ -610,121 +652,113 @@ export const PersonalMissionControl: React.FC<PersonalMissionControlProps> = ({
         </div>
       )}
 
-      {/* MEMBER PROGRESS & WORK LOG MODAL */}
+      {/* 5. WORK LOG & PROGRESS UPDATE MODAL (Re-architected with Modal.tsx) */}
       {updatingTask && (
-        <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
-          <div className="bg-paper border border-line w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-5 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-line">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
-                  <FileCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-display text-sm font-bold text-ink">Update Work Log & Progress</h3>
-                  <span className="text-xs text-muted font-mono">TASK-{updatingTask.id}</span>
-                </div>
-              </div>
+        <Modal
+          isOpen={true}
+          onClose={() => setUpdatingTask(null)}
+          size="md"
+          kicker={`LOG PROGRESS · TASK-${updatingTask.id}`}
+          title="Update Work Log & Progress"
+          subtitle={updatingTask.title}
+          footer={
+            <div className="flex items-center justify-between w-full">
               <button
+                type="button"
                 onClick={() => setUpdatingTask(null)}
-                className="p-1.5 text-muted hover:text-ink hover:bg-paper-dark rounded-lg transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-muted hover:text-ink hover:bg-paper-dark/70 rounded-xl transition-all cursor-pointer active:scale-95"
               >
-                <X className="w-4 h-4" />
+                Cancel
               </button>
-            </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-paper-light rounded-xl border border-line space-y-1">
-                <span className="text-[10px] text-muted font-bold uppercase tracking-wider block">Target Task</span>
-                <span className="font-semibold text-ink text-sm">{updatingTask.title}</span>
-              </div>
-
-              {/* Progress percentage slider & preset chips */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-semibold">
-                  <span className="text-ink">Current Completion</span>
-                  <span className="font-display text-sm font-bold text-emerald-700">{progressPct}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={progressPct}
-                  onChange={(e) => setProgressPct(Number(e.target.value))}
-                  className="w-full accent-primary cursor-pointer h-2 bg-paper-dark rounded-lg"
-                />
-                <div className="flex items-center gap-1.5 pt-1">
-                  {[25, 50, 75, 100].map((pct) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => setProgressPct(pct)}
-                      className={`flex-1 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${
-                        progressPct === pct
-                          ? 'bg-primary text-white border-primary shadow-xs'
-                          : 'bg-paper border-line text-muted hover:text-ink'
-                      }`}
-                    >
-                      {pct}%
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-ink">What I completed today</label>
-                <textarea
-                  rows={2}
-                  value={workCompleted}
-                  onChange={(e) => setWorkCompleted(e.target.value)}
-                  placeholder="e.g. Created database schema, implemented JPA repository layer..."
-                  className="w-full px-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl outline-none text-xs text-ink placeholder:text-muted/60 transition-all font-sans"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-ink">Currently working on</label>
-                <input
-                  type="text"
-                  value={workingOn}
-                  onChange={(e) => setWorkingOn(e.target.value)}
-                  placeholder="e.g. REST Controller endpoints & JWT validation"
-                  className="w-full px-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl outline-none text-xs text-ink placeholder:text-muted/60 transition-all font-sans"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-ink">Blocker / Help needed (Optional)</label>
-                <input
-                  type="text"
-                  value={blockerNote}
-                  onChange={(e) => setBlockerNote(e.target.value)}
-                  placeholder="Explain any issue blocking progress..."
-                  className="w-full px-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl outline-none text-xs text-ink placeholder:text-muted/60 transition-all font-sans"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-line flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleSaveProgressUpdate(false)}
-                  className="px-4 py-2 border border-line hover:border-line-dark bg-paper text-ink font-semibold rounded-xl hover:shadow-2xs active:scale-95 transition-all cursor-pointer"
+                  className="px-4 py-2 border border-line hover:border-line-dark bg-paper text-ink text-xs font-semibold rounded-xl hover:shadow-2xs active:scale-95 transition-all cursor-pointer"
                 >
                   Save Progress
                 </button>
-
                 <button
                   type="button"
                   onClick={() => handleSaveProgressUpdate(true)}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-xs hover:shadow-md active:scale-95 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md active:scale-95 transition-all cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Submit for Review</span>
                 </button>
               </div>
             </div>
+          }
+        >
+          <div className="space-y-4 text-xs">
+            {/* Progress Slider */}
+            <div className="space-y-2 p-3.5 bg-paper rounded-xl border border-line">
+              <div className="flex justify-between items-center text-xs font-semibold">
+                <span className="text-ink">Current Completion</span>
+                <span className="font-display text-sm font-bold text-primary">{progressPct}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={progressPct}
+                onChange={(e) => setProgressPct(Number(e.target.value))}
+                className="w-full accent-primary cursor-pointer h-2 bg-paper-dark rounded-lg"
+              />
+              <div className="flex items-center gap-1.5 pt-1">
+                {[25, 50, 75, 100].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setProgressPct(pct)}
+                    className={`flex-1 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${
+                      progressPct === pct
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'bg-paper-light border-line text-muted hover:text-ink'
+                    }`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-ink">What I completed today</label>
+              <textarea
+                rows={2}
+                value={workCompleted}
+                onChange={(e) => setWorkCompleted(e.target.value)}
+                placeholder="e.g. Created database schema, implemented JPA repository layer..."
+                className="w-full px-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl outline-none text-xs text-ink placeholder:text-muted/60 transition-all font-sans"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-ink">Currently working on</label>
+              <input
+                type="text"
+                value={workingOn}
+                onChange={(e) => setWorkingOn(e.target.value)}
+                placeholder="e.g. REST Controller endpoints & JWT validation"
+                className="w-full px-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl outline-none text-xs text-ink placeholder:text-muted/60 transition-all font-sans"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-ink">Blocker / Help needed (Optional)</label>
+              <input
+                type="text"
+                value={blockerNote}
+                onChange={(e) => setBlockerNote(e.target.value)}
+                placeholder="Explain any issue blocking progress..."
+                className="w-full px-3 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-xl outline-none text-xs text-ink placeholder:text-muted/60 transition-all font-sans"
+              />
+            </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
@@ -749,7 +783,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={() => onOpenTask(task)}
-      className={`p-4 bg-paper border rounded-xl cursor-pointer space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm group flex flex-col justify-between ${
+      className={`p-4 bg-paper-light border rounded-2xl cursor-pointer space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card group flex flex-col justify-between ${
         isOverdue
           ? 'border-red-300 bg-red-50/10'
           : task.status === 'REVIEW'
@@ -759,7 +793,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     >
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-mono text-[10px] font-bold text-muted bg-paper-dark px-1.5 py-0.5 rounded border border-line">
+          <span className="font-mono text-[10px] font-bold text-muted bg-paper px-2 py-0.5 rounded-md border border-line">
             TASK-{task.id}
           </span>
           <StatusBadge type="priority" value={task.priority} />
@@ -780,7 +814,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             {task.labels.slice(0, 3).map((l) => (
               <span
                 key={l}
-                className="text-[9px] font-medium px-1.5 py-0.2 bg-paper-dark border border-line text-muted rounded"
+                className="text-[9px] font-semibold px-2 py-0.5 bg-paper border border-line text-muted rounded-md"
               >
                 {l}
               </span>
@@ -789,11 +823,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
         )}
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-line/60">
+      <div className="space-y-2 pt-2.5 border-t border-line/60">
         <div className="space-y-1">
           <div className="flex justify-between text-[10px] font-semibold text-muted">
             <span>Progress</span>
-            <span className="text-ink">{task.progressPct || 0}%</span>
+            <span className="text-ink font-bold">{task.progressPct || 0}%</span>
           </div>
           <ProgressBar progressPct={task.progressPct || 0} />
         </div>
@@ -806,7 +840,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </span>
           )}
 
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center gap-1.5 ml-auto">
             {task.status === 'TODO' && (
               <button
                 type="button"
@@ -814,7 +848,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   e.stopPropagation();
                   onStatusChange(task.id, 'IN_PROGRESS');
                 }}
-                className="px-2.5 py-1 bg-primary hover:bg-primary-hover text-white text-[11px] font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                className="px-2.5 py-1 bg-primary hover:bg-primary-hover text-white text-[11px] font-semibold rounded-lg shadow-2xs active:scale-95 transition-all cursor-pointer"
               >
                 Start
               </button>
@@ -828,7 +862,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     e.stopPropagation();
                     onOpenUpdateModal(task);
                   }}
-                  className="px-2 py-1 bg-paper-dark hover:bg-paper border border-line text-[10px] font-medium rounded-lg text-ink active:scale-95 transition-all"
+                  className="px-2 py-1 bg-paper hover:bg-paper-dark border border-line text-[10px] font-medium rounded-lg text-ink active:scale-95 transition-all cursor-pointer"
                 >
                   Log
                 </button>
@@ -838,7 +872,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     e.stopPropagation();
                     onStatusChange(task.id, 'REVIEW');
                   }}
-                  className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-semibold rounded-lg shadow-2xs active:scale-95 transition-all"
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-semibold rounded-lg shadow-2xs active:scale-95 transition-all cursor-pointer"
                 >
                   Review
                 </button>
