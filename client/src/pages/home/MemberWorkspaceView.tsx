@@ -162,38 +162,47 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
   return (
     <div className="space-y-6 max-w-6xl mx-auto font-sans animate-fade-in pb-10">
       {/* ========================================================================= */}
-      {/* 1. EXECUTIVE HERO BAR (Clean, modern, uncluttered header)                  */}
+      {/* 1. EXECUTIVE HERO BAR (Elevated, Vibrant, Premium SaaS Cockpit)            */}
       {/* ========================================================================= */}
-      <div className="bg-gradient-to-br from-paper-light via-paper to-paper-dark/40 border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 relative overflow-hidden transition-all duration-300 hover:shadow-card-hover group">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/6 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4 group-hover:scale-105 transition-transform duration-700" />
+      <div className="bg-gradient-to-br from-paper-light via-paper to-paper-light border border-line rounded-2xl p-6 sm:p-7 shadow-xs space-y-4 relative overflow-hidden transition-all duration-300 hover:shadow-card-hover group">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/8 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4 group-hover:scale-110 transition-transform duration-700" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-ochre/5 rounded-full blur-2xl pointer-events-none translate-y-1/2 -translate-x-1/4" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           {/* Left: Greeting & Context */}
-          <div className="space-y-2 min-w-0">
+          <div className="space-y-2.5 min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-              <span className="font-bold px-2.5 py-0.5 rounded-md bg-paper border border-line text-ink shadow-2xs">
+              <span className="font-bold px-2.5 py-0.5 rounded-full bg-paper border border-line-dark/60 text-ink shadow-2xs">
                 {user.serialNumber || data.serialNumber || 'MEMBER'}
               </span>
               <span className="text-muted/60">·</span>
               <span className="text-muted font-medium">{user.position || data.position || 'SDE Intern'}</span>
               <span className="text-muted/60">·</span>
-              <span className="text-ink font-semibold px-2 py-0.5 rounded-md bg-paper-dark/60 border border-line/50">
+              <span className="text-ink font-semibold px-2.5 py-0.5 rounded-full bg-paper-dark border border-line/70 text-[11px]">
                 {data.teamName}
               </span>
               <span className="text-muted/60">·</span>
-              <span className="text-muted">{fullTitle}</span>
+              <span className="text-muted/80">{fullTitle}</span>
             </div>
 
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-              {greetingTitle}
-            </h1>
+            <div className="space-y-1">
+              <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink tracking-tight flex items-center gap-2">
+                <span>{greetingTitle}</span>
+                <span className="inline-block animate-wave origin-[70%_70%]">👋</span>
+              </h1>
+            </div>
 
-            <div className="inline-flex items-center space-x-2 text-xs font-mono text-muted bg-paper-light/90 border border-line/70 px-3 py-1 rounded-full shadow-2xs">
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+              <div className="inline-flex items-center space-x-2 text-xs font-mono text-muted bg-paper-light/95 border border-line/80 px-3 py-1 rounded-full shadow-2xs">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="truncate">{dailyContext}</span>
+              </div>
+              <span className="text-[11px] font-bold text-primary px-2.5 py-0.5 rounded-full bg-primary-soft border border-primary/20">
+                ACTIVE SPRINT
               </span>
-              <span className="truncate">{dailyContext}</span>
             </div>
           </div>
 
@@ -207,9 +216,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   setStandupModalMode('WRITE');
                   setStandupModalOpen(true);
                 }}
-                className="px-4.5 py-2.5 bg-primary text-paper hover:bg-primary-hover active:scale-95 rounded-lg font-mono text-xs font-bold transition-all duration-150 flex items-center space-x-2 shadow-sm hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer"
+                className="px-5 py-3 bg-gradient-to-r from-primary via-[#244A37] to-[#1C3A2C] text-white hover:from-primary-hover hover:to-[#173225] active:scale-95 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center space-x-2.5 shadow-[0_4px_16px_rgba(45,90,67,0.3)] hover:shadow-[0_6px_22px_rgba(45,90,67,0.4)] hover:-translate-y-0.5 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-paper/90 animate-pulse" />
+                <Sparkles className="w-4 h-4 text-emerald-300 animate-pulse" />
                 <span>Submit Daily Standup</span>
               </button>
             ) : (
@@ -220,7 +229,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   setStandupModalMode('VIEW');
                   setStandupModalOpen(true);
                 }}
-                className="px-3.5 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/15 active:scale-95 rounded-lg font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-2 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
+                className="px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/35 text-emerald-800 hover:bg-emerald-500/20 active:scale-95 rounded-xl font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-2 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Standup Recorded ✓</span>
@@ -230,7 +239,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             {!isCurrentLead && (
               <button
                 onClick={() => setAskLeadOpen(true)}
-                className="px-3.5 py-2 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-ink rounded-lg font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-1.5 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
+                className="px-4 py-2.5 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-ink rounded-xl font-mono text-xs font-semibold transition-all duration-150 flex items-center space-x-2 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
                 title="Send a quick question to your Team Lead"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-primary" />
@@ -240,7 +249,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
 
             <button
               onClick={() => setLeaveModalOpen(true)}
-              className="p-2.5 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-muted hover:text-ink rounded-lg transition-all duration-150 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
+              className="p-3 bg-paper hover:bg-paper-light active:scale-95 border border-line hover:border-primary/40 text-muted hover:text-ink rounded-xl transition-all duration-150 shadow-2xs hover:-translate-y-0.5 cursor-pointer"
               title="Generate Leave Request Email"
               aria-label="Generate Leave Request Email"
             >
@@ -253,7 +262,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
       {/* ========================================================================= */}
       {/* 2. CORE TELEMETRY METRICS (4 balanced, interactive KPI cards)              */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5">
         {/* CARD 1: DAILY STANDUP */}
         <div
           onClick={() => {
@@ -268,7 +277,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             }
             setStandupModalOpen(true);
           }}
-          className={`p-4.5 rounded-xl border transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group ${
+          className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group ${
             isSubmittedToday
               ? 'bg-emerald-500/5 border-emerald-500/30 hover:border-emerald-600'
               : 'bg-paper border-line hover:border-amber-500/50'
@@ -276,19 +285,19 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Daily Standup</span>
-            <div className={`p-2 rounded-lg transition-all duration-200 ${
+            <div className={`p-2.5 rounded-xl transition-all duration-200 shadow-2xs ${
               isSubmittedToday
-                ? 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white'
-                : 'bg-amber-500/10 text-amber-600 group-hover:bg-amber-500 group-hover:text-white'
+                ? 'bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-600 border border-emerald-500/30 group-hover:scale-105'
+                : 'bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-600 border border-amber-500/30 group-hover:scale-105'
             }`}>
               <Calendar className="w-4 h-4" />
             </div>
           </div>
           
           <div className="py-2.5">
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-2">
               <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-              <span className={`font-mono text-xl font-black block leading-none tracking-tight ${
+              <span className={`font-mono text-xl sm:text-2xl font-black block leading-none tracking-tight ${
                 isSubmittedToday ? 'text-emerald-700' : 'text-amber-700'
               }`}>
                 {isSubmittedToday ? 'DONE ✓' : 'PENDING'}
@@ -296,16 +305,23 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
           </div>
 
-          <div className="space-y-1.5 pt-1 border-t border-line/60">
-            <span className="font-mono text-[10px] text-muted truncate block">
-              {isSubmittedToday && todayStandup?.submittedAt
-                ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
-                : 'Action required today'}
-            </span>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+          <div className="space-y-2 pt-1 border-t border-line/60">
+            <div className="flex items-center justify-between font-mono text-[10px] text-muted">
+              <span className="truncate">
+                {isSubmittedToday && todayStandup?.submittedAt
+                  ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
+                  : 'Action required today'}
+              </span>
+              <span className={`px-1.5 py-0.2 rounded-xs font-bold text-[9px] uppercase ${
+                isSubmittedToday ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700'
+              }`}>
+                {isSubmittedToday ? 'RECORDED' : '2 MIN'}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  isSubmittedToday ? 'w-full bg-emerald-500' : 'w-1/4 bg-amber-500'
+                  isSubmittedToday ? 'w-full bg-gradient-to-r from-emerald-500 to-teal-400' : 'w-1/4 bg-gradient-to-r from-amber-500 to-orange-400 animate-pulse'
                 }`}
               />
             </div>
@@ -315,35 +331,42 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         {/* CARD 2: MY TASKS */}
         <div
           onClick={() => onNavigateTab('tasks')}
-          className="p-4.5 bg-paper border border-line hover:border-primary/50 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
+          className="p-5 bg-paper border border-line hover:border-blue-500/50 rounded-2xl transition-all duration-200 cursor-pointer shadow-xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">My Tasks</span>
-            <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-200">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/10 text-blue-600 border border-blue-500/30 shadow-2xs group-hover:scale-105 transition-all duration-200">
               <CheckSquare className="w-4 h-4" />
             </div>
           </div>
           
           <div className="py-2.5">
-            <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
-              {data.openTasksCount}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
+                {data.openTasksCount}
+              </span>
+              {data.openTasksCount === 0 && (
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-mono text-[10px] font-bold">
+                  ALL CLEAR
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-1.5 pt-1 border-t border-line/60">
+          <div className="space-y-2 pt-1 border-t border-line/60">
             <div className="flex items-center justify-between font-mono text-[10px] text-muted">
               <span className="truncate">
                 {data.tasksDueTodayCount > 0
                   ? `${data.tasksDueTodayCount} due today`
                   : `${data.lifetimeCompletedTasks} completed lifetime`}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
             </div>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
                 style={{
-                  width: `${Math.min(100, Math.max(10, ((data.lifetimeCompletedTasks || 0) / Math.max(1, (data.lifetimeCompletedTasks || 0) + (data.openTasksCount || 0))) * 100))}%`
+                  width: `${data.openTasksCount === 0 ? 100 : Math.min(100, Math.max(15, ((data.lifetimeCompletedTasks || 0) / Math.max(1, (data.lifetimeCompletedTasks || 0) + (data.openTasksCount || 0))) * 100))}%`
                 }}
               />
             </div>
@@ -353,35 +376,42 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         {/* CARD 3: HOMEWORK */}
         <div
           onClick={() => onNavigateTab('homework')}
-          className="p-4.5 bg-paper border border-line hover:border-ochre/50 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
+          className="p-5 bg-paper border border-line hover:border-amber-500/50 rounded-2xl transition-all duration-200 cursor-pointer shadow-xs hover:shadow-card-hover hover:-translate-y-1 flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Homework</span>
-            <div className="p-2 rounded-lg bg-ochre/15 text-ochre group-hover:bg-ochre group-hover:text-white transition-all duration-200">
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Homework & Labs</span>
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-600 border border-amber-500/30 shadow-2xs group-hover:scale-105 transition-all duration-200">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
 
           <div className="py-2.5">
-            <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
-              {data.pendingHomeworkCount}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="font-mono text-3xl font-black text-ink block leading-none tracking-tight">
+                {data.pendingHomeworkCount}
+              </span>
+              {data.pendingHomeworkCount === 0 && (
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-mono text-[10px] font-bold">
+                  UP TO DATE
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-1.5 pt-1 border-t border-line/60">
+          <div className="space-y-2 pt-1 border-t border-line/60">
             <div className="flex items-center justify-between font-mono text-[10px] text-muted">
               <span className="truncate">
                 {data.totalHomeworkCount > 0
                   ? `${data.totalHomeworkCount - data.pendingHomeworkCount}/${data.totalHomeworkCount} assignments turned in`
-                  : 'No assignments due'}
+                  : 'All assignments cleared ✓'}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all" />
             </div>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-ochre transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-500"
                 style={{
-                  width: `${data.totalHomeworkCount > 0 ? Math.min(100, Math.max(8, ((data.totalHomeworkCount - data.pendingHomeworkCount) / data.totalHomeworkCount) * 100)) : 100}%`
+                  width: `${data.totalHomeworkCount > 0 ? Math.min(100, Math.max(15, ((data.totalHomeworkCount - data.pendingHomeworkCount) / data.totalHomeworkCount) * 100)) : 100}%`
                 }}
               />
             </div>
@@ -395,39 +425,46 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
               setAskLeadOpen(true);
             }
           }}
-          className={`p-4.5 rounded-xl border transition-all duration-200 shadow-2xs flex flex-col justify-between ${
+          className={`p-5 rounded-2xl border transition-all duration-200 shadow-xs flex flex-col justify-between ${
             data.openBlockersCount > 0
               ? 'bg-rose-500/5 border-rose-500/30 hover:border-rose-500 cursor-pointer hover:shadow-card-hover hover:-translate-y-1 group'
-              : 'bg-paper border-line'
+              : 'bg-paper border-line hover:border-emerald-500/50 hover:shadow-card-hover hover:-translate-y-1 group cursor-default'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Blockers</span>
-            <div className={`p-2 rounded-lg transition-all duration-200 ${
+            <span className="font-mono text-[10px] uppercase font-bold text-muted tracking-wider">Blockers & Support</span>
+            <div className={`p-2.5 rounded-xl transition-all duration-200 shadow-2xs ${
               data.openBlockersCount > 0
-                ? 'bg-rose-500/10 text-rose-600 group-hover:bg-rose-500 group-hover:text-white'
-                : 'bg-paper-dark text-muted'
+                ? 'bg-gradient-to-br from-rose-500/20 to-red-500/10 text-rose-600 border border-rose-500/30 group-hover:scale-105'
+                : 'bg-gradient-to-br from-emerald-500/15 to-teal-500/10 text-emerald-600 border border-emerald-500/25 group-hover:scale-105'
             }`}>
               <Shield className="w-4 h-4" />
             </div>
           </div>
 
           <div className="py-2.5">
-            <span className={`font-mono text-3xl font-black block leading-none tracking-tight ${
-              data.openBlockersCount > 0 ? 'text-rose-700' : 'text-ink'
-            }`}>
-              {data.openBlockersCount}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className={`font-mono text-3xl font-black block leading-none tracking-tight ${
+                data.openBlockersCount > 0 ? 'text-rose-700' : 'text-ink'
+              }`}>
+                {data.openBlockersCount}
+              </span>
+              {data.openBlockersCount === 0 && (
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-mono text-[10px] font-bold">
+                  ZERO FLAGS
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-1.5 pt-1 border-t border-line/60">
+          <div className="space-y-2 pt-1 border-t border-line/60">
             <span className="font-mono text-[10px] text-muted truncate block">
-              {data.openBlockersCount > 0 ? 'Requires Lead assistance' : 'No blockers flagged ✓'}
+              {data.openBlockersCount > 0 ? 'Requires Lead assistance' : 'No blockers flagged · Full velocity'}
             </span>
-            <div className="w-full h-1 bg-line/60 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-line/60 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-emerald-500/50'
+                  data.openBlockersCount > 0 ? 'w-full bg-rose-500' : 'w-full bg-gradient-to-r from-emerald-500 to-teal-400'
                 }`}
               />
             </div>
@@ -467,7 +504,7 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
         <div className="lg:col-span-7 space-y-6">
           
           {/* SECTION A: YOUR FOCUS TODAY */}
-          <div className="bg-paper border border-line rounded-xl p-5 sm:p-6 shadow-xs space-y-4 transition-all duration-200 hover:shadow-card-hover">
+          <div className="bg-paper border border-line rounded-2xl p-5 sm:p-6 shadow-xs space-y-4 transition-all duration-200 hover:shadow-card-hover">
             <div className="flex items-center justify-between border-b border-line pb-3">
               <div className="flex items-center space-x-2.5">
                 <div className="p-1.5 bg-primary/10 text-primary rounded-md">
@@ -477,22 +514,89 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                   Your Focus Today
                 </h2>
               </div>
-              <span className="font-mono text-[10px] text-muted font-bold px-2 py-0.5 rounded-full bg-paper-dark border border-line/60">
+              <span className="font-mono text-[10px] text-muted font-bold px-2.5 py-0.5 rounded-full bg-paper-dark border border-line/60">
                 {data.focusItems?.length || 0} Priority Items
               </span>
             </div>
 
             {(!data.focusItems || data.focusItems.length === 0) ? (
-              <div className="py-8 px-4 text-center space-y-2 bg-paper-light/70 rounded-lg border border-line/60">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-5 h-5" />
+              <div className="p-5 sm:p-6 bg-gradient-to-br from-paper-light via-paper to-paper-dark/30 rounded-xl border border-line/80 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-line/60">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-600 border border-emerald-500/30 flex items-center justify-center shadow-2xs shrink-0">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-bold text-ink">
+                        Sprint Runway is Clear
+                      </h3>
+                      <p className="font-mono text-[11px] text-muted">
+                        No urgent deadlines or bottlenecks today. Accelerate your progression:
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full uppercase self-start sm:self-center shrink-0">
+                    100% OPERATIONAL
+                  </span>
                 </div>
-                <h3 className="font-display text-sm font-bold text-ink">
-                  Your focus board is clear
-                </h3>
-                <p className="font-mono text-xs text-muted max-w-sm mx-auto">
-                  No urgent deadlines or blockers right now. Work through your sprint tasks or practice in the Interview Lab.
-                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Quick Action 1: Interview Lab */}
+                  <div
+                    onClick={() => onNavigateTab('interview')}
+                    className="p-3.5 bg-paper hover:bg-paper-light border border-line hover:border-primary/40 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-0.5 group flex flex-col justify-between"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>INTERVIEW LAB</span>
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </div>
+                      <h4 className="font-sans text-xs font-bold text-ink group-hover:text-primary transition-colors">
+                        Practice Technical Interviews
+                      </h4>
+                      <p className="text-[11px] text-muted font-sans leading-relaxed">
+                        Sharpen Java concurrency, memory model, and backend system architecture concepts.
+                      </p>
+                    </div>
+                    <div className="pt-3">
+                      <span className="font-mono text-[11px] font-semibold text-primary flex items-center gap-1">
+                        <span>Launch Lab</span>
+                        <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quick Action 2: Kanban Board */}
+                  <div
+                    onClick={() => onNavigateTab('tasks')}
+                    className="p-3.5 bg-paper hover:bg-paper-light border border-line hover:border-primary/40 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-card-hover hover:-translate-y-0.5 group flex flex-col justify-between"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckSquare className="w-3.5 h-3.5 text-blue-600" />
+                          <span>SPRINT BACKLOG</span>
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </div>
+                      <h4 className="font-sans text-xs font-bold text-ink group-hover:text-primary transition-colors">
+                        Explore Sprint Kanban Board
+                      </h4>
+                      <p className="text-[11px] text-muted font-sans leading-relaxed">
+                        Pick up your next development ticket, verify code reviews, or update sprint progress.
+                      </p>
+                    </div>
+                    <div className="pt-3">
+                      <span className="font-mono text-[11px] font-semibold text-primary flex items-center gap-1">
+                        <span>Open Kanban</span>
+                        <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -649,27 +753,27 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
             </div>
 
             {/* PART 1: YOUR STANDUP */}
-            <div className={`p-4 rounded-lg border space-y-3 transition-all duration-200 ${
-              isSubmittedToday ? 'bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40' : 'bg-paper-light border-line hover:border-line-dark'
+            <div className={`p-4.5 rounded-xl border space-y-3.5 transition-all duration-200 ${
+              isSubmittedToday ? 'bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40' : 'bg-gradient-to-br from-paper-light via-paper to-paper-light border-line hover:border-line-dark shadow-2xs'
             }`}>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${isSubmittedToday ? 'bg-emerald-600' : 'bg-amber-500 animate-pulse'}`} />
                   <span>My Daily Briefing</span>
                 </span>
-                <span className="font-mono text-[10px] text-muted">
+                <span className="font-mono text-[10px] text-muted font-semibold">
                   {isSubmittedToday && todayStandup?.submittedAt
-                    ? formatLocalTime(todayStandup.submittedAt)
-                    : 'Not submitted yet'}
+                    ? `Logged at ${formatLocalTime(todayStandup.submittedAt)}`
+                    : 'Action required'}
                 </span>
               </div>
 
               {!isSubmittedToday ? (
                 <div className="space-y-3">
                   <p className="text-xs text-muted font-sans leading-relaxed">
-                    Share your yesterday progress and blockers with the team in 2 minutes.
+                    Share your yesterday progress, today's targets, and any blockers with your team in 2 minutes.
                   </p>
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-2.5 pt-1">
                     <button
                       onClick={() => {
                         setStandupModalViewOnly(false);
@@ -677,10 +781,10 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('WRITE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-2 px-3 bg-paper hover:bg-paper-dark border border-line hover:border-ink font-mono text-xs font-semibold text-ink rounded-lg transition-all duration-150 flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
+                      className="flex-1 py-2.5 px-3 bg-paper hover:bg-paper-light border border-line hover:border-ink font-mono text-xs font-bold text-ink rounded-xl transition-all duration-150 flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
                     >
                       <PenTool className="w-3.5 h-3.5 text-primary" />
-                      <span>Write</span>
+                      <span>Write Standup</span>
                     </button>
                     <button
                       onClick={() => {
@@ -689,9 +793,9 @@ export const MemberWorkspaceView: React.FC<MemberWorkspaceViewProps> = ({ onNavi
                         setStandupModalMode('VOICE');
                         setStandupModalOpen(true);
                       }}
-                      className="flex-1 py-2 px-3 bg-primary text-paper hover:bg-primary-hover font-mono text-xs font-semibold rounded-lg transition-all duration-150 flex items-center justify-center space-x-1.5 shadow-xs hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer"
+                      className="flex-1 py-2.5 px-3 bg-gradient-to-r from-primary to-[#1D4030] text-white hover:from-primary-hover hover:to-[#173225] font-mono text-xs font-bold rounded-xl transition-all duration-150 flex items-center justify-center space-x-2 shadow-[0_4px_12px_rgba(45,90,67,0.25)] hover:shadow-[0_6px_18px_rgba(45,90,67,0.35)] hover:-translate-y-0.5 cursor-pointer"
                     >
-                      <Mic className="w-3.5 h-3.5 text-paper/90" />
+                      <Mic className="w-3.5 h-3.5 text-emerald-300 animate-pulse" />
                       <span>Record Voice</span>
                     </button>
                   </div>

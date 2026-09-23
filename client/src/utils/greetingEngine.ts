@@ -14,11 +14,11 @@ export function getTimeGreeting(fullName?: string): string {
   const hour = new Date().getHours();
 
   if (hour >= 0 && hour < 12) {
-    return `GOOD MORNING, ${name.toUpperCase()}.`;
+    return `Good morning, ${name}`;
   } else if (hour >= 12 && hour < 17) {
-    return `GOOD AFTERNOON, ${name.toUpperCase()}.`;
+    return `Good afternoon, ${name}`;
   } else {
-    return `GOOD EVENING, ${name.toUpperCase()}.`;
+    return `Good evening, ${name}`;
   }
 }
 
