@@ -98,6 +98,11 @@ export const TeamMeetingsSection: React.FC = () => {
   };
 
   const handleToggleComplete = async (meeting: TeamMeeting, completed: boolean) => {
+    // 1. Optimistic UI update: instantly update UI so the user experiences zero lag
+    setMeetings((prev) =>
+      prev.map((m) => (m.id === meeting.id ? { ...m, isActive: !completed } : m))
+    );
+
     try {
       if (completed) {
         await api.completeMeeting(meeting.id);
@@ -110,6 +115,10 @@ export const TeamMeetingsSection: React.FC = () => {
       }
       await fetchMeetings();
     } catch (err: any) {
+      // Revert optimistic update on error
+      setMeetings((prev) =>
+        prev.map((m) => (m.id === meeting.id ? { ...m, isActive: meeting.isActive } : m))
+      );
       showToast('error', 'Status Update Failed', err?.message || 'Failed to update meeting status.');
     }
   };
@@ -316,23 +325,54 @@ export const TeamMeetingsSection: React.FC = () => {
             </span>
           </div>
 
-          {/* 4. MEETINGS GRID */}
+          {/* 4. MEETINGS GRID OR ACTIVE MEETING GUIDELINES */}
           {viewFilter === 'UPCOMING' && gridUpcomingMeetings.length === 0 && heroMeeting ? (
-            <div className="py-8 px-6 bg-paper-light border border-line rounded-2xl text-center space-y-2">
-              <p className="text-xs font-semibold text-ink">
-                The featured sync above is the active upcoming meeting.
-              </p>
-              <p className="text-xs text-muted max-w-md mx-auto">
-                No additional syncs are queued. Switch to{' '}
-                <button
-                  type="button"
-                  onClick={() => setViewFilter('PAST')}
-                  className="text-primary underline font-bold cursor-pointer"
-                >
-                  Past History ({pastMeetings.length})
-                </button>{' '}
-                to review completed syncs.
-              </p>
+            <div className="bg-paper-light border border-line rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-line pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <h3 className="font-display text-sm font-bold text-ink">
+                    Team Sync Guidelines & Active Agenda
+                  </h3>
+                </div>
+                <span className="text-[11px] font-mono text-muted bg-paper px-2.5 py-1 rounded-md border border-line">
+                  Featured sync is live above
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
+                <div className="bg-paper p-3.5 rounded-xl border border-line/70 space-y-1">
+                  <div className="font-semibold text-ink flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Crisp 15-Minute Standup
+                  </div>
+                  <p className="text-muted leading-relaxed text-[11px]">
+                    Share what was completed, active blockers, and daily deliverables quickly.
+                  </p>
+                </div>
+
+                <div className="bg-paper p-3.5 rounded-xl border border-line/70 space-y-1">
+                  <div className="font-semibold text-ink flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    Screen Share & Code Reviews
+                  </div>
+                  <p className="text-muted leading-relaxed text-[11px]">
+                    Share terminal or IDE tabs for architecture spikes and PR walkthroughs.
+                  </p>
+                </div>
+
+                <div className="bg-paper p-3.5 rounded-xl border border-line/70 space-y-1">
+                  <div className="font-semibold text-ink flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                    Instant Task Tracking
+                  </div>
+                  <p className="text-muted leading-relaxed text-[11px]">
+                    Action items can be logged directly into Member Mission Control right after the call.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (viewFilter === 'UPCOMING' ? gridUpcomingMeetings : viewFilter === 'PAST' ? pastMeetings : meetings).length === 0 ? (
             <div className="py-12 text-center text-xs text-muted bg-paper-light rounded-xl border border-line">
