@@ -32,6 +32,11 @@ export const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   // Handle ESC key press & return focus on close
   useEffect(() => {
     if (!isOpen) return;
@@ -41,13 +46,14 @@ export const Modal: React.FC<ModalProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
-    if (modalRef.current) {
+    // Only focus modal container if focus is not already inside the modal
+    if (modalRef.current && !modalRef.current.contains(document.activeElement)) {
       modalRef.current.focus();
     }
 
@@ -57,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   // Lock body scroll with scrollbar layout-shift compensation
   useEffect(() => {

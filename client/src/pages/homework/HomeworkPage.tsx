@@ -22,10 +22,7 @@ import {
   AlertCircle,
   Edit3,
   Search,
-  Filter,
   CheckCircle2,
-  Target,
-  Flame,
   Users,
   Copy,
   CheckCheck,
@@ -469,8 +466,6 @@ export const HomeworkPage: React.FC = () => {
     return diffDays <= 2 || hw.isOverdue;
   }).length;
 
-  const solutionsCount = homeworkList.filter((hw) => hw.isSolutionPublished).length;
-
   const distinctTopics = Array.from(
     new Set(homeworkList.map((hw) => hw.subjectTopic).filter(Boolean))
   );
@@ -499,190 +494,63 @@ export const HomeworkPage: React.FC = () => {
   return (
     <PageContainer width="default" className="space-y-6">
       {/* ========================================================================= */}
-      {/* 1. EXECUTIVE PAGE HEADER                                                  */}
+      {/* 1. MINIMAL PAGE HEADER                                                    */}
       {/* ========================================================================= */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-paper-light via-surface to-paper border border-line/90 rounded-2xl p-6 sm:p-7 shadow-xs">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {isLead ? 'LEADERSHIP ACTION CENTER' : 'STUDENT ASSIGNMENTS'}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-line">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-display text-2xl font-bold text-ink tracking-tight">
+              Homework & Practice
+            </h1>
+            <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded-full bg-paper-dark border border-line text-muted">
+              {activeCount} active
+            </span>
+            {dueSoonCount > 0 && (
+              <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700">
+                {dueSoonCount} due soon
               </span>
-              <span className="text-muted/40">·</span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-paper border border-line text-muted">
-                {activeCount} Active
+            )}
+            {isLead && pendingReviewCount > 0 && (
+              <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary">
+                {pendingReviewCount} pending review
               </span>
-              {dueSoonCount > 0 && (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700">
-                  {dueSoonCount} Due Soon
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-baseline gap-3">
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-                {isLead ? 'Homework & Technical Practice Hub' : 'My Homework Assignments'}
-              </h1>
-            </div>
-            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
-              {isLead
-                ? 'Assign technical practice questions, monitor crew submissions in real-time, and release instructor solutions.'
-                : 'Core technical questions, practical challenges, and solution guidelines assigned by your Team Lead.'}
-            </p>
+            )}
           </div>
-
-          {isLead && (
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                onClick={() => handleOpenAddModal()}
-                className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-emerald-300 group-hover:rotate-90 transition-transform duration-200" />
-                <span>Add Homework</span>
-              </button>
-            </div>
-          )}
+          <p className="text-xs text-muted">
+            {isLead
+              ? 'Assign technical practice questions, track crew submissions, and release solution guides.'
+              : 'Core technical questions and practice tasks assigned by your Team Lead.'}
+          </p>
         </div>
+
+        {isLead && (
+          <button
+            onClick={() => handleOpenAddModal()}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Homework</span>
+          </button>
+        )}
       </div>
 
       {error && (
-        <div className="p-3.5 bg-attention/10 border border-attention text-xs text-attention rounded-xl flex items-center space-x-2">
+        <div className="p-3 bg-attention/10 border border-attention text-xs text-attention rounded-xl flex items-center space-x-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 2. EXECUTIVE METRIC STRIP (Interactive Filter Cards)                      */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total Assigned */}
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
-            activeTab === 'all'
-              ? 'bg-paper-light border-primary ring-2 ring-primary/20 shadow-xs'
-              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-ink transition-colors">
-              Total Assigned
-            </span>
-            <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                activeTab === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-paper border border-line text-primary'
-              }`}
-            >
-              <Target className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-ink">{totalCount}</span>
-            <span className="text-xs text-muted font-medium">all challenges</span>
-          </div>
-        </button>
-
-        {/* Active Homework */}
-        <button
-          onClick={() => setActiveTab('active')}
-          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
-            activeTab === 'active'
-              ? 'bg-amber-500/5 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
-              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-amber-800 transition-colors">
-              Active Challenges
-            </span>
-            <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                activeTab === 'active'
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-paper border border-line text-amber-600'
-              }`}
-            >
-              <Flame className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-amber-600">
-              {activeCount}
-            </span>
-            <span className="text-xs text-muted font-medium">live sprint</span>
-          </div>
-        </button>
-
-        {/* Pending Review or Due Soon */}
-        <div
-          className="p-4 rounded-2xl border text-left transition-all duration-200 bg-paper-light/90 border-line shadow-2xs group"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-purple-800 transition-colors">
-              {isLead ? 'Pending Review' : 'Due Soon'}
-            </span>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-paper border border-line text-purple-600">
-              {isLead ? <FileCheck className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-purple-600">
-              {isLead ? pendingReviewCount : dueSoonCount}
-            </span>
-            <span className="text-xs text-muted font-medium">
-              {isLead ? 'submissions waiting' : 'within 48 hours'}
-            </span>
-          </div>
-        </div>
-
-        {/* Solutions Published */}
-        <button
-          onClick={() => setActiveTab('archived')}
-          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
-            activeTab === 'archived'
-              ? 'bg-emerald-500/5 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
-              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-emerald-800 transition-colors">
-              Verified Solutions
-            </span>
-            <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                activeTab === 'archived'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-paper border border-line text-emerald-600'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-2xl sm:text-3xl font-black text-emerald-600">
-              {solutionsCount}
-            </span>
-            <span className="text-xs text-muted font-medium">solutions released</span>
-          </div>
-        </button>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 3. TOOLBAR: TABS, SEARCH & TOPIC FILTERS                                   */}
+      {/* 2. MINIMAL UNIFIED TOOLBAR: TABS + SEARCH                                  */}
       {/* ========================================================================= */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Segmented View Tabs */}
-          <div className="inline-flex p-1 bg-paper-dark/70 border border-line rounded-xl gap-1 shrink-0 self-start sm:self-auto">
+          <div className="inline-flex p-1 bg-paper-dark border border-line rounded-xl gap-1 shrink-0 self-start sm:self-auto">
             <button
               onClick={() => setActiveTab('active')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'active'
                   ? 'bg-paper text-ink shadow-2xs font-bold'
                   : 'text-muted hover:text-ink'
@@ -692,17 +560,17 @@ export const HomeworkPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('archived')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'archived'
                   ? 'bg-paper text-ink shadow-2xs font-bold'
                   : 'text-muted hover:text-ink'
               }`}
             >
-              Archived & Past ({archivedCount})
+              Archived ({archivedCount})
             </button>
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'all'
                   ? 'bg-paper text-ink shadow-2xs font-bold'
                   : 'text-muted hover:text-ink'
@@ -719,8 +587,8 @@ export const HomeworkPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title, topic, or question..."
-              className="w-full pl-8 pr-8 py-2 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
+              placeholder="Search homework or questions..."
+              className="w-full pl-8 pr-8 py-2 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
             />
             {searchQuery && (
               <button
@@ -733,18 +601,15 @@ export const HomeworkPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Topic Filters */}
+        {/* Topic Filters (if multiple exist) */}
         {distinctTopics.length > 1 && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-            <span className="text-[11px] font-semibold text-muted uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-              <Filter className="w-3 h-3" /> Topic:
-            </span>
             <button
               onClick={() => setSelectedTopic('ALL')}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                 selectedTopic === 'ALL'
                   ? 'bg-ink text-paper shadow-2xs'
-                  : 'bg-paper border border-line text-muted hover:text-ink hover:border-line-dark'
+                  : 'bg-paper border border-line text-muted hover:text-ink'
               }`}
             >
               All Topics
@@ -756,7 +621,7 @@ export const HomeworkPage: React.FC = () => {
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                   selectedTopic.toLowerCase() === topic.toLowerCase()
                     ? 'bg-ink text-paper shadow-2xs'
-                    : 'bg-paper border border-line text-muted hover:text-ink hover:border-line-dark'
+                    : 'bg-paper border border-line text-muted hover:text-ink'
                 }`}
               >
                 {topic}
@@ -767,147 +632,86 @@ export const HomeworkPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. ACTIVE HOMEWORK SECTION                                                */}
+      {/* 3. ASSIGNMENTS FEED                                                       */}
       {/* ========================================================================= */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-line pb-2">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="w-4 h-4 text-accent" />
-            <h2 className="font-display text-base font-bold text-ink">
-              Active Homework
-            </h2>
-          </div>
-          <span className="font-mono text-xs text-muted">
-            {activeHomeworkList.length} Active
-          </span>
-        </div>
-
         {filteredHomeworkList.length === 0 ? (
           searchQuery || selectedTopic !== 'ALL' ? (
             /* Search / Filter yielded no results */
-            <div className="border border-line bg-paper rounded-2xl p-10 text-center space-y-3 shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
-                <Search className="w-5 h-5" />
+            <div className="border border-line bg-paper rounded-2xl p-8 text-center space-y-3 shadow-2xs max-w-lg mx-auto">
+              <div className="w-10 h-10 rounded-xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
+                <Search className="w-4 h-4" />
               </div>
-              <h3 className="font-display text-base font-bold text-ink">No Matching Assignments</h3>
-              <p className="text-xs text-muted max-w-sm mx-auto">
-                No homework assignments matched your current search or topic filter.
+              <h3 className="font-display text-sm font-bold text-ink">No Matching Homework</h3>
+              <p className="text-xs text-muted">
+                No assignments match your search query or topic filter.
               </p>
               <button
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedTopic('ALL');
                 }}
-                className="px-4 py-2 bg-paper border border-line hover:border-ink rounded-xl text-xs font-semibold text-ink transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 bg-paper border border-line hover:border-ink rounded-lg text-xs font-semibold text-ink transition-colors cursor-pointer"
               >
                 Reset Filters
               </button>
             </div>
           ) : activeTab === 'archived' ? (
             /* Empty Archive */
-            <div className="border border-line bg-paper rounded-2xl p-10 text-center space-y-3 shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
-                <Clock className="w-5 h-5" />
+            <div className="border border-line bg-paper rounded-2xl p-8 text-center space-y-2 shadow-2xs max-w-lg mx-auto">
+              <div className="w-10 h-10 rounded-xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
+                <Clock className="w-4 h-4" />
               </div>
-              <h3 className="font-display text-base font-bold text-ink">No Archived Homework</h3>
-              <p className="text-xs text-muted max-w-sm mx-auto">
-                Completed assignments will appear here once their due dates pass.
+              <h3 className="font-display text-sm font-bold text-ink">No Archived Homework</h3>
+              <p className="text-xs text-muted">
+                Completed assignments will appear here once their due dates have passed.
               </p>
             </div>
           ) : (
-            /* Empty State for Active Assignments (Visual Hero & Blueprints) */
-            <div className="space-y-6">
-              {/* Hero Empty Banner */}
-              <div className="relative overflow-hidden bg-gradient-to-b from-paper-light to-surface border border-line rounded-2xl p-8 sm:p-10 text-center space-y-4 shadow-xs">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-600 shadow-2xs">
-                  <BookOpen className="w-7 h-7" />
-                </div>
-                <div className="space-y-1.5 max-w-md mx-auto">
-                  <h3 className="font-display text-xl font-bold text-ink tracking-tight">
-                    {isLead ? 'No Active Homework Right Now' : 'All Caught Up!'}
-                  </h3>
-                  <p className="text-xs text-muted leading-relaxed">
-                    {isLead
-                      ? 'Assign technical practice questions from your latest sync, track crew progress in real time, and share instructor solutions.'
-                      : "Your Team Lead hasn't assigned any active homework yet. Sharpen your skills in the Interview Lab or check your team tasks."}
-                  </p>
-                </div>
-
-                {isLead ? (
-                  <button
-                    onClick={() => handleOpenAddModal()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4 text-emerald-300" />
-                    <span>Create Custom Assignment</span>
-                  </button>
-                ) : (
-                  <div className="flex items-center justify-center gap-3 pt-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Zero Pending Submissions</span>
-                    </span>
-                  </div>
-                )}
+            /* Minimal Clean Empty State */
+            <div className="border border-line bg-paper rounded-2xl p-8 sm:p-10 text-center space-y-4 shadow-2xs max-w-xl mx-auto">
+              <div className="w-12 h-12 rounded-xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-display text-base font-bold text-ink">
+                  {isLead ? 'No Active Homework' : 'All Caught Up!'}
+                </h3>
+                <p className="text-xs text-muted max-w-sm mx-auto">
+                  {isLead
+                    ? 'No homework assignments are currently active for your crew.'
+                    : "Your lead hasn't posted any active assignments yet. Check back soon!"}
+                </p>
               </div>
 
-              {/* Curated Technical Practice Blueprints (For Leads) */}
               {isLead && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-display text-sm font-bold text-ink flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        <span>Quick-Start Engineering Blueprints</span>
-                      </h4>
-                      <p className="text-[11px] text-muted">
-                        Select a battle-tested technical practice assignment to launch to your crew in 1 click.
-                      </p>
-                    </div>
-                  </div>
+                <div className="space-y-4 pt-1">
+                  <button
+                    onClick={() => handleOpenAddModal()}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Homework</span>
+                  </button>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    {STARTER_TEMPLATES.map((tpl) => (
-                      <div
-                        key={tpl.id}
-                        className="p-5 rounded-2xl bg-paper border border-line hover:border-line-dark shadow-2xs hover:shadow-card transition-all duration-200 flex flex-col justify-between gap-4 group"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-paper-dark border border-line text-ink">
-                              {tpl.topic}
-                            </span>
-                            <span className="text-[10px] font-semibold text-muted">
-                              {tpl.questions.length} Questions
-                            </span>
-                          </div>
-
-                          <h5 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
-                            {tpl.title}
-                          </h5>
-                          <p className="text-xs text-muted leading-relaxed">
-                            {tpl.description}
-                          </p>
-
-                          {/* Problem preview */}
-                          <div className="p-2.5 rounded-xl bg-paper-dark/60 border border-line/60 font-mono text-[11px] text-ink/80 space-y-1">
-                            <span className="text-[10px] font-bold text-muted block uppercase tracking-wider">
-                              Preview:
-                            </span>
-                            <p className="truncate">1. {tpl.questions[0]}</p>
-                          </div>
-                        </div>
-
+                  {/* Compact Quick Templates */}
+                  <div className="pt-3 border-t border-line/70">
+                    <span className="text-[11px] text-muted block mb-2 font-medium">
+                      Or start quickly from a template:
+                    </span>
+                    <div className="flex flex-wrap items-center justify-center gap-1.5">
+                      {STARTER_TEMPLATES.map((tpl) => (
                         <button
+                          key={tpl.id}
                           type="button"
                           onClick={() => handleApplyTemplate(tpl)}
-                          className="w-full py-2 px-3 bg-paper-light hover:bg-primary hover:text-white border border-line hover:border-primary text-xs font-semibold rounded-xl text-ink transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                          className="px-2.5 py-1 bg-paper-light hover:bg-paper-dark border border-line rounded-lg text-xs text-ink font-medium transition-all hover:border-line-dark cursor-pointer inline-flex items-center gap-1"
                         >
-                          <Plus className="w-3.5 h-3.5 text-primary group-hover:text-white" />
-                          <span>Use Blueprint Template</span>
+                          <Sparkles className="w-3 h-3 text-primary" />
+                          <span>{tpl.topic}</span>
                         </button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1755,8 +1559,7 @@ export const HomeworkPage: React.FC = () => {
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
               placeholder="e.g. Java If-Else Practice & Conditionals"
-              className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
-              autoFocus
+              className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
             />
           </div>
 
@@ -1771,7 +1574,7 @@ export const HomeworkPage: React.FC = () => {
                 value={formTopic}
                 onChange={(e) => setFormTopic(e.target.value)}
                 placeholder="e.g. Core Java — Control Flow"
-                className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
+                className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
               />
             </div>
 
@@ -1783,7 +1586,7 @@ export const HomeworkPage: React.FC = () => {
                 type="date"
                 value={formDueDate}
                 onChange={(e) => setFormDueDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink outline-none transition-all font-mono"
+                className="w-full px-3.5 py-2.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl text-xs text-ink outline-none transition-all font-mono"
               />
             </div>
           </div>
@@ -1812,11 +1615,11 @@ export const HomeworkPage: React.FC = () => {
                     {idx + 1}.
                   </span>
                   <textarea
-                    rows={2}
+                    rows={3}
                     value={q}
                     onChange={(e) => handleQuestionChange(idx, e.target.value)}
                     placeholder={`Question ${idx + 1} statement or challenge requirements...`}
-                    className="flex-1 p-2.5 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-none transition-all font-sans"
+                    className="flex-1 p-2.5 bg-paper border border-line focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none resize-y min-h-[60px] transition-all font-sans"
                   />
                   {formQuestions.length > 1 && (
                     <button
