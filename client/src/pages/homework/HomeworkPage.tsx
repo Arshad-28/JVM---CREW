@@ -14,7 +14,6 @@ import {
   Sparkles,
   X,
   ChevronDown,
-  ChevronUp,
   Eye,
   Bell,
   Check,
@@ -22,9 +21,76 @@ import {
   Trash2,
   AlertCircle,
   Edit3,
+  Search,
+  Filter,
+  CheckCircle2,
+  Target,
+  Flame,
+  Users,
+  Copy,
+  CheckCheck,
+  FileCheck,
 } from 'lucide-react';
 import { PageContainer } from '../../components/common/PageContainer';
 import { Modal } from '../../components/common/Modal';
+const STARTER_TEMPLATES = [
+  {
+    id: 'java-core',
+    topic: 'Core Java',
+    badge: 'OOP & Architecture',
+    title: 'Polymorphism, Interfaces & Error Handling',
+    description: 'Design robust abstractions using interfaces, dynamic dispatch, and clean exception hierarchies.',
+    questions: [
+      'Design a PaymentGateway interface with methods processPayment(double amount) and refund(String txId). Implement two concrete providers: StripeGateway and PayPalGateway.',
+      'Explain Dynamic Method Dispatch in Java and write a short snippet demonstrating runtime polymorphism with an overridden calculateFee() method.',
+      'Create a custom PaymentProcessingException and implement try-with-resources to ensure database or connection handles are closed safely.',
+    ],
+    instructions: 'Focus on clean separation of concerns. Do not use raw types. Add unit test assertions or edge case checks in comments.',
+    color: 'emerald',
+  },
+  {
+    id: 'dsa-algo',
+    topic: 'DSA & Algorithms',
+    badge: 'Two Pointers & Arrays',
+    title: 'Optimal Two Pointers & Subarray Sliding Window',
+    description: 'Master in-place array manipulation, boundary pointers, and frequency maps in O(n) optimal time.',
+    questions: [
+      'Solve the Container With Most Water problem in O(n) time and O(1) auxiliary space. Explain why the shorter boundary line must be moved inward at each step.',
+      'Given an array of integers and target sum S, find the minimal length of a contiguous subarray whose sum is greater than or equal to S using a dynamic sliding window.',
+      'Implement 3Sum without generating duplicate triplets in the output list. Analyze the time complexity compared to brute-force O(n³).',
+    ],
+    instructions: 'Aim for O(n) or O(n log n) optimal complexity. Write comments detailing your invariants and loop termination conditions.',
+    color: 'amber',
+  },
+  {
+    id: 'spring-boot',
+    topic: 'Spring Boot',
+    badge: 'REST APIs & JPA',
+    title: 'REST Architecture, Validation & Global Exception Handling',
+    description: 'Build enterprise RESTful endpoints with input validation, transactional service methods, and @ControllerAdvice.',
+    questions: [
+      'Build a @RestController for Task resources with GET (paginated), POST (with @Valid request body), and DELETE endpoints.',
+      'Implement a @ControllerAdvice class that catches MethodArgumentNotValidException and returns clean field-level error response schemas.',
+      'Explain the difference between @Transactional(readOnly = true) vs default read-write propagation in Spring Data JPA queries.',
+    ],
+    instructions: 'Use constructor injection with Lombok @RequiredArgsConstructor. Return standard HTTP status codes (200, 201, 204, 400, 404).',
+    color: 'purple',
+  },
+  {
+    id: 'database-sql',
+    topic: 'Databases & SQL',
+    badge: 'Indexing & Queries',
+    title: 'PostgreSQL Indexing, Window Functions & CTEs',
+    description: 'Analyze real-world database queries, formulate window functions, and optimize query plans with indexing strategies.',
+    questions: [
+      'Write a query using ROW_NUMBER() or DENSE_RANK() to retrieve the top 3 highest-scoring members for each team over the past 30 days.',
+      'Explain when a B-Tree index scan is preferred over a sequential scan, and how composite index column order affects query planner selectivity.',
+      'Write a Common Table Expression (CTE) to calculate running daily task completion totals and cumulative percentages.',
+    ],
+    instructions: 'Write standard PostgreSQL syntax. Include comments indicating which indexes are required for optimal execution performance.',
+    color: 'blue',
+  },
+];
 
 export const HomeworkPage: React.FC = () => {
   const { user } = useAuth();
@@ -82,6 +148,39 @@ export const HomeworkPage: React.FC = () => {
   // Expanded Accordion State
   const [expandedHomework, setExpandedHomework] = useState<Record<number, boolean>>({});
   const [remindedMembersMap, setRemindedMembersMap] = useState<Record<string, boolean>>({});
+
+  // Filter & Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>('active');
+  const [selectedTopic, setSelectedTopic] = useState<string>('ALL');
+  const [copiedQuestionId, setCopiedQuestionId] = useState<string | null>(null);
+
+  const handleCopyQuestion = (text: string, key: string) => {
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedQuestionId(key);
+      setTimeout(() => setCopiedQuestionId(null), 2000);
+    } catch {}
+  };
+
+  const handleApplyTemplate = (tpl: (typeof STARTER_TEMPLATES)[0]) => {
+    setEditingHomework(null);
+    setFormTitle(tpl.title);
+    setFormTopic(tpl.topic);
+    setFormInstructions(tpl.instructions);
+    setFormQuestions([...tpl.questions]);
+    const inThreeDays = new Date();
+    inThreeDays.setDate(inThreeDays.getDate() + 3);
+    setFormDueDate(inThreeDays.toISOString().substring(0, 10));
+    setFormAttachmentName('');
+    setFormAttachmentData('');
+    setFormAttachmentType('');
+    setFormSolutionText('');
+    setFormSolutionAttachmentName('');
+    setFormSolutionAttachmentData('');
+    setFormSolutionAttachmentType('');
+    setAddModalOpen(true);
+  };
 
   // Homework Deletion State
   const [homeworkToDelete, setHomeworkToDelete] = useState<Homework | null>(null);
@@ -352,10 +451,55 @@ export const HomeworkPage: React.FC = () => {
     (hw) => hw.dueDate && hw.dueDate < todayStr && hw.isPublished
   );
 
+  // Live Metrics Calculation
+  const totalCount = homeworkList.length;
+  const activeCount = activeHomeworkList.length;
+  const archivedCount = previousHomeworkList.length;
+
+  const pendingReviewCount = homeworkList.reduce((acc, hw) => {
+    const unreviewed = hw.memberSubmissions?.filter((s) => s.status === 'Submitted').length || 0;
+    return acc + unreviewed;
+  }, 0);
+
+  const dueSoonCount = activeHomeworkList.filter((hw) => {
+    if (!hw.dueDate) return false;
+    const diffDays = Math.ceil(
+      (new Date(hw.dueDate).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return diffDays <= 2 || hw.isOverdue;
+  }).length;
+
+  const solutionsCount = homeworkList.filter((hw) => hw.isSolutionPublished).length;
+
+  const distinctTopics = Array.from(
+    new Set(homeworkList.map((hw) => hw.subjectTopic).filter(Boolean))
+  );
+
+  const listToFilter =
+    activeTab === 'active'
+      ? activeHomeworkList
+      : activeTab === 'archived'
+      ? previousHomeworkList
+      : homeworkList;
+
+  const filteredHomeworkList = listToFilter.filter((hw) => {
+    const matchesTopic =
+      selectedTopic === 'ALL' || hw.subjectTopic?.toLowerCase() === selectedTopic.toLowerCase();
+    if (!matchesTopic) return false;
+
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const matchesTitle = hw.title?.toLowerCase().includes(q);
+    const matchesSubject = hw.subjectTopic?.toLowerCase().includes(q);
+    const matchesQuestions = hw.questions?.some((quest) => quest.toLowerCase().includes(q));
+    const matchesInstructions = hw.instructions?.toLowerCase().includes(q);
+    return matchesTitle || matchesSubject || matchesQuestions || matchesInstructions;
+  });
+
   return (
     <PageContainer width="default" className="space-y-6">
       {/* ========================================================================= */}
-      {/* PAGE HEADER                                                               */}
+      {/* 1. EXECUTIVE PAGE HEADER                                                  */}
       {/* ========================================================================= */}
       <div className="relative overflow-hidden bg-gradient-to-br from-paper-light via-surface to-paper border border-line/90 rounded-2xl p-6 sm:p-7 shadow-xs">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
@@ -369,43 +513,261 @@ export const HomeworkPage: React.FC = () => {
               </span>
               <span className="text-muted/40">·</span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-paper border border-line text-muted">
-                {activeHomeworkList.length} Active
+                {activeCount} Active
               </span>
+              {dueSoonCount > 0 && (
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700">
+                  {dueSoonCount} Due Soon
+                </span>
+              )}
             </div>
 
             <div className="flex items-baseline gap-3">
               <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-                {isLead ? 'Homework & Classwork Hub' : 'My Homework Assignments'}
+                {isLead ? 'Homework & Technical Practice Hub' : 'My Homework Assignments'}
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
               {isLead
-                ? 'Assign questions from class, track submissions, and share instructor solutions with your team.'
-                : 'Questions, practice exercises, and solution guidelines assigned by your Team Lead.'}
+                ? 'Assign technical practice questions, monitor crew submissions in real-time, and release instructor solutions.'
+                : 'Core technical questions, practical challenges, and solution guidelines assigned by your Team Lead.'}
             </p>
           </div>
 
           {isLead && (
-            <button
-              onClick={() => handleOpenAddModal()}
-              className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer shrink-0"
-            >
-              <Plus className="w-4 h-4 text-emerald-300 group-hover:rotate-90 transition-transform duration-200" />
-              <span>Add Homework</span>
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => handleOpenAddModal()}
+                className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-emerald-300 group-hover:rotate-90 transition-transform duration-200" />
+                <span>Add Homework</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
 
       {error && (
-        <div className="p-3.5 bg-attention/10 border border-attention text-xs text-attention rounded-sm flex items-center space-x-2">
+        <div className="p-3.5 bg-attention/10 border border-attention text-xs text-attention rounded-xl flex items-center space-x-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 1. ACTIVE HOMEWORK SECTION                                                */}
+      {/* 2. EXECUTIVE METRIC STRIP (Interactive Filter Cards)                      */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {/* Total Assigned */}
+        <button
+          onClick={() => setActiveTab('all')}
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+            activeTab === 'all'
+              ? 'bg-paper-light border-primary ring-2 ring-primary/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-ink transition-colors">
+              Total Assigned
+            </span>
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                activeTab === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-paper border border-line text-primary'
+              }`}
+            >
+              <Target className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-ink">{totalCount}</span>
+            <span className="text-xs text-muted font-medium">all challenges</span>
+          </div>
+        </button>
+
+        {/* Active Homework */}
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+            activeTab === 'active'
+              ? 'bg-amber-500/5 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-amber-800 transition-colors">
+              Active Challenges
+            </span>
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                activeTab === 'active'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-paper border border-line text-amber-600'
+              }`}
+            >
+              <Flame className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-amber-600">
+              {activeCount}
+            </span>
+            <span className="text-xs text-muted font-medium">live sprint</span>
+          </div>
+        </button>
+
+        {/* Pending Review or Due Soon */}
+        <div
+          className="p-4 rounded-2xl border text-left transition-all duration-200 bg-paper-light/90 border-line shadow-2xs group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-purple-800 transition-colors">
+              {isLead ? 'Pending Review' : 'Due Soon'}
+            </span>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-paper border border-line text-purple-600">
+              {isLead ? <FileCheck className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-purple-600">
+              {isLead ? pendingReviewCount : dueSoonCount}
+            </span>
+            <span className="text-xs text-muted font-medium">
+              {isLead ? 'submissions waiting' : 'within 48 hours'}
+            </span>
+          </div>
+        </div>
+
+        {/* Solutions Published */}
+        <button
+          onClick={() => setActiveTab('archived')}
+          className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+            activeTab === 'archived'
+              ? 'bg-emerald-500/5 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+              : 'bg-paper-light/90 border-line hover:border-line-dark hover:shadow-card'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted group-hover:text-emerald-800 transition-colors">
+              Verified Solutions
+            </span>
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                activeTab === 'archived'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-paper border border-line text-emerald-600'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-black text-emerald-600">
+              {solutionsCount}
+            </span>
+            <span className="text-xs text-muted font-medium">solutions released</span>
+          </div>
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. TOOLBAR: TABS, SEARCH & TOPIC FILTERS                                   */}
+      {/* ========================================================================= */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Segmented View Tabs */}
+          <div className="inline-flex p-1 bg-paper-dark/70 border border-line rounded-xl gap-1 shrink-0 self-start sm:self-auto">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'active'
+                  ? 'bg-paper text-ink shadow-2xs font-bold'
+                  : 'text-muted hover:text-ink'
+              }`}
+            >
+              Active ({activeCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('archived')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'archived'
+                  ? 'bg-paper text-ink shadow-2xs font-bold'
+                  : 'text-muted hover:text-ink'
+              }`}
+            >
+              Archived & Past ({archivedCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'all'
+                  ? 'bg-paper text-ink shadow-2xs font-bold'
+                  : 'text-muted hover:text-ink'
+              }`}
+            >
+              All ({totalCount})
+            </button>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, topic, or question..."
+              className="w-full pl-8 pr-8 py-2 bg-paper border border-line focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl text-xs text-ink placeholder:text-muted/60 outline-none transition-all font-sans"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink p-0.5 rounded cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Topic Filters */}
+        {distinctTopics.length > 1 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+            <span className="text-[11px] font-semibold text-muted uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+              <Filter className="w-3 h-3" /> Topic:
+            </span>
+            <button
+              onClick={() => setSelectedTopic('ALL')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                selectedTopic === 'ALL'
+                  ? 'bg-ink text-paper shadow-2xs'
+                  : 'bg-paper border border-line text-muted hover:text-ink hover:border-line-dark'
+              }`}
+            >
+              All Topics
+            </button>
+            {distinctTopics.map((topic) => (
+              <button
+                key={topic}
+                onClick={() => setSelectedTopic(topic)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  selectedTopic.toLowerCase() === topic.toLowerCase()
+                    ? 'bg-ink text-paper shadow-2xs'
+                    : 'bg-paper border border-line text-muted hover:text-ink hover:border-line-dark'
+                }`}
+              >
+                {topic}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. ACTIVE HOMEWORK SECTION                                                */}
       {/* ========================================================================= */}
       <div className="space-y-4">
         <div className="flex items-center justify-between border-b border-line pb-2">
@@ -420,103 +782,255 @@ export const HomeworkPage: React.FC = () => {
           </span>
         </div>
 
-        {activeHomeworkList.length === 0 ? (
-          <div className="border border-line bg-paper rounded-sm p-8 text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
-              <FileText className="w-5 h-5" />
+        {filteredHomeworkList.length === 0 ? (
+          searchQuery || selectedTopic !== 'ALL' ? (
+            /* Search / Filter yielded no results */
+            <div className="border border-line bg-paper rounded-2xl p-10 text-center space-y-3 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
+                <Search className="w-5 h-5" />
+              </div>
+              <h3 className="font-display text-base font-bold text-ink">No Matching Assignments</h3>
+              <p className="text-xs text-muted max-w-sm mx-auto">
+                No homework assignments matched your current search or topic filter.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedTopic('ALL');
+                }}
+                className="px-4 py-2 bg-paper border border-line hover:border-ink rounded-xl text-xs font-semibold text-ink transition-colors cursor-pointer"
+              >
+                Reset Filters
+              </button>
             </div>
-            <div>
-              <h3 className="font-display text-base font-bold text-ink">
-                No Homework Yet
-              </h3>
-              <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
-                {isLead
-                  ? 'Create an assignment when your instructor gives the team homework.'
-                  : "Your Lead hasn't assigned any homework yet."}
+          ) : activeTab === 'archived' ? (
+            /* Empty Archive */
+            <div className="border border-line bg-paper rounded-2xl p-10 text-center space-y-3 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-paper-dark border border-line flex items-center justify-center mx-auto text-muted">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="font-display text-base font-bold text-ink">No Archived Homework</h3>
+              <p className="text-xs text-muted max-w-sm mx-auto">
+                Completed assignments will appear here once their due dates pass.
               </p>
             </div>
-            {isLead && (
-              <button
-                onClick={() => handleOpenAddModal()}
-                className="px-4 py-2 bg-ink text-paper hover:bg-ink-light font-mono text-xs font-semibold rounded-sm transition-colors inline-flex items-center space-x-1.5"
-              >
-                <Plus className="w-3.5 h-3.5 text-accent" />
-                <span>+ Add Homework</span>
-              </button>
-            )}
-          </div>
+          ) : (
+            /* Empty State for Active Assignments (Visual Hero & Blueprints) */
+            <div className="space-y-6">
+              {/* Hero Empty Banner */}
+              <div className="relative overflow-hidden bg-gradient-to-b from-paper-light to-surface border border-line rounded-2xl p-8 sm:p-10 text-center space-y-4 shadow-xs">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-600 shadow-2xs">
+                  <BookOpen className="w-7 h-7" />
+                </div>
+                <div className="space-y-1.5 max-w-md mx-auto">
+                  <h3 className="font-display text-xl font-bold text-ink tracking-tight">
+                    {isLead ? 'No Active Homework Right Now' : 'All Caught Up!'}
+                  </h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    {isLead
+                      ? 'Assign technical practice questions from your latest sync, track crew progress in real time, and share instructor solutions.'
+                      : "Your Team Lead hasn't assigned any active homework yet. Sharpen your skills in the Interview Lab or check your team tasks."}
+                  </p>
+                </div>
+
+                {isLead ? (
+                  <button
+                    onClick={() => handleOpenAddModal()}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-emerald-300" />
+                    <span>Create Custom Assignment</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Zero Pending Submissions</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Curated Technical Practice Blueprints (For Leads) */}
+              {isLead && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-display text-sm font-bold text-ink flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        <span>Quick-Start Engineering Blueprints</span>
+                      </h4>
+                      <p className="text-[11px] text-muted">
+                        Select a battle-tested technical practice assignment to launch to your crew in 1 click.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {STARTER_TEMPLATES.map((tpl) => (
+                      <div
+                        key={tpl.id}
+                        className="p-5 rounded-2xl bg-paper border border-line hover:border-line-dark shadow-2xs hover:shadow-card transition-all duration-200 flex flex-col justify-between gap-4 group"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-paper-dark border border-line text-ink">
+                              {tpl.topic}
+                            </span>
+                            <span className="text-[10px] font-semibold text-muted">
+                              {tpl.questions.length} Questions
+                            </span>
+                          </div>
+
+                          <h5 className="font-display text-sm font-bold text-ink group-hover:text-primary transition-colors">
+                            {tpl.title}
+                          </h5>
+                          <p className="text-xs text-muted leading-relaxed">
+                            {tpl.description}
+                          </p>
+
+                          {/* Problem preview */}
+                          <div className="p-2.5 rounded-xl bg-paper-dark/60 border border-line/60 font-mono text-[11px] text-ink/80 space-y-1">
+                            <span className="text-[10px] font-bold text-muted block uppercase tracking-wider">
+                              Preview:
+                            </span>
+                            <p className="truncate">1. {tpl.questions[0]}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleApplyTemplate(tpl)}
+                          className="w-full py-2 px-3 bg-paper-light hover:bg-primary hover:text-white border border-line hover:border-primary text-xs font-semibold rounded-xl text-ink transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-primary group-hover:text-white" />
+                          <span>Use Blueprint Template</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
         ) : (
           <div className="space-y-4">
-            {activeHomeworkList.map((hw) => {
+            {filteredHomeworkList.map((hw) => {
               const isExpanded = !!expandedHomework[hw.id];
               const isOverdue = hw.isOverdue;
 
               return (
                 <div
                   key={hw.id}
-                  className="border border-line bg-paper rounded-sm overflow-hidden shadow-xs transition-all"
+                  className="border border-line hover:border-line-dark bg-paper rounded-2xl overflow-hidden shadow-xs hover:shadow-card transition-all duration-200"
                 >
                   {/* Card Top Summary Bar */}
                   <div
                     onClick={() => toggleAccordion(hw.id)}
-                    className="p-4 bg-paper-dark/60 hover:bg-paper-dark cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line transition-colors"
+                    className="relative p-4 sm:p-5 bg-paper hover:bg-paper-light/50 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-colors select-none"
                   >
-                    <div className="space-y-1 min-w-0">
+                    {/* Left Urgency Color Stripe */}
+                    <div
+                      className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                        isOverdue
+                          ? 'bg-red-500'
+                          : hw.dueDate === todayStr
+                          ? 'bg-amber-500'
+                          : hw.isPublished
+                          ? 'bg-primary'
+                          : 'bg-muted/30'
+                      }`}
+                    />
+
+                    <div className="space-y-1.5 min-w-0 pl-2">
                       <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {hw.subjectTopic}
+                        </span>
+
                         <h3 className="font-display text-base font-bold text-ink truncate">
                           {hw.title}
                         </h3>
-                        <span className="font-mono text-[10px] px-2 py-0.5 bg-paper border border-line rounded-xs text-muted">
-                          {hw.subjectTopic}
-                        </span>
+
                         {isLead ? (
                           hw.isPublished ? (
-                            <span className="font-mono text-[10px] px-2 py-0.5 bg-accent/10 text-accent border border-accent/30 rounded-xs font-bold">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                               Published
                             </span>
                           ) : (
-                            <span className="font-mono text-[10px] px-2 py-0.5 bg-paper border border-attention/40 text-attention rounded-xs font-semibold">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                               Draft
                             </span>
                           )
                         ) : (
                           <span
-                            className={`font-mono text-[10px] px-2 py-0.5 rounded-xs font-bold border ${
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                               hw.myStatus === 'Reviewed'
-                                ? 'bg-accent/10 text-accent border-accent/30'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : hw.myStatus === 'Submitted'
-                                ? 'bg-accent/10 text-accent border-accent/30'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
                                 : hw.myStatus === 'Overdue'
-                                ? 'bg-attention/10 text-attention border-attention/30'
-                                : 'bg-paper text-muted border-line'
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : 'bg-paper-dark text-muted border-line'
                             }`}
                           >
-                            {hw.myStatus}
+                            {hw.myStatus === 'Reviewed'
+                              ? '✓ Reviewed'
+                              : hw.myStatus === 'Submitted'
+                              ? '✓ Submitted'
+                              : hw.myStatus || 'Not Submitted'}
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] text-muted">
-                        <span className="flex items-center space-x-1">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
+                        <span
+                          className={`inline-flex items-center gap-1.5 font-medium ${
+                            isOverdue
+                              ? 'text-red-600 font-semibold'
+                              : hw.dueDate === todayStr
+                              ? 'text-amber-600 font-semibold'
+                              : ''
+                          }`}
+                        >
                           <Calendar className="w-3.5 h-3.5" />
-                          <span className={isOverdue ? 'text-attention font-semibold' : ''}>
-                            Due: {hw.dueDate} {isOverdue && '(Overdue)'}
+                          <span>
+                            Due: {hw.dueDate || 'No Due Date'}
+                            {isOverdue && ' (Overdue)'}
+                            {hw.dueDate === todayStr && ' (Due Today)'}
                           </span>
                         </span>
                         <span>·</span>
                         <span>{hw.questions.length} Questions</span>
+
                         {isLead && (
                           <>
                             <span>·</span>
-                            <span className="font-semibold text-ink">
-                              {hw.submittedCount} / {hw.totalMembers} Submitted
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-1.5 bg-paper-dark rounded-full overflow-hidden border border-line">
+                                <div
+                                  className="h-full bg-emerald-500 rounded-full transition-all"
+                                  style={{
+                                    width: `${Math.round(
+                                      ((hw.submittedCount || 0) / Math.max(hw.totalMembers || 1, 1)) * 100
+                                    )}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="font-semibold text-ink text-[11px]">
+                                {hw.submittedCount || 0}/{hw.totalMembers || 0} Submitted (
+                                {Math.round(
+                                  ((hw.submittedCount || 0) / Math.max(hw.totalMembers || 1, 1)) * 100
+                                )}
+                                %)
+                              </span>
+                            </div>
                           </>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2 shrink-0">
+                    <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto pl-2">
                       {isLead && (
                         <>
                           <button
@@ -525,7 +1039,7 @@ export const HomeworkPage: React.FC = () => {
                               e.stopPropagation();
                               handleOpenAddModal(hw);
                             }}
-                            className="p-1.5 hover:bg-paper border border-line hover:border-ink rounded-sm text-muted hover:text-ink transition-colors"
+                            className="p-2 hover:bg-paper-dark border border-line hover:border-line-dark rounded-xl text-muted hover:text-ink transition-colors cursor-pointer shadow-2xs"
                             title="Edit Homework"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -536,83 +1050,119 @@ export const HomeworkPage: React.FC = () => {
                               e.stopPropagation();
                               setHomeworkToDelete(hw);
                             }}
-                            className="p-1.5 hover:bg-red-500/10 border border-line hover:border-red-500/40 rounded-sm text-muted hover:text-red-600 transition-colors"
+                            className="p-2 hover:bg-red-50 border border-line hover:border-red-300 rounded-xl text-muted hover:text-red-600 transition-colors cursor-pointer shadow-2xs"
                             title="Delete Homework"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </>
                       )}
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-muted" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted" />
-                      )}
+                      <div className="p-2 text-muted">
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? 'rotate-180 text-ink' : ''
+                          }`}
+                        />
+                      </div>
                     </div>
                   </div>
 
                   {/* Expanded Body */}
                   {isExpanded && (
-                    <div className="p-5 space-y-5 text-xs font-sans">
+                    <div className="p-5 sm:p-6 space-y-6 text-xs font-sans border-t border-line bg-surface/30">
                       {/* Reminder banner for member */}
-                      {!isLead && hw.isReminded && hw.myStatus !== 'Submitted' && hw.myStatus !== 'Reviewed' && (
-                        <div className="p-3 bg-attention/10 border border-attention text-attention rounded-sm flex items-center space-x-2">
-                          <Bell className="w-4 h-4 shrink-0" />
-                          <span>
-                            <strong>Reminder from Lead:</strong> Your homework is due. Please submit your work.
-                          </span>
-                        </div>
-                      )}
+                      {!isLead &&
+                        hw.isReminded &&
+                        hw.myStatus !== 'Submitted' &&
+                        hw.myStatus !== 'Reviewed' && (
+                          <div className="p-4 bg-amber-500/10 border border-amber-500/30 text-amber-800 rounded-xl flex items-center space-x-2.5">
+                            <Bell className="w-4 h-4 shrink-0 text-amber-600" />
+                            <span>
+                              <strong>Reminder from Lead:</strong> Your homework is due soon. Please submit your work.
+                            </span>
+                          </div>
+                        )}
 
-                      {/* Instructions & Lead Attachment */}
+                      {/* Instructions & Guidelines */}
                       {hw.instructions && (
-                        <div className="p-3 bg-paper-light border border-line rounded-sm space-y-1">
-                          <span className="font-mono text-[10px] uppercase font-bold text-muted block">
-                            Instructions
+                        <div className="p-4 bg-paper border border-line rounded-xl space-y-1.5 shadow-2xs">
+                          <span className="text-[10px] uppercase font-bold text-muted tracking-wider block">
+                            Assignment Guidelines & Hints
                           </span>
-                          <p className="text-ink leading-relaxed whitespace-pre-wrap">
+                          <p className="text-ink text-xs leading-relaxed whitespace-pre-wrap">
                             {hw.instructions}
                           </p>
                         </div>
                       )}
 
                       {/* Questions List */}
-                      <div className="space-y-2">
-                        <span className="font-mono text-[11px] uppercase font-bold text-muted block">
-                          Questions
-                        </span>
-                        <div className="space-y-2 border border-line rounded-sm p-4 bg-paper-light">
-                          {hw.questions.map((q, idx) => (
-                            <div key={idx} className="flex items-start space-x-2.5">
-                              <span className="font-mono font-bold text-accent shrink-0 mt-0.5">
-                                {idx + 1}.
-                              </span>
-                              <p className="text-ink font-medium leading-relaxed">{q}</p>
-                            </div>
-                          ))}
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-ink uppercase tracking-wider block">
+                            Questions / Problem Statements ({hw.questions.length})
+                          </span>
+                          <span className="text-[11px] text-muted">Click copy to save to clipboard</span>
+                        </div>
+
+                        <div className="space-y-2.5">
+                          {hw.questions.map((q, idx) => {
+                            const copyKey = `${hw.id}-${idx}`;
+                            const isCopied = copiedQuestionId === copyKey;
+
+                            return (
+                              <div
+                                key={idx}
+                                className="group relative flex items-start justify-between gap-3 p-3.5 rounded-xl border border-line bg-paper shadow-2xs hover:border-line-dark transition-all"
+                              >
+                                <div className="flex items-start gap-3 min-w-0">
+                                  <span className="font-mono font-bold text-primary text-xs shrink-0 pt-0.5 w-5 text-right">
+                                    {idx + 1}.
+                                  </span>
+                                  <p className="text-ink font-medium leading-relaxed text-xs">
+                                    {q}
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyQuestion(q, copyKey)}
+                                  className="p-1.5 rounded-lg border border-line hover:border-line-dark text-muted hover:text-ink transition-colors cursor-pointer shrink-0"
+                                  title="Copy Question"
+                                >
+                                  {isCopied ? (
+                                    <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
 
                       {/* Lead Attachment (if any) */}
                       {hw.attachmentData && (
-                        <div className="p-3 border border-line rounded-sm bg-paper-dark/40 flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <FileText className="w-4 h-4 text-muted" />
+                        <div className="p-4 border border-line rounded-xl bg-paper shadow-2xs flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                              <FileText className="w-4 h-4" />
+                            </div>
                             <div>
-                              <span className="font-mono text-xs font-semibold text-ink block">
+                              <span className="text-xs font-bold text-ink block">
                                 {hw.attachmentName || 'Classwork_Material'}
                               </span>
-                              <span className="font-mono text-[10px] text-muted">
-                                Assignment attachment provided by Lead
+                              <span className="text-[11px] text-muted">
+                                Resource file provided by Team Lead
                               </span>
                             </div>
                           </div>
                           <a
                             href={hw.attachmentData}
                             download={hw.attachmentName || 'Homework_Attachment'}
-                            className="px-3 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-[11px] text-ink font-semibold flex items-center space-x-1"
+                            className="px-3.5 py-1.5 bg-paper hover:bg-paper-dark border border-line hover:border-line-dark rounded-xl text-xs text-ink font-semibold flex items-center space-x-1.5 transition-all shadow-2xs"
                           >
-                            <Download className="w-3.5 h-3.5" />
+                            <Download className="w-3.5 h-3.5 text-primary" />
                             <span>Download</span>
                           </a>
                         </div>
@@ -622,25 +1172,34 @@ export const HomeworkPage: React.FC = () => {
                       {/* LEAD MANAGEMENT SECTION                                 */}
                       {/* ======================================================= */}
                       {isLead ? (
-                        <div className="space-y-4 pt-3 border-t border-line">
+                        <div className="space-y-4 pt-4 border-t border-line/80">
                           {/* Solution Action Bar */}
-                          <div className="p-3 bg-paper-dark rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div>
-                              <span className="font-mono text-xs font-bold text-ink block">
-                                Answer / Solution
-                              </span>
-                              <p className="text-[11px] text-muted">
-                                {hw.isSolutionPublished
-                                  ? 'Solution is currently visible to your team.'
-                                  : 'Solution is not visible to members until you publish it.'}
-                              </p>
+                          <div className="p-4 bg-paper-light/70 border border-line/80 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <Sparkles className="w-4 h-4 text-emerald-600" />
+                              </div>
+                              <div>
+                                <span className="font-display text-xs sm:text-sm font-bold text-ink block">
+                                  Official Instructor Solution
+                                </span>
+                                <p className="text-[11px] text-muted leading-tight mt-0.5">
+                                  {hw.isSolutionPublished
+                                    ? 'Solution guide is currently visible to all crew members.'
+                                    : 'Keep solution private until members submit their work.'}
+                                </p>
+                              </div>
                             </div>
 
                             <button
                               onClick={() => handleOpenSolutionModal(hw)}
-                              className="px-3.5 py-1.5 bg-paper border border-line hover:border-ink font-mono text-xs font-semibold text-ink rounded-sm transition-colors flex items-center space-x-1.5 shrink-0"
+                              className={`px-4 py-2 font-mono text-xs font-semibold rounded-xl border transition-all duration-150 flex items-center justify-center space-x-2 shrink-0 cursor-pointer shadow-2xs ${
+                                hw.isSolutionPublished
+                                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/20'
+                                  : 'bg-primary hover:bg-primary-hover text-white border-transparent'
+                              }`}
                             >
-                              <Sparkles className="w-3.5 h-3.5 text-accent" />
+                              <Sparkles className="w-3.5 h-3.5" />
                               <span>
                                 {hw.isSolutionPublished
                                   ? '✓ Solution Published (Edit)'
@@ -650,28 +1209,31 @@ export const HomeworkPage: React.FC = () => {
                           </div>
 
                           {/* Member Submissions Tracker Table */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-[11px] uppercase font-bold text-muted">
-                                Team Submissions ({hw.submittedCount}/{hw.totalMembers})
-                              </span>
-                              <span className="font-mono text-[10px] text-muted">
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between px-0.5">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-primary" />
+                                <span className="font-mono text-xs font-bold uppercase tracking-wider text-ink">
+                                  Team Submissions ({hw.submittedCount}/{hw.totalMembers})
+                                </span>
+                              </div>
+                              <span className="font-mono text-[11px] text-muted bg-paper-dark px-2.5 py-0.5 rounded-full border border-line">
                                 {hw.reviewedCount} Reviewed
                               </span>
                             </div>
 
                             {/* Member Submissions Tracker: Desktop Table (hidden md:block) */}
-                            <div className="hidden md:block border border-line rounded-sm overflow-hidden">
+                            <div className="hidden md:block border border-line/80 rounded-xl overflow-hidden shadow-2xs bg-paper">
                               <table className="w-full text-left text-xs border-collapse">
                                 <thead>
-                                  <tr className="border-b border-line bg-paper-light font-mono text-[11px] text-muted">
-                                    <th className="p-3">Member</th>
+                                  <tr className="border-b border-line bg-paper-light/80 font-mono text-[11px] text-muted">
+                                    <th className="p-3 pl-4">Member</th>
                                     <th className="p-3 text-center">Status</th>
                                     <th className="p-3">Submitted At</th>
-                                    <th className="p-3 text-right">Action</th>
+                                    <th className="p-3 pr-4 text-right">Action</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-line font-sans">
+                                <tbody className="divide-y divide-line/70 font-sans">
                                   {hw.memberSubmissions?.map((m) => {
                                     const isReminded =
                                       m.isReminded || remindedMembersMap[`${hw.id}-${m.userId}`];
@@ -679,27 +1241,34 @@ export const HomeworkPage: React.FC = () => {
                                     return (
                                       <tr
                                         key={m.userId}
-                                        className="hover:bg-paper-dark/40 transition-colors"
+                                        className="hover:bg-paper-light/50 transition-colors"
                                       >
-                                        <td className="p-3">
-                                          <span className="font-medium text-ink block">
-                                            {m.name}
-                                          </span>
-                                          <span className="font-mono text-[10px] text-muted">
-                                            {m.email}
-                                          </span>
+                                        <td className="p-3 pl-4">
+                                          <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary font-mono font-bold text-[11px] flex items-center justify-center shrink-0">
+                                              {m.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0">
+                                              <span className="font-semibold text-ink block truncate">
+                                                {m.name}
+                                              </span>
+                                              <span className="font-mono text-[10px] text-muted truncate block">
+                                                {m.email}
+                                              </span>
+                                            </div>
+                                          </div>
                                         </td>
 
                                         <td className="p-3 text-center">
                                           <span
-                                            className={`font-mono text-[10px] px-2 py-0.5 rounded-xs font-bold border inline-block ${
+                                            className={`font-mono text-[10px] px-2.5 py-0.5 rounded-full font-bold border inline-block ${
                                               m.status === 'Reviewed'
-                                                ? 'bg-accent/10 text-accent border-accent/30'
+                                                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
                                                 : m.status === 'Submitted'
-                                                ? 'bg-accent/10 text-accent border-accent/30'
+                                                ? 'bg-primary/10 text-primary border-primary/30'
                                                 : m.status === 'Overdue'
-                                                ? 'bg-attention/10 text-attention border-attention/30'
-                                                : 'bg-paper text-muted border-line'
+                                                ? 'bg-rose-500/10 text-rose-700 border-rose-500/30'
+                                                : 'bg-paper-dark text-muted border-line'
                                             }`}
                                           >
                                             {m.status}
@@ -717,27 +1286,27 @@ export const HomeworkPage: React.FC = () => {
                                             : '—'}
                                         </td>
 
-                                        <td className="p-3 text-right">
+                                        <td className="p-3 pr-4 text-right">
                                           {m.isSubmitted ? (
                                             <button
                                               onClick={() => handleOpenReviewModal(hw.id, m)}
-                                              className="px-3 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-xs font-medium text-ink transition-colors inline-flex items-center space-x-1"
+                                              className="px-3 py-1.5 bg-paper hover:bg-paper-light border border-line hover:border-primary rounded-lg font-mono text-xs font-semibold text-ink transition-all inline-flex items-center space-x-1.5 shadow-2xs cursor-pointer"
                                             >
-                                              <Eye className="w-3.5 h-3.5 text-accent" />
-                                              <span>{m.isReviewed ? 'View' : 'Review'}</span>
+                                              <Eye className="w-3.5 h-3.5 text-primary" />
+                                              <span>{m.isReviewed ? 'View Work' : 'Review'}</span>
                                             </button>
                                           ) : (
                                             <button
                                               onClick={() => handleRemindMember(hw.id, m.userId)}
                                               disabled={isReminded}
-                                              className={`px-3 py-1 border rounded-sm font-mono text-xs transition-colors inline-flex items-center space-x-1 ${
+                                              className={`px-3 py-1.5 border rounded-lg font-mono text-xs transition-all inline-flex items-center space-x-1.5 ${
                                                 isReminded
-                                                  ? 'border-line bg-paper-dark text-muted cursor-default'
-                                                  : 'border-line bg-paper hover:border-ink text-ink'
+                                                  ? 'border-line bg-paper-dark text-muted/60 cursor-default'
+                                                  : 'border-line bg-paper hover:border-line-dark hover:bg-paper-light text-ink cursor-pointer'
                                               }`}
                                             >
-                                              <Bell className="w-3 h-3" />
-                                              <span>{isReminded ? 'Reminded' : 'Remind'}</span>
+                                              <Bell className="w-3 h-3 text-muted" />
+                                              <span>{isReminded ? 'Reminded' : 'Send Reminder'}</span>
                                             </button>
                                           )}
                                         </td>
@@ -757,25 +1326,30 @@ export const HomeworkPage: React.FC = () => {
                                 return (
                                   <div
                                     key={m.userId}
-                                    className="p-3 bg-paper-light border border-line rounded-sm space-y-2"
+                                    className="p-3.5 bg-paper border border-line/80 rounded-xl space-y-2.5 shadow-2xs"
                                   >
                                     <div className="flex items-start justify-between gap-2">
-                                      <div className="min-w-0">
-                                        <span className="font-medium text-ink block text-xs truncate">
-                                          {m.name}
-                                        </span>
-                                        <span className="font-mono text-[10px] text-muted truncate block">
-                                          {m.email}
-                                        </span>
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary font-mono font-bold text-[11px] flex items-center justify-center shrink-0">
+                                          {m.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <span className="font-semibold text-ink block text-xs truncate">
+                                            {m.name}
+                                          </span>
+                                          <span className="font-mono text-[10px] text-muted truncate block">
+                                            {m.email}
+                                          </span>
+                                        </div>
                                       </div>
                                       <span
-                                        className={`font-mono text-[10px] px-2 py-0.5 rounded-xs font-bold border shrink-0 ${
+                                        className={`font-mono text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 ${
                                           m.status === 'Reviewed'
-                                            ? 'bg-accent/10 text-accent border-accent/30'
+                                            ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
                                             : m.status === 'Submitted'
-                                            ? 'bg-accent/10 text-accent border-accent/30'
+                                            ? 'bg-primary/10 text-primary border-primary/30'
                                             : m.status === 'Overdue'
-                                            ? 'bg-attention/10 text-attention border-attention/30'
+                                            ? 'bg-rose-500/10 text-rose-700 border-rose-500/30'
                                             : 'bg-paper text-muted border-line'
                                         }`}
                                       >
@@ -783,7 +1357,7 @@ export const HomeworkPage: React.FC = () => {
                                       </span>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-1 border-t border-line/60">
+                                    <div className="flex items-center justify-between pt-2 border-t border-line/60">
                                       <span className="font-mono text-[10px] text-muted">
                                         {m.submittedAt
                                           ? new Date(m.submittedAt).toLocaleString('en-US', {
@@ -798,22 +1372,22 @@ export const HomeworkPage: React.FC = () => {
                                       {m.isSubmitted ? (
                                         <button
                                           onClick={() => handleOpenReviewModal(hw.id, m)}
-                                          className="px-2.5 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-[11px] font-medium text-ink transition-colors inline-flex items-center space-x-1"
+                                          className="px-2.5 py-1 bg-paper border border-line hover:border-primary rounded-lg font-mono text-[11px] font-medium text-ink transition-colors inline-flex items-center space-x-1"
                                         >
-                                          <Eye className="w-3 h-3 text-accent" />
+                                          <Eye className="w-3 h-3 text-primary" />
                                           <span>{m.isReviewed ? 'View' : 'Review'}</span>
                                         </button>
                                       ) : (
                                         <button
                                           onClick={() => handleRemindMember(hw.id, m.userId)}
                                           disabled={isReminded}
-                                          className={`px-2.5 py-1 border rounded-sm font-mono text-[11px] transition-colors inline-flex items-center space-x-1 ${
+                                          className={`px-2.5 py-1 border rounded-lg font-mono text-[11px] transition-colors inline-flex items-center space-x-1 ${
                                             isReminded
                                               ? 'border-line bg-paper-dark text-muted cursor-default'
-                                              : 'border-line bg-paper hover:border-ink text-ink'
+                                              : 'border-line bg-paper hover:border-line-dark text-ink'
                                           }`}
                                         >
-                                          <Bell className="w-3 h-3" />
+                                          <Bell className="w-3 h-3 text-muted" />
                                           <span>{isReminded ? 'Reminded' : 'Remind'}</span>
                                         </button>
                                       )}
@@ -829,10 +1403,10 @@ export const HomeworkPage: React.FC = () => {
                             <div className="pt-2 flex justify-end">
                               <button
                                 onClick={() => handlePublishHomeworkDirectly(hw.id)}
-                                className="px-4 py-2 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 shadow-xs"
+                                className="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 shadow-xs cursor-pointer"
                               >
                                 <Send className="w-3.5 h-3.5" />
-                                <span>Publish to Team</span>
+                                <span>Publish Homework to Crew</span>
                               </button>
                             </div>
                           )}
@@ -841,20 +1415,26 @@ export const HomeworkPage: React.FC = () => {
                         /* ======================================================= */
                         /* MEMBER SUBMISSION & SOLUTION VIEW                       */
                         /* ======================================================= */
-                        <div className="space-y-5 pt-3 border-t border-line">
+                        <div className="space-y-4 pt-4 border-t border-line/80">
                           {/* 1. YOUR SUBMISSION */}
-                          <div className="border border-line bg-paper rounded-sm p-4 space-y-3">
-                            <div className="flex items-center justify-between border-b border-line pb-2">
-                              <span className="font-display text-sm font-bold text-ink">
-                                Your Submission
-                              </span>
+                          <div className="border border-line/80 bg-paper rounded-xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                            <div className="flex items-center justify-between border-b border-line/70 pb-3">
+                              <div className="flex items-center gap-2">
+                                <FileCheck className="w-4 h-4 text-primary" />
+                                <span className="font-display text-sm font-bold text-ink">
+                                  Your Submission
+                                </span>
+                              </div>
                               {hw.mySubmission && (
-                                <span className="font-mono text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-xs">
-                                  ✓ Submitted on{' '}
-                                  {new Date(hw.mySubmission.submittedAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })}
+                                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-semibold">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>
+                                    Submitted{' '}
+                                    {new Date(hw.mySubmission.submittedAt).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                    })}
+                                  </span>
                                 </span>
                               )}
                             </div>
@@ -863,28 +1443,30 @@ export const HomeworkPage: React.FC = () => {
                               /* Display Submitted Work */
                               <div className="space-y-3 text-xs">
                                 {hw.mySubmission.answerText && (
-                                  <div className="p-3 bg-paper-light border border-line rounded-sm space-y-1">
-                                    <span className="font-mono text-[10px] uppercase font-bold text-muted block">
-                                      Your Typed Answer
+                                  <div className="p-3.5 bg-paper-light/60 border border-line/80 rounded-xl space-y-1.5">
+                                    <span className="font-mono text-[10px] uppercase font-bold text-muted block tracking-wider">
+                                      Your Typed Answer / Solution
                                     </span>
-                                    <p className="text-ink whitespace-pre-wrap leading-relaxed">
+                                    <p className="text-ink font-mono text-xs whitespace-pre-wrap leading-relaxed">
                                       {hw.mySubmission.answerText}
                                     </p>
                                   </div>
                                 )}
 
                                 {hw.mySubmission.attachmentData && (
-                                  <div className="p-3 bg-paper-dark border border-line rounded-sm flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <FileText className="w-4 h-4 text-accent" />
-                                      <span className="font-mono text-xs font-semibold text-ink">
+                                  <div className="p-3.5 bg-paper-light/60 border border-line/80 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center space-x-2.5 min-w-0">
+                                      <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                        <FileText className="w-4 h-4 text-primary" />
+                                      </div>
+                                      <span className="font-mono text-xs font-semibold text-ink truncate">
                                         {hw.mySubmission.attachmentName || 'My_Completed_Work'}
                                       </span>
                                     </div>
                                     <a
                                       href={hw.mySubmission.attachmentData}
                                       download={hw.mySubmission.attachmentName || 'My_Work'}
-                                      className="px-3 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-[11px] text-ink font-semibold flex items-center space-x-1"
+                                      className="px-3 py-1.5 bg-paper border border-line hover:border-primary rounded-lg font-mono text-xs text-ink font-semibold flex items-center space-x-1.5 shadow-2xs hover:bg-paper-light transition-all shrink-0"
                                     >
                                       <Download className="w-3.5 h-3.5" />
                                       <span>Download</span>
@@ -893,9 +1475,9 @@ export const HomeworkPage: React.FC = () => {
                                 )}
 
                                 {hw.mySubmission.leadFeedback && (
-                                  <div className="p-3 bg-accent/5 border border-accent/30 rounded-sm space-y-1">
-                                    <span className="font-mono text-[10px] uppercase font-bold text-accent block">
-                                      Lead Feedback & Review:
+                                  <div className="p-3.5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-1.5">
+                                    <span className="font-mono text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">
+                                      Lead Feedback & Evaluation:
                                     </span>
                                     <p className="text-ink font-medium leading-relaxed">
                                       {hw.mySubmission.leadFeedback}
@@ -916,7 +1498,7 @@ export const HomeworkPage: React.FC = () => {
                                       }));
                                       setEditingSubmissionMap((prev) => ({ ...prev, [hw.id]: true }));
                                     }}
-                                    className="px-3.5 py-1.5 border border-line hover:bg-paper-dark font-mono text-xs rounded-sm text-ink transition-colors"
+                                    className="px-4 py-2 border border-line hover:border-line-dark bg-paper hover:bg-paper-light font-mono text-xs rounded-xl text-ink font-semibold transition-all shadow-2xs cursor-pointer"
                                   >
                                     Update Your Work
                                   </button>
@@ -927,8 +1509,8 @@ export const HomeworkPage: React.FC = () => {
                               <div className="space-y-4">
                                 {/* Option 1: Type Answer */}
                                 <div className="space-y-1.5">
-                                  <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                                    Option 1 — Type Answer / Code
+                                  <label className="font-mono text-[11px] font-bold text-muted uppercase block tracking-wider">
+                                    Option 1 — Type Solution / Java Code
                                   </label>
                                   <textarea
                                     rows={5}
@@ -939,20 +1521,20 @@ export const HomeworkPage: React.FC = () => {
                                         [hw.id]: e.target.value,
                                       }))
                                     }
-                                    placeholder="Write your Java code, solution, or answers here..."
-                                    className="w-full p-3 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-mono placeholder:font-sans placeholder:text-muted/60"
+                                    placeholder="Write your code, solution, explanations, or approach here..."
+                                    className="w-full p-3.5 bg-paper-light/50 border border-line rounded-xl text-xs text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-mono placeholder:font-sans placeholder:text-muted/60 transition-all"
                                   />
                                 </div>
 
                                 {/* Option 2: Upload Completed Work */}
                                 <div className="space-y-1.5">
-                                  <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                                    Option 2 — Upload File (PDF, Image, Doc)
+                                  <label className="font-mono text-[11px] font-bold text-muted uppercase block tracking-wider">
+                                    Option 2 — Upload File (PDF, Image, Doc, Code)
                                   </label>
-                                  <div className="flex items-center space-x-3">
-                                    <label className="px-4 py-2 bg-paper-dark border border-line hover:border-ink rounded-sm font-mono text-xs font-semibold text-ink cursor-pointer flex items-center space-x-1.5 transition-colors">
-                                      <Upload className="w-3.5 h-3.5 text-accent" />
-                                      <span>Choose File</span>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <label className="px-4 py-2 bg-paper border border-line hover:border-primary rounded-xl font-mono text-xs font-semibold text-ink cursor-pointer flex items-center space-x-2 transition-all shadow-2xs hover:bg-paper-light">
+                                      <Upload className="w-3.5 h-3.5 text-primary" />
+                                      <span>Choose Work File</span>
                                       <input
                                         type="file"
                                         accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.java"
@@ -968,7 +1550,7 @@ export const HomeworkPage: React.FC = () => {
                                       />
                                     </label>
                                     {submissionFiles[hw.id] && (
-                                      <div className="flex items-center space-x-2 font-mono text-xs text-ink bg-paper-light border border-line px-2.5 py-1 rounded-sm">
+                                      <div className="flex items-center space-x-2 font-mono text-xs text-ink bg-paper-light border border-line px-3 py-1.5 rounded-xl">
                                         <span>{submissionFiles[hw.id].name}</span>
                                         <button
                                           type="button"
@@ -979,7 +1561,7 @@ export const HomeworkPage: React.FC = () => {
                                               return copy;
                                             })
                                           }
-                                          className="text-muted hover:text-attention"
+                                          className="text-muted hover:text-red-500 cursor-pointer"
                                         >
                                           <X className="w-3.5 h-3.5" />
                                         </button>
@@ -990,8 +1572,8 @@ export const HomeworkPage: React.FC = () => {
 
                                 {/* Optional Note for Lead */}
                                 <div className="space-y-1">
-                                  <label className="font-mono text-[11px] font-bold text-muted uppercase block">
-                                    Optional Note for Lead
+                                  <label className="font-mono text-[11px] font-bold text-muted uppercase block tracking-wider">
+                                    Optional Note for Team Lead
                                   </label>
                                   <input
                                     type="text"
@@ -1002,12 +1584,12 @@ export const HomeworkPage: React.FC = () => {
                                         [hw.id]: e.target.value,
                                       }))
                                     }
-                                    placeholder="e.g. Added edge case handling for zero inputs."
-                                    className="w-full p-2 bg-paper border border-line rounded-sm text-xs text-ink focus:outline-none focus:border-ink font-sans"
+                                    placeholder="e.g. Completed questions 1-3, implemented two pointer approach."
+                                    className="w-full p-2.5 bg-paper-light/50 border border-line rounded-xl text-xs text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans transition-all"
                                   />
                                 </div>
 
-                                <div className="flex items-center justify-end space-x-2 pt-2 border-t border-line">
+                                <div className="flex items-center justify-end space-x-2.5 pt-2 border-t border-line/70">
                                   {editingSubmissionMap[hw.id] && (
                                     <button
                                       type="button"
@@ -1017,7 +1599,7 @@ export const HomeworkPage: React.FC = () => {
                                           [hw.id]: false,
                                         }))
                                       }
-                                      className="px-3 py-1.5 border border-line text-muted hover:text-ink font-mono text-xs rounded-sm"
+                                      className="px-4 py-2 border border-line text-muted hover:text-ink font-mono text-xs rounded-xl hover:bg-paper-light transition-all cursor-pointer"
                                     >
                                       Cancel
                                     </button>
@@ -1026,7 +1608,7 @@ export const HomeworkPage: React.FC = () => {
                                     type="button"
                                     onClick={() => handleMemberSubmit(hw.id)}
                                     disabled={submittingMap[hw.id]}
-                                    className="px-5 py-2 bg-accent text-paper hover:bg-accent-dark font-mono text-xs font-semibold rounded-sm transition-colors flex items-center space-x-1.5 disabled:opacity-50 shadow-xs"
+                                    className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-mono text-xs font-semibold rounded-xl transition-all flex items-center space-x-2 disabled:opacity-50 shadow-xs cursor-pointer"
                                   >
                                     <Send className="w-3.5 h-3.5" />
                                     <span>
@@ -1039,44 +1621,59 @@ export const HomeworkPage: React.FC = () => {
                           </div>
 
                           {/* 2. ANSWER / SOLUTION SECTION */}
-                          <div className="border border-line bg-paper rounded-sm p-4 space-y-2">
-                            <span className="font-display text-sm font-bold text-ink block">
-                              Answer / Solution
-                            </span>
+                          <div className="border border-line/80 bg-paper rounded-xl p-4 sm:p-5 space-y-3 shadow-2xs">
+                            <div className="flex items-center justify-between border-b border-line/70 pb-2">
+                              <div className="flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-emerald-600" />
+                                <span className="font-display text-sm font-bold text-ink">
+                                  Instructor Answer & Solution
+                                </span>
+                              </div>
+                              {hw.isSolutionPublished && (
+                                <span className="font-mono text-[10px] text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                                  Official Release
+                                </span>
+                              )}
+                            </div>
+
                             {hw.isSolutionPublished && hw.solutionText ? (
                               <div className="space-y-3 text-xs pt-1">
-                                <div className="p-3.5 bg-paper-light border border-line rounded-sm space-y-1">
-                                  <span className="font-mono text-[10px] uppercase font-bold text-accent block">
-                                    Instructor Solution
+                                <div className="p-4 bg-paper-light/60 border border-line/80 rounded-xl space-y-1.5">
+                                  <span className="font-mono text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">
+                                    Solution Guide & Code
                                   </span>
-                                  <p className="text-ink font-mono whitespace-pre-wrap leading-relaxed">
+                                  <p className="text-ink font-mono text-xs whitespace-pre-wrap leading-relaxed">
                                     {hw.solutionText}
                                   </p>
                                 </div>
 
                                 {hw.solutionAttachmentData && (
-                                  <div className="p-3 bg-paper-dark border border-line rounded-sm flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <FileText className="w-4 h-4 text-accent" />
-                                      <span className="font-mono text-xs font-semibold text-ink">
+                                  <div className="p-3.5 bg-paper-light/60 border border-line/80 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center space-x-2.5 min-w-0">
+                                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                        <FileText className="w-4 h-4 text-emerald-600" />
+                                      </div>
+                                      <span className="font-mono text-xs font-semibold text-ink truncate">
                                         {hw.solutionAttachmentName || 'Solution_Document'}
                                       </span>
                                     </div>
                                     <a
                                       href={hw.solutionAttachmentData}
                                       download={hw.solutionAttachmentName || 'Homework_Solution'}
-                                      className="px-3 py-1 bg-paper border border-line hover:border-ink rounded-sm font-mono text-[11px] text-ink font-semibold flex items-center space-x-1"
+                                      className="px-3.5 py-1.5 bg-paper border border-line hover:border-emerald-500/50 rounded-lg font-mono text-xs text-ink font-semibold flex items-center space-x-1.5 shadow-2xs hover:bg-paper-light transition-all shrink-0"
                                     >
                                       <Download className="w-3.5 h-3.5" />
-                                      <span>Download Solution</span>
+                                      <span>Download Guide</span>
                                     </a>
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <p className="text-muted font-mono text-xs py-2">
-                                Solution not published yet.
-                              </p>
+                              <div className="p-4 bg-paper-light/40 border border-dashed border-line rounded-xl text-center">
+                                <p className="text-muted font-mono text-xs">
+                                  Instructor solution has not been released yet. It will appear here once published by your Team Lead.
+                                </p>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -1090,68 +1687,6 @@ export const HomeworkPage: React.FC = () => {
         )}
       </div>
 
-      {/* ========================================================================= */}
-      {/* 2. PREVIOUS HOMEWORK (HISTORY) SECTION                                     */}
-      {/* ========================================================================= */}
-      <div className="border border-line bg-paper rounded-sm p-4 space-y-3">
-        <div className="flex items-center justify-between border-b border-line pb-2">
-          <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-muted" />
-            <h2 className="font-display text-base font-bold text-ink">
-              Previous Homework
-            </h2>
-          </div>
-          <span className="font-mono text-xs text-muted">
-            {previousHomeworkList.length} Archived
-          </span>
-        </div>
-
-        {previousHomeworkList.length === 0 ? (
-          <p className="text-muted font-mono text-xs py-4 text-center">
-            No Previous Homework
-          </p>
-        ) : (
-          <div className="divide-y divide-line text-xs">
-            {previousHomeworkList.map((hw) => (
-              <div key={hw.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span className="font-medium text-ink truncate">{hw.title}</span>
-                    <span className="font-mono text-[10px] px-1.5 py-0.2 bg-paper-dark border border-line rounded-xs text-muted">
-                      {hw.subjectTopic}
-                    </span>
-                  </div>
-                  <span className="font-mono text-[10px] text-muted block">
-                    Completed on {hw.dueDate}
-                  </span>
-                </div>
-
-                <div className="shrink-0 flex items-center space-x-2 self-start sm:self-auto">
-                  {isLead ? (
-                    <>
-                      <span className="font-mono text-[11px] text-muted">
-                        {hw.submittedCount}/{hw.totalMembers} Submitted
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setHomeworkToDelete(hw)}
-                        className="p-1 hover:bg-red-500/10 border border-line hover:border-red-500/40 rounded-sm text-muted hover:text-red-600 transition-colors"
-                        title="Delete Homework"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </>
-                  ) : (
-                    <span className="font-mono text-[10px] text-accent font-bold">
-                      {hw.myStatus || 'Completed'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* ========================================================================= */}
       {/* LEAD ADD / EDIT HOMEWORK MODAL                                            */}
