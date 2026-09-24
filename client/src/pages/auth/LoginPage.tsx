@@ -257,6 +257,11 @@ export const LoginPage: React.FC = () => {
                   </>
                 )}
               </button>
+              {loading && statusMessage && (statusMessage.includes('Waking') || statusMessage.includes('database') || statusMessage.includes('Connecting')) && (
+                <p className="text-[11px] font-mono text-muted text-center pt-2 animate-pulse">
+                  ⚡ Pre-warming secure cluster... Your session will authenticate automatically.
+                </p>
+              )}
             </div>
           </form>
 

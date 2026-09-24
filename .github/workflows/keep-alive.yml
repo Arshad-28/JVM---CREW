@@ -1,0 +1,61 @@
+name: Keep Render Backend Alive 24/7
+
+on:
+  schedule:
+    # Trigger every 10 minutes (Render sleeps after 15 minutes of inactivity)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/keep-alive.yml'
+
+jobs:
+  keep-alive:
+    name: Ping Render Free Instance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Heartbeat Ping - Health Endpoint
+        run: |
+          echo "======================================================="
+          echo "Sending 24/7 Keep-Alive Heartbeat to Render Backend..."
+          echo "Timestamp: $(date -u)"
+          echo "======================================================="
+
+          URL="https://jvm-crew.onrender.com/health"
+          ATTEMPT=1
+          MAX_ATTEMPTS=3
+          SUCCESS=0
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Attempt $ATTEMPT of $MAX_ATTEMPTS to $URL..."
+            HTTP_RESPONSE=$(curl -s -o /tmp/health_res.txt -w "%{http_code}" --connect-timeout 20 --max-time 60 -A "GitHubActions-KeepAlive/1.0" "$URL" || true)
+
+            if [ "$HTTP_RESPONSE" -eq 200 ]; then
+              echo " SUCCESS: Backend responded with HTTP 200 OK!"
+              echo "Response payload: $(cat /tmp/health_res.txt)"
+              SUCCESS=1
+              break
+            else
+              echo " Attempt $ATTEMPT failed with HTTP status: $HTTP_RESPONSE"
+              if [ -f /tmp/health_res.txt ]; then
+                cat /tmp/health_res.txt
+              fi
+              echo "Waiting 10 seconds before retry..."
+              sleep 10
+            fi
+            ATTEMPT=$((ATTEMPT+1))
+          done
+
+          if [ $SUCCESS -ne 1 ]; then
+            echo " Warning: Could not verify 200 OK within $MAX_ATTEMPTS attempts."
+          fi
+
+      - name: Heartbeat Ping - Database Pool Warmup (/api/health)
+        run: |
+          echo "Pinging /api/health to ensure Supabase Hikari pool is active..."
+          curl -s --connect-timeout 20 --max-time 30 -A "GitHubActions-KeepAlive/1.0" "https://jvm-crew.onrender.com/api/health" || true
+          echo "Keep-alive routine completed successfully."

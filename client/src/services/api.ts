@@ -326,8 +326,8 @@ export const api = {
   // Proactive non-blocking warmup ping for server and DB pool pre-initialization
   warmup(): void {
     const now = Date.now();
-    // Throttle to at most one ping every 12 seconds to prevent connection contention on mobile devices
-    if (now - lastWarmupTimestamp < 12000) {
+    // Throttle to at most one ping every 10 seconds to prevent connection contention
+    if (now - lastWarmupTimestamp < 10000) {
       return;
     }
     lastWarmupTimestamp = now;
@@ -341,12 +341,24 @@ export const api = {
 
       const host = BASE_URL.replace(/\/api\/?$/, '');
       const healthEndpoint = host && host.startsWith('http') ? `${host}/health` : '/health';
+      const dbHealthEndpoint = host && host.startsWith('http') ? `${host}/api/health` : '/api/health';
 
+      // Ping health endpoint to wake container
       fetch(healthEndpoint, {
         method: 'GET',
         mode: 'cors',
         signal,
         cache: 'no-store',
+        keepalive: true,
+      }).catch(() => {});
+
+      // Ping api/health to pre-warm Hikari database pool
+      fetch(dbHealthEndpoint, {
+        method: 'GET',
+        mode: 'cors',
+        signal,
+        cache: 'no-store',
+        keepalive: true,
       }).catch(() => {});
     } catch (e) {}
   },

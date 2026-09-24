@@ -78,6 +78,9 @@ app:
     bucket: ${SUPABASE_STORAGE_BUCKET:jvmcrew-files}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:80,http://127.0.0.1:3000,http://127.0.0.1:80,http://localhost:5173,https://engineerspace.netlify.app}}
+  keep-alive:
+    enabled: ${APP_KEEP_ALIVE_ENABLED:true}
+    url: ${APP_KEEP_ALIVE_URL:${RENDER_EXTERNAL_URL:https://jvm-crew.onrender.com}}
 
 
 ai:
