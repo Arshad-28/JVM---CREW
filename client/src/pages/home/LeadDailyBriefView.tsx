@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api, cacheStore, getLocalTodayDateString } from '../../services/api';
-import { LeadDailyBrief, TeamQuestion, TeamSummaryRow, LeadMessage, Standup } from '../../types';
+import { LeadDailyBrief, TeamQuestion, TeamSummaryRow, LeadMessage } from '../../types';
 import {
   getTimeGreeting,
   getPersonalDailyContext,
@@ -26,6 +26,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { StandupAudioPlayer } from '../../components/common/StandupAudioPlayer';
+import { TeamStandupHistoryModal } from '../../components/standup/TeamStandupHistoryModal';
 
 interface LeadDailyBriefViewProps {
   onNavigateTab?: (tab: string) => void;
@@ -66,21 +67,9 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const [playingStandupId, setPlayingStandupId] = useState<number | null>(null);
   const [teamHistoryOpen, setTeamHistoryOpen] = useState(false);
-  const [teamHistoryList, setTeamHistoryList] = useState<Standup[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [historyPlayingId, setHistoryPlayingId] = useState<number | null>(null);
 
-  const handleOpenTeamHistory = async () => {
+  const handleOpenTeamHistory = () => {
     setTeamHistoryOpen(true);
-    setLoadingHistory(true);
-    try {
-      const hist = await api.getTeamStandupHistory();
-      setTeamHistoryList(hist || []);
-    } catch (e) {
-      console.error('Failed to load team standup history:', e);
-    } finally {
-      setLoadingHistory(false);
-    }
   };
 
 
@@ -1315,207 +1304,10 @@ export const LeadDailyBriefView: React.FC<LeadDailyBriefViewProps> = ({ onNaviga
       {/* ========================================================================= */}
       {/* 8. TEAM STANDUP HISTORY MODAL (GROUPED BY CALENDAR DATE)                   */}
       {/* ========================================================================= */}
-      {teamHistoryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4 overflow-y-auto font-sans">
-          <div className="bg-paper border border-line max-w-3xl w-full p-6 rounded-sm shadow-xl space-y-5 my-8 animate-in fade-in zoom-in-95 duration-100 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-line pb-3">
-              <div className="flex items-center space-x-2">
-                <History className="w-5 h-5 text-accent" />
-                <div>
-                  <h3 className="font-display text-base font-bold text-ink">
-                    Team Standup History
-                  </h3>
-                  <p className="font-mono text-xs text-muted">
-                    Historical submissions grouped by calendar date · Audio recordings preserved
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setTeamHistoryOpen(false)}
-                className="text-muted hover:text-ink transition-colors p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {loadingHistory ? (
-              <div className="py-12 text-center font-mono text-xs text-muted space-y-2">
-                <span className="w-2 h-2 rounded-full bg-accent animate-pulse inline-block" />
-                <p>Loading historical team standups...</p>
-              </div>
-            ) : teamHistoryList.length === 0 ? (
-              <div className="py-12 text-center font-mono text-xs text-muted">
-                No past standup recordings found in history.
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {(() => {
-                  const groups: { [date: string]: Standup[] } = {};
-                  teamHistoryList.forEach((item) => {
-                    const d = item.date || 'Unknown Date';
-                    if (!groups[d]) groups[d] = [];
-                    groups[d].push(item);
-                  });
-
-                  return Object.keys(groups)
-                    .sort((a, b) => b.localeCompare(a))
-                    .map((dateKey) => {
-                      const items = groups[dateKey];
-                      const formattedGroupDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      });
-
-                      return (
-                        <div key={dateKey} className="border border-line rounded-sm overflow-hidden bg-paper">
-                          {/* Group Header */}
-                          <div className="bg-paper-dark p-3.5 border-b border-line flex items-center justify-between">
-                            <div className="flex items-center space-x-2.5">
-                              <span className="font-mono text-xs font-black text-ink uppercase">
-                                {formattedGroupDate}
-                              </span>
-                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-paper border border-line text-muted">
-                                {items.length} {items.length === 1 ? 'Submission' : 'Submissions'}
-                              </span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => api.downloadTeamStandupPdf(dateKey)}
-                              className="px-2.5 py-1 bg-paper hover:bg-paper-dark border border-line hover:border-ink text-ink rounded-xs font-mono text-[11px] font-bold transition-colors flex items-center space-x-1"
-                              title={`Export PDF report for ${dateKey}`}
-                            >
-                              <FileDown className="w-3 h-3 text-accent" />
-                              <span>Export Day PDF</span>
-                            </button>
-                          </div>
-
-                          {/* Member Submissions on this date */}
-                          <div className="divide-y divide-line">
-                            {items.map((standup) => {
-                              const isVoice = standup.submissionType === 'VOICE' || standup.hasVoiceRecording;
-                              const isPlayingThis = historyPlayingId === standup.id;
-
-                              return (
-                                <div key={standup.id} className="p-4 space-y-3">
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="font-mono font-bold text-ink text-sm">
-                                        {standup.userName}
-                                      </span>
-                                      {isVoice ? (
-                                        <span className="px-2 py-0.5 bg-accent/10 border border-accent/30 text-accent font-mono text-[10px] font-bold rounded-xs flex items-center space-x-1">
-                                          <Mic className="w-3 h-3" />
-                                          <span>VOICE STANDUP · {formatShortDate(standup.submittedAt || standup.date)} · {formatLocalTime(standup.submittedAt)} {standup.audioDurationSeconds ? `· ${standup.audioDurationSeconds}s` : ''}</span>
-                                        </span>
-                                      ) : (
-                                        <span className="px-2 py-0.5 bg-accent/10 border border-accent/30 text-accent font-mono text-[10px] font-bold rounded-xs">
-                                          WRITTEN · {formatShortDate(standup.submittedAt || standup.date)} · {formatLocalTime(standup.submittedAt)}
-                                        </span>
-                                      )}
-                                      {standup.confidence && (
-                                        <span className="font-mono text-[10px] text-muted bg-paper-dark px-1.5 py-0.5 rounded-xs border border-line">
-                                          Confidence: {standup.confidenceLabel || `${standup.confidence}/5`}
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    <div className="flex items-center space-x-2">
-                                      {isVoice && (
-                                        <button
-                                          type="button"
-                                          onClick={() => setHistoryPlayingId(isPlayingThis ? null : standup.id)}
-                                          className={`px-3 py-1 font-mono text-xs font-semibold rounded-xs transition-colors flex items-center space-x-1 ${
-                                            isPlayingThis ? 'bg-accent text-paper' : 'bg-ink text-paper hover:bg-ink-light'
-                                          }`}
-                                        >
-                                          {isPlayingThis ? (
-                                            <span>Close Player</span>
-                                          ) : (
-                                            <>
-                                              <Play className="w-3 h-3 fill-current text-accent" />
-                                              <span>Play Voice</span>
-                                            </>
-                                          )}
-                                        </button>
-                                      )}
-
-                                      <button
-                                        type="button"
-                                        onClick={() => api.downloadStandupPdf(standup.id)}
-                                        className="p-1 text-muted hover:text-ink transition-colors border border-line rounded-xs"
-                                        title="Download individual standup PDF"
-                                      >
-                                        <FileDown className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* Inline Audio Player for this historical item */}
-                                  {isVoice && isPlayingThis && (
-                                    <div className="p-3 bg-paper-dark border border-line rounded-xs space-y-2 animate-in fade-in duration-150">
-                                      <div className="flex items-center justify-between text-xs">
-                                        <span className="font-mono text-[10px] uppercase font-bold text-accent flex items-center space-x-1.5">
-                                          <Mic className="w-3.5 h-3.5" />
-                                          <span>Playing {standup.userName}'s recording from {standup.date} ({standup.audioDurationSeconds ? `${standup.audioDurationSeconds}s` : 'Recorded'})</span>
-                                        </span>
-                                        <button
-                                          onClick={() => setHistoryPlayingId(null)}
-                                          className="text-muted hover:text-ink font-mono text-[10px]"
-                                        >
-                                          ✕ Close
-                                        </button>
-                                      </div>
-                                      <StandupAudioPlayer
-                                        standupId={standup.id}
-                                        initialDurationSeconds={standup.audioDurationSeconds || undefined}
-                                        title={`${standup.userName} · ${standup.date} Voice Standup`}
-                                        autoPlay={true}
-                                      />
-                                    </div>
-                                  )}
-
-                                  <div className="text-xs text-muted space-y-1 font-sans">
-                                    <p>
-                                      <strong className="text-ink font-medium">Update:</strong>{' '}
-                                      {isVoice ? 'Voice standup submitted.' : (standup.yesterday || 'No details provided.')}
-                                    </p>
-                                    {standup.hasBlockers && standup.blockers && (
-                                      <p className="text-rose-700 font-medium">
-                                        <strong>Blocker:</strong> {standup.blockers}
-                                      </p>
-                                    )}
-                                    {standup.questionForLead && (
-                                      <p className="italic text-ink">
-                                        <strong>Question:</strong> "{standup.questionForLead}"
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    });
-                })()}
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2 border-t border-line">
-              <button
-                type="button"
-                onClick={() => setTeamHistoryOpen(false)}
-                className="px-4 py-1.5 bg-ink text-paper hover:bg-ink-light font-mono text-xs font-bold rounded-xs transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TeamStandupHistoryModal
+        isOpen={teamHistoryOpen}
+        onClose={() => setTeamHistoryOpen(false)}
+      />
 
     </div>
   );

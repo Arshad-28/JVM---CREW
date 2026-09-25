@@ -725,7 +725,11 @@ export const api = {
     const res = await fetch(`${BASE_URL}/standups/team/history`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse<Standup[]>(res);
+    const data = await handleResponse<Standup[]>(res);
+    if (data) {
+      cacheStore.set('team_standup_history', data, 3 * 60 * 1000);
+    }
+    return data;
   },
 
   async getStandupHistory(memberId?: number): Promise<Standup[]> {
