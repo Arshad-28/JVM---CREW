@@ -21,6 +21,9 @@ public interface StandupRepository extends JpaRepository<Standup, Long> {
     List<Standup> findByTeamIdAndDate(Long teamId, LocalDate date);
     List<Standup> findByUserOrderByDateDesc(User user);
     List<Standup> findByUserInOrderByDateDesc(java.util.Collection<User> users);
+    List<Standup> findByUserInAndDate(java.util.Collection<User> users, LocalDate date);
+    List<Standup> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
+    List<Standup> findByUserInAndDateBetween(java.util.Collection<User> users, LocalDate startDate, LocalDate endDate);
     List<Standup> findByTeamOrderByDateDesc(Team team);
     List<Standup> findByTeamAndDateBetween(Team team, LocalDate startDate, LocalDate endDate);
     long countByTeamAndDate(Team team, LocalDate date);

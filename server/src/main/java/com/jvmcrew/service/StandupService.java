@@ -297,6 +297,9 @@ public class StandupService {
         if (existingOpt.isPresent()) {
             // Edit existing update for this calendar date
             standup = existingOpt.get();
+            standup.setUser(user);
+            standup.setTeam(team);
+            standup.setDate(submissionDate);
             standup.setYesterday(progress);
             standup.setToday(focus);
             standup.setBlockers(blockerText);
@@ -317,6 +320,11 @@ public class StandupService {
             }
             standup.setInputMethodsJson(inputMethodsJson);
             standup.setPrimaryInputMethod(primaryInputMethod);
+            if (StringUtils.hasText(standup.getAudioStoragePath())) {
+                standup.setSubmissionType("TEXT_AND_VOICE");
+            } else {
+                standup.setSubmissionType("TEXT");
+            }
             standup.setIsCompleted(isCompleted);
             standup.setUpdatedAt(Instant.now());
         } else {
@@ -342,6 +350,7 @@ public class StandupService {
                     .questionsJson(request.getQuestionsJson())
                     .inputMethodsJson(inputMethodsJson)
                     .primaryInputMethod(primaryInputMethod)
+                    .submissionType("TEXT")
                     .isCompleted(isCompleted)
                     .submittedAt(Instant.now())
                     .build();
@@ -435,10 +444,29 @@ public class StandupService {
                 .orElseThrow(() -> new IllegalArgumentException("Requester not found: " + requesterId));
 
         TeamMember requesterMember = resolveUserTeamMember(requester);
-
         Team team = requesterMember.getTeam();
-        return standupRepository.findByTeamOrderByDateDesc(team).stream()
-                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
+
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeamAndIsActiveTrueOrderByJoinedAtAsc(team);
+        Set<User> teamUsers = teamMembers.stream().map(TeamMember::getUser).collect(Collectors.toSet());
+        teamUsers.add(requester);
+
+        List<Standup> standupsByUsers = standupRepository.findByUserInOrderByDateDesc(teamUsers);
+        List<Standup> standupsByTeam = standupRepository.findByTeamOrderByDateDesc(team);
+
+        Map<Long, Standup> merged = new LinkedHashMap<>();
+        for (Standup s : standupsByUsers) {
+            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+                merged.put(s.getId(), s);
+            }
+        }
+        for (Standup s : standupsByTeam) {
+            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+                merged.put(s.getId(), s);
+            }
+        }
+
+        return merged.values().stream()
+                .sorted((a, b) -> b.getDate().compareTo(a.getDate()))
                 .map(s -> mapToResponse(s, false))
                 .collect(Collectors.toList());
     }
@@ -472,8 +500,33 @@ public class StandupService {
     @Transactional(readOnly = true)
     public List<StandupResponse> getTeamStandupsToday(Long teamId, LocalDate targetDate) {
         LocalDate queryDate = targetDate != null ? targetDate : LocalDate.now();
-        return standupRepository.findByTeamIdAndDate(teamId, queryDate).stream()
-                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
+        Team team = teamId != null ? teamRepository.findById(teamId).orElse(null) : null;
+        if (team == null) {
+            return standupRepository.findByTeamIdAndDate(teamId, queryDate).stream()
+                    .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
+                    .map(s -> mapToResponse(s, false))
+                    .collect(Collectors.toList());
+        }
+
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeamAndIsActiveTrueOrderByJoinedAtAsc(team);
+        List<User> teamUsers = teamMembers.stream().map(TeamMember::getUser).collect(Collectors.toList());
+
+        List<Standup> standupsByTeam = standupRepository.findByTeamAndDate(team, queryDate);
+        List<Standup> standupsByUsers = !teamUsers.isEmpty() ? standupRepository.findByUserInAndDate(teamUsers, queryDate) : Collections.emptyList();
+
+        Map<Long, Standup> merged = new LinkedHashMap<>();
+        for (Standup s : standupsByTeam) {
+            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+                merged.put(s.getId(), s);
+            }
+        }
+        for (Standup s : standupsByUsers) {
+            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+                merged.put(s.getId(), s);
+            }
+        }
+
+        return merged.values().stream()
                 .map(s -> mapToResponse(s, false))
                 .collect(Collectors.toList());
     }
@@ -503,6 +556,9 @@ public class StandupService {
 
         if (existingOpt.isPresent()) {
             standup = existingOpt.get();
+            standup.setUser(user);
+            standup.setTeam(team);
+            standup.setDate(standupDate);
             oldAudioPath = standup.getAudioStoragePath();
             standup.setUpdatedAt(Instant.now());
         } else {

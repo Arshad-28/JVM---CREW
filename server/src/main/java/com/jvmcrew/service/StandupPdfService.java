@@ -130,7 +130,22 @@ public class StandupPdfService {
                 .filter(tm -> tm.getRole() != Role.LEAD)
                 .collect(Collectors.toList());
 
-        List<Standup> standups = standupRepository.findByTeamAndDateAndIsCompletedTrue(team, targetDate);
+        List<User> memberUsers = allMembers.stream().map(TeamMember::getUser).collect(Collectors.toList());
+        List<Standup> standupsByTeam = standupRepository.findByTeamAndDateAndIsCompletedTrue(team, targetDate);
+        List<Standup> standupsByUsers = !memberUsers.isEmpty() ? standupRepository.findByUserInAndDate(memberUsers, targetDate) : java.util.Collections.emptyList();
+
+        java.util.Map<Long, Standup> merged = new java.util.LinkedHashMap<>();
+        for (Standup s : standupsByTeam) {
+            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+                merged.put(s.getId(), s);
+            }
+        }
+        for (Standup s : standupsByUsers) {
+            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+                merged.put(s.getId(), s);
+            }
+        }
+        List<Standup> standups = new java.util.ArrayList<>(merged.values());
 
         byte[] pdfBytes = generateTeamDailyStandupPdfBytes(team, targetDate, allMembers, standups, lead);
         String filename = String.format("JVM-CREW-Team-Standup-%s-%s.pdf", team.getName().replaceAll("[^a-zA-Z0-9]", "_"), targetDate);

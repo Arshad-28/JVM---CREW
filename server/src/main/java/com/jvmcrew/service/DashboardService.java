@@ -374,16 +374,31 @@ public class DashboardService {
         DayOfWeek dow = today.getDayOfWeek();
         String dayName = dow.toString().substring(0, 1) + dow.toString().substring(1).toLowerCase();
 
-        List<Standup> todayStandups = team != null ? standupRepository.findByTeamAndDate(team, today) : Collections.emptyList();
-        Map<Long, Standup> standupByUserMap = todayStandups.stream()
-                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
-                .collect(Collectors.toMap(s -> s.getUser().getId(), s -> s, (existing, replacement) -> replacement));
+        List<User> memberUsers = members.stream().map(TeamMember::getUser).collect(Collectors.toList());
+
+        List<Standup> todayStandupsByTeam = team != null ? standupRepository.findByTeamAndDate(team, today) : Collections.emptyList();
+        List<Standup> todayStandupsByUsers = !memberUsers.isEmpty() ? standupRepository.findByUserInAndDate(memberUsers, today) : Collections.emptyList();
+
+        Map<Long, Standup> standupByUserMap = new HashMap<>();
+        for (Standup s : todayStandupsByTeam) {
+            if (Boolean.TRUE.equals(s.getIsCompleted()) && s.getUser() != null) {
+                standupByUserMap.put(s.getUser().getId(), s);
+            }
+        }
+        for (Standup s : todayStandupsByUsers) {
+            if (Boolean.TRUE.equals(s.getIsCompleted()) && s.getUser() != null) {
+                standupByUserMap.put(s.getUser().getId(), s);
+                if (team != null && (s.getTeam() == null || !team.getId().equals(s.getTeam().getId()))) {
+                    s.setTeam(team);
+                    standupRepository.save(s);
+                }
+            }
+        }
 
         int updatesReceived = (int) members.stream()
                 .filter(m -> standupByUserMap.containsKey(m.getUser().getId()))
                 .count();
 
-        List<User> memberUsers = members.stream().map(TeamMember::getUser).collect(Collectors.toList());
         Map<Long, UserStreakDto> memberStreakMap = streakService.getBatchUserStreaks(memberUsers, today);
 
         List<LeadDailyBriefDto.AttentionItemDto> attentionList = new ArrayList<>();
@@ -711,8 +726,29 @@ public class DashboardService {
                 .collect(Collectors.toList());
         int totalMembers = members.size();
 
-        List<Standup> todayStandups = standupRepository.findByTeamAndDate(team, today);
-        int standupsSubmittedToday = todayStandups.size();
+        List<User> memberUsers = members.stream().map(TeamMember::getUser).collect(Collectors.toList());
+        List<Standup> todayStandupsByTeam = standupRepository.findByTeamAndDate(team, today);
+        List<Standup> todayStandupsByUsers = !memberUsers.isEmpty() ? standupRepository.findByUserInAndDate(memberUsers, today) : Collections.emptyList();
+
+        Map<Long, Standup> standupByUserMap = new HashMap<>();
+        for (Standup s : todayStandupsByTeam) {
+            if (Boolean.TRUE.equals(s.getIsCompleted()) && s.getUser() != null) {
+                standupByUserMap.put(s.getUser().getId(), s);
+            }
+        }
+        for (Standup s : todayStandupsByUsers) {
+            if (Boolean.TRUE.equals(s.getIsCompleted()) && s.getUser() != null) {
+                standupByUserMap.put(s.getUser().getId(), s);
+                if (team != null && (s.getTeam() == null || !team.getId().equals(s.getTeam().getId()))) {
+                    s.setTeam(team);
+                    standupRepository.save(s);
+                }
+            }
+        }
+
+        int standupsSubmittedToday = (int) members.stream()
+                .filter(m -> standupByUserMap.containsKey(m.getUser().getId()))
+                .count();
         int standupRatePct = totalMembers > 0 ? (standupsSubmittedToday * 100) / totalMembers : 0;
 
         long totalTasks = taskRepository.countByTeam(team);
@@ -764,10 +800,10 @@ public class DashboardService {
             int streak = streakService.getUserStreak(user, today).getCurrentStreak();
 
             // 3. Standup metrics
-            Optional<Standup> userTodayStandup = standupRepository.findByTeamAndUserAndDate(team, user, today);
-            boolean standupToday = userTodayStandup.isPresent();
-            Integer confidence = userTodayStandup.map(Standup::getConfidence).orElse(null);
-            String confidenceLabel = userTodayStandup.map(s -> getConfidenceLabel(s.getConfidence())).orElse(null);
+            Standup userTodayStandup = standupByUserMap.get(user.getId());
+            boolean standupToday = userTodayStandup != null;
+            Integer confidence = standupToday ? userTodayStandup.getConfidence() : null;
+            String confidenceLabel = standupToday ? getConfidenceLabel(userTodayStandup.getConfidence()) : null;
 
             if (standupToday) {
                 activeTodayCount++;

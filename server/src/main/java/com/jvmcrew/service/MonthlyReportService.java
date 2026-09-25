@@ -167,9 +167,9 @@ public class MonthlyReportService {
         int hwSubmitted = mySubs.size();
         int hwReviewed = (int) mySubs.stream().filter(s -> "REVIEWED".equalsIgnoreCase(s.getStatus()) || s.getLeadFeedback() != null).count();
 
-        // Standups in this month scoped to team
-        List<Standup> userStandups = standupRepository.findByTeamAndDateBetween(team, start, end).stream()
-                .filter(s -> s.getUser().getId().equals(user.getId()) && Boolean.TRUE.equals(s.getIsCompleted()))
+        // Standups in this month for user
+        List<Standup> userStandups = standupRepository.findByUserAndDateBetween(user, start, end).stream()
+                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
                 .collect(Collectors.toList());
         int standupsSubmitted = userStandups.size();
         int voiceStandups = (int) userStandups.stream().filter(s -> "VOICE".equalsIgnoreCase(s.getSubmissionType())).count();

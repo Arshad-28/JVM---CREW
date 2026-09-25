@@ -398,8 +398,8 @@ public class TeamPerformanceReportService {
 
         // 3. Standups for this member
         int eligibleWorkdays = calculateEligibleWorkdays(start, end, today);
-        List<Standup> memberStandups = standupRepository.findByTeamAndDateBetween(team, start, end).stream()
-                .filter(s -> s.getUser().getId().equals(targetUser.getId()) && Boolean.TRUE.equals(s.getIsCompleted()))
+        List<Standup> memberStandups = standupRepository.findByUserAndDateBetween(targetUser, start, end).stream()
+                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
                 .collect(Collectors.toList());
         int standupsSubmitted = memberStandups.size();
         int standupConsistencyPct = eligibleWorkdays > 0 ? Math.min(100, (standupsSubmitted * 100) / eligibleWorkdays) : (standupsSubmitted > 0 ? 100 : 0);
