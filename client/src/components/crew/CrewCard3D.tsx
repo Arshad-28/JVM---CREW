@@ -164,7 +164,7 @@ export const CrewCard3D: React.FC<CrewCard3DProps> = ({
   return (
     <div
       className={`relative select-none transition-all duration-300 ${
-        isFocused ? 'w-full max-w-[360px] mx-auto my-2' : 'w-full max-w-[360px] mx-auto cursor-pointer hover:scale-[1.02]'
+        isFocused ? 'w-full max-w-[340px] sm:max-w-[360px] mx-auto my-2' : 'w-full max-w-[340px] sm:max-w-[360px] mx-auto cursor-pointer hover:scale-[1.02]'
       }`}
       style={{ perspective: '1200px' }}
     >

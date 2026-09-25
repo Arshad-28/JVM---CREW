@@ -128,11 +128,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           
           {/* LEFT: HAMBURGER (Mobile) & BRAND IDENTITY */}
-          <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
             {/* Mobile Hamburger Toggle (44px min touch target) */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden w-10 h-10 -ml-1.5 flex items-center justify-center text-ink hover:text-primary rounded-sm focus-ring transition-colors"
+              className="md:hidden w-11 h-11 -ml-2 flex items-center justify-center text-ink hover:text-primary active:bg-paper-dark rounded-xl focus-ring transition-colors cursor-pointer"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-5 h-5" />
@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={handleOpenReveal}
-                className="w-8 h-8 bg-primary hover:bg-primary-hover active:scale-95 rounded-sm flex items-center justify-center font-mono font-black text-white text-xs shadow-xs shrink-0 transition-all duration-200 cursor-pointer focus-ring"
+                className="w-8 h-8 sm:w-9 sm:h-9 bg-primary hover:bg-primary-hover active:scale-95 rounded-lg flex items-center justify-center font-mono font-black text-white text-xs shadow-xs shrink-0 transition-all duration-200 cursor-pointer focus-ring"
                 title="View Team Identity"
                 aria-label={`View ${cleanTeamName} Team Identity`}
               >
@@ -158,11 +158,11 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 <div className="flex items-center space-x-1.5">
-                  <span className="font-display font-black text-xs sm:text-sm tracking-tight text-ink group-hover:text-primary transition-colors uppercase truncate max-w-[130px] sm:max-w-none">
+                  <span className="font-display font-black text-xs sm:text-sm tracking-tight text-ink group-hover:text-primary transition-colors uppercase truncate max-w-[120px] sm:max-w-none">
                     {cleanTeamName}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-muted truncate">
+                <span className="text-[10px] font-mono text-muted truncate max-w-[120px] sm:max-w-none">
                   {user?.position || 'SDE Intern'} · {isLead ? 'Lead' : 'Member'}
                 </span>
               </div>
@@ -534,7 +534,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => handleNavClick('home')}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'home'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -546,7 +546,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => handleNavClick('tasks')}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'tasks'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -558,7 +558,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => handleNavClick('homework')}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'homework'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -570,7 +570,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => handleNavClick('interview-lab')}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'interview-lab'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -589,7 +589,7 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('meetings');
                   setMobileDrawerOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'meetings'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -604,7 +604,7 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('crew');
                   setMobileDrawerOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'crew'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -619,7 +619,7 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('reports');
                   setMobileDrawerOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'reports'
                     ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
@@ -636,7 +636,7 @@ export const Header: React.FC<HeaderProps> = ({
                     setActiveTab('team');
                     setMobileDrawerOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                  className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                     activeTab === 'team'
                       ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                       : 'text-ink hover:bg-paper'
@@ -657,14 +657,14 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('profile');
                   setMobileDrawerOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'profile'
-                    ? 'bg-ink text-paper shadow-2xs'
+                    ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
                 }`}
               >
-                <UserCircle className={`w-4 h-4 shrink-0 ${activeTab === 'profile' ? 'text-accent' : 'text-muted'}`} />
-                <span>My Profile</span>
+                <UserCircle className={`w-4 h-4 shrink-0 ${activeTab === 'profile' ? 'text-primary' : 'text-muted'}`} />
+                <span>My Profile & Card</span>
               </button>
 
               <button
@@ -672,22 +672,35 @@ export const Header: React.FC<HeaderProps> = ({
                   setActiveTab('settings');
                   setMobileDrawerOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-sm text-xs font-semibold transition-colors min-h-[44px] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
                   activeTab === 'settings'
-                    ? 'bg-ink text-paper shadow-2xs'
+                    ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
                     : 'text-ink hover:bg-paper'
                 }`}
               >
-                <Settings className={`w-4 h-4 shrink-0 ${activeTab === 'settings' ? 'text-accent' : 'text-muted'}`} />
+                <Settings className={`w-4 h-4 shrink-0 ${activeTab === 'settings' ? 'text-primary' : 'text-muted'}`} />
                 <span>Account Settings</span>
               </button>
+
+              {onOpenLeaveEmail && (
+                <button
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    onOpenLeaveEmail();
+                  }}
+                  className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold text-ink hover:bg-paper transition-colors min-h-[44px]"
+                >
+                  <Mail className="w-4 h-4 shrink-0 text-muted" />
+                  <span>Leave Email Generator</span>
+                </button>
+              )}
             </div>
 
             {/* Drawer Footer */}
             <div className="p-3 border-t border-line bg-paper pb-safe">
               <button
                 onClick={logout}
-                className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 text-xs text-attention font-bold bg-attention-subtle hover:bg-attention-subtle/80 rounded-sm transition-colors min-h-[44px]"
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 text-xs text-attention font-bold bg-attention-subtle hover:bg-attention-subtle/80 rounded-lg transition-colors min-h-[44px]"
               >
                 <LogOut className="w-4 h-4 text-attention" />
                 <span>Sign Out</span>

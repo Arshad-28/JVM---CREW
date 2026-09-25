@@ -407,7 +407,7 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
       />
 
       <div
-        className="relative z-[110] bg-paper border border-line-dark w-full sm:max-w-2xl rounded-2xl shadow-modal flex flex-col max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] animate-scale-in overflow-hidden"
+        className="relative z-[110] bg-paper border border-line-dark w-full sm:max-w-2xl rounded-2xl shadow-modal flex flex-col max-h-[calc(100dvh-24px)] sm:max-h-[calc(100vh-48px)] animate-scale-in overflow-hidden pb-safe"
         onClick={(e) => e.stopPropagation()}
       >
         

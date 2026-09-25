@@ -310,7 +310,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="Enter full name"
-                className="w-full px-3 py-2 text-sm bg-paper border border-line focus:border-ink rounded-xs font-medium text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-sm bg-paper border border-line focus:border-ink rounded-xs font-medium text-ink outline-none transition-colors"
                 required
               />
             </div>
@@ -330,7 +330,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="Enter email address"
-                className="w-full px-3 py-2 text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
                 required
               />
             </div>
@@ -350,7 +350,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="+91 9876543210"
-                className="w-full px-3 py-2 text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
               />
             </div>
 
@@ -369,7 +369,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="Kalpataru Institute of Technology, Tiptur"
-                className="w-full px-3 py-2 text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
               />
             </div>
 
@@ -388,7 +388,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="e.g. linkedin.com/in/username or www.linkedin.com/..."
-                className="w-full px-3 py-2 text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
               />
             </div>
 
@@ -407,7 +407,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="e.g. github.com/username or https://github.com/..."
-                className="w-full px-3 py-2 text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
               />
             </div>
 
@@ -426,7 +426,7 @@ export const AccountSettingsPage: React.FC<AccountSettingsPageProps> = ({
                   setAccountSuccess(null);
                 }}
                 placeholder="Brief engineering summary or bio..."
-                className="w-full px-3 py-2 text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
+                className="w-full px-3 py-2 text-base sm:text-xs font-mono bg-paper border border-line focus:border-ink rounded-xs text-ink outline-none transition-colors"
               />
             </div>
 

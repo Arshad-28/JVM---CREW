@@ -283,7 +283,7 @@ export const TeamMeetingsSection: React.FC = () => {
 
           {/* 3. INTERACTIVE VIEW FILTER TABS & SEARCH */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
-            <div className="flex items-center gap-1.5 bg-paper p-1 rounded-xl border border-line">
+            <div className="flex items-center gap-1.5 bg-paper p-1 rounded-xl border border-line overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setViewFilter('ALL')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${

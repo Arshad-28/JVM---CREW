@@ -118,7 +118,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* 2. Modal Dialog Box (100% Opaque, Layered at z-[110]) */}
       <div
-        className={`relative z-[110] ${sizeClasses} bg-paper-light border border-line rounded-2xl shadow-modal flex flex-col max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] animate-scale-in pb-safe overflow-hidden ${className}`}
+        className={`relative z-[110] ${sizeClasses} bg-paper-light border border-line rounded-2xl shadow-modal flex flex-col max-h-[calc(100dvh-24px)] sm:max-h-[calc(100vh-48px)] animate-scale-in pb-safe overflow-hidden ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

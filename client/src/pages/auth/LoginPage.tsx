@@ -145,7 +145,7 @@ export const LoginPage: React.FC = () => {
                       onFocus={api.warmup}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Rahul Kumar"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -164,7 +164,7 @@ export const LoginPage: React.FC = () => {
                       onFocus={api.warmup}
                       onChange={(e) => setTeamName(e.target.value)}
                       placeholder="e.g. STACK, PHOENIX, NOVA"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
                     />
                   </div>
                   <p className="text-[10px] font-mono text-muted mt-1">
@@ -195,7 +195,7 @@ export const LoginPage: React.FC = () => {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
                   autoFocus={!isRegister}
                 />
               </div>
@@ -221,7 +221,7 @@ export const LoginPage: React.FC = () => {
                     if (e.target.value.length === 1) api.warmup();
                   }}
                   placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
-                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
                 />
                 <button
                   type="button"

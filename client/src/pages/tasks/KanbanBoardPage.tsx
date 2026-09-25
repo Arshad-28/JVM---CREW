@@ -728,7 +728,42 @@ export const KanbanBoardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 6. RESPONSIVE KANBAN COLUMNS */}
+          {/* 6. MOBILE COLUMN TAB SWITCHER (< 2xl screens) */}
+          <div className="2xl:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            <button
+              onClick={() => setMobileColumnTab('ALL')}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                mobileColumnTab === 'ALL'
+                  ? 'bg-ink text-paper border-ink shadow-xs'
+                  : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
+              }`}
+            >
+              All Columns ({filteredTasks.length})
+            </button>
+            {COLUMNS.map((c) => {
+              const count = filteredTasks.filter((t) => {
+                if (c.id === 'BLOCKED') return t.status === 'IN_PROGRESS' && t.labels?.includes('BLOCKED');
+                return t.status === c.id;
+              }).length;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setMobileColumnTab(c.id)}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
+                    mobileColumnTab === c.id
+                      ? 'bg-ink text-paper border-ink shadow-xs'
+                      : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${c.dotColor}`} />
+                  <span>{c.title}</span>
+                  <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 7. RESPONSIVE KANBAN COLUMNS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3.5 items-start">
             {COLUMNS.filter((col) => mobileColumnTab === 'ALL' || col.id === mobileColumnTab).map((col) => {
               const colTasks = filteredTasks.filter((t) => {

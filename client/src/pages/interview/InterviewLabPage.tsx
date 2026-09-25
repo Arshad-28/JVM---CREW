@@ -508,11 +508,11 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
               </div>
             </div>
 
-            {/* Mode Switcher Tabs (ALL 5 ALWAYS VISIBLE) */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-paper p-1.5 rounded-xl border border-line">
+            {/* Mode Switcher Tabs (ALL 5 ALWAYS VISIBLE & NATIVE SCROLLABLE ON MOBILE) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-paper p-1.5 rounded-xl border border-line">
               <button
                 onClick={() => setActiveTab('learn')}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 ${
                   activeTab === 'learn'
                     ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
                     : 'text-muted hover:text-ink hover:bg-paper-light/50'
@@ -529,7 +529,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   }
                   setActiveTab('practice');
                 }}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 ${
                   activeTab === 'practice'
                     ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
                     : 'text-muted hover:text-ink hover:bg-paper-light/50'
@@ -549,7 +549,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   }
                   setActiveTab('coding');
                 }}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 ${
                   activeTab === 'coding'
                     ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
                     : 'text-muted hover:text-ink hover:bg-paper-light/50'
@@ -569,7 +569,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
                   }
                   setActiveTab('mock');
                 }}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 ${
                   activeTab === 'mock'
                     ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
                     : 'text-muted hover:text-ink hover:bg-paper-light/50'
@@ -584,7 +584,7 @@ export const InterviewLabPage: React.FC<InterviewLabPageProps> = ({ initialTopic
 
               <button
                 onClick={() => setActiveTab('coach')}
-                className={`col-span-2 sm:col-span-1 px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 ${
                   activeTab === 'coach'
                     ? 'bg-paper-light text-primary shadow-xs font-bold border border-primary/30'
                     : 'text-muted hover:text-ink hover:bg-paper-light/50'
