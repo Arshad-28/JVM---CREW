@@ -470,14 +470,15 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
                         className="border border-line rounded-sm overflow-hidden bg-paper shadow-2xs"
                       >
                         {/* ========================================================= */}
-                        {/* COMPACT DATE GROUP HEADER                                 */}
+                        {/* COMPACT STICKY DATE GROUP HEADER                          */}
                         {/* ========================================================= */}
-                        <div className="bg-paper-dark px-4 py-2.5 border-b border-line flex items-center justify-between">
+                        <div className="sticky top-0 z-10 bg-paper-dark/95 backdrop-blur-xs px-4 py-2.5 border-b border-line flex items-center justify-between shadow-2xs">
                           <div className="flex items-center space-x-2.5">
-                            <span className="font-mono text-xs font-black text-ink uppercase tracking-wide">
-                              {formatGroupHeaderDate(dateKey)}
+                            <span className="font-mono text-xs font-black text-ink uppercase tracking-wide flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-accent" />
+                              <span>{formatGroupHeaderDate(dateKey)}</span>
                             </span>
-                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-paper border border-line text-muted">
+                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-paper border border-line text-muted">
                               {items.length} {items.length === 1 ? 'submission' : 'submissions'}
                             </span>
                           </div>
@@ -506,7 +507,7 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
                             return (
                               <div
                                 key={standup.id}
-                                className="p-3 sm:px-4 sm:py-3 hover:bg-paper-light/70 transition-colors space-y-2.5"
+                                className="p-3 sm:px-4 sm:py-3 hover:bg-paper-light/70 transition-colors space-y-2"
                               >
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                   {/* Left: Avatar + Name + Metadata */}
@@ -571,7 +572,7 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
                                       <button
                                         type="button"
                                         onClick={() => setPlayingStandupId(isPlayingThis ? null : standup.id)}
-                                        className={`px-2.5 py-1 font-mono text-xs font-semibold rounded-xs transition-colors flex items-center space-x-1.5 cursor-pointer shadow-2xs ${
+                                        className={`px-3 py-1 font-mono text-xs font-semibold rounded-xs transition-colors flex items-center space-x-1.5 cursor-pointer shadow-2xs ${
                                           isPlayingThis
                                             ? 'bg-accent text-paper'
                                             : 'bg-ink text-paper hover:bg-ink-light'
@@ -586,7 +587,7 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
                                         ) : (
                                           <>
                                             <Play className="w-3 h-3 fill-current text-accent" />
-                                            <span>Play</span>
+                                            <span>Play Voice</span>
                                           </>
                                         )}
                                       </button>
@@ -613,6 +614,22 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
                                     </button>
                                   </div>
                                 </div>
+
+                                {/* Clean 1-line preview for written standups (No redundant text for voice!) */}
+                                {!isVoice && (standup.yesterday || standup.today || standup.blockers) && (
+                                  <div className="pl-11 text-xs space-y-0.5 font-sans">
+                                    {standup.yesterday && (
+                                      <p className="text-muted line-clamp-1">
+                                        <strong className="text-ink font-semibold">Done:</strong> {standup.yesterday}
+                                      </p>
+                                    )}
+                                    {standup.blockers && (
+                                      <p className="text-rose-700 font-medium line-clamp-1">
+                                        <strong>Blocker:</strong> {standup.blockers}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
 
                                 {/* Compact Inline Voice Player */}
                                 {isVoice && isPlayingThis && (
