@@ -286,7 +286,7 @@ export const TeamManagementSection: React.FC = () => {
               {cleanTeamDisplayName(teamInfo.displayName) || cleanTeamDisplayName(user?.teamName) || 'Loading team...'}
             </h2>
             <p className="font-mono text-[11px] text-muted">
-              Active Engineering Team · {teamInfo.memberCount} / 5 Interns
+              Active Engineering Team · {teamInfo.memberCount} Members
             </p>
           </div>
         </div>
@@ -386,7 +386,7 @@ export const TeamManagementSection: React.FC = () => {
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-mono text-xs font-bold text-muted uppercase tracking-wider">
-            TEAM MEMBERS ({teamInfo.members.length} / 5 INTERNS)
+            TEAM MEMBERS ({teamInfo.members.length} MEMBERS)
           </span>
 
           {isLeadOrAdmin && (

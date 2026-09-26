@@ -95,10 +95,6 @@ export const MeetTheCrewPage: React.FC = () => {
     ? crewMembers.find((m) => m.id === selectedMemberId) || null
     : null;
 
-  // Split members for 3 top / 2 bottom layout on desktop
-  const topMembers = crewMembers.slice(0, 3);
-  const bottomMembers = crewMembers.slice(3, 5);
-
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-8 py-16 text-center font-mono text-xs text-muted animate-pulse">
@@ -213,9 +209,9 @@ export const MeetTheCrewPage: React.FC = () => {
               </span>
             </div>
 
-            {/* Row 1: Up to 3 Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {topMembers.map((member) => (
+            {/* Unified Responsive Grid for All Members */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center">
+              {crewMembers.map((member) => (
                 <CrewCard3D
                   key={member.id}
                   member={member}
@@ -226,22 +222,6 @@ export const MeetTheCrewPage: React.FC = () => {
                 />
               ))}
             </div>
-
-            {/* Row 2: Remaining Cards Centered */}
-            {bottomMembers.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                {bottomMembers.map((member) => (
-                  <CrewCard3D
-                    key={member.id}
-                    member={member}
-                    isFocused={false}
-                    currentUser={user}
-                    onSelect={() => setSelectedMemberId(member.id)}
-                    onEdit={() => setEditingMember(member)}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         )
       )}

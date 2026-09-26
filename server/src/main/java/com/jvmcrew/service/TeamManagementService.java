@@ -98,16 +98,8 @@ public class TeamManagementService {
             }
         }
         int nextSlot = 2;
-        while (nextSlot <= 5 && usedSlots.contains(nextSlot)) {
+        while (usedSlots.contains(nextSlot)) {
             nextSlot++;
-        }
-        if (nextSlot > 5) {
-            for (int i = 1; i <= 5; i++) {
-                if (!usedSlots.contains(i)) {
-                    nextSlot = i;
-                    break;
-                }
-            }
         }
         return String.format("%s-%03d", prefix, nextSlot);
     }
@@ -119,11 +111,6 @@ public class TeamManagementService {
 
         Team team = resolveUserTeam(requester, principal.getTeamId());
         verifyLeadOrAdmin(principal, team);
-
-        long activeMemberCount = teamMemberRepository.countByTeamAndIsActiveTrue(team);
-        if (activeMemberCount >= 5) {
-            throw new IllegalStateException("Team " + team.getFormattedDisplayName() + " has reached its maximum capacity of 5 members (1 Lead + 4 Interns).");
-        }
 
         User targetUser = null;
         if (request.getUserId() != null) {
