@@ -68,6 +68,10 @@ public class Standup {
     @Column(name = "audio_duration_seconds")
     private Integer audioDurationSeconds;
 
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "audio_data")
+    private byte[] audioData;
+
     // Extended adaptive check-in fields
     @Column(columnDefinition = "TEXT")
     private String difficulty; // What slowed you down / difficult concept

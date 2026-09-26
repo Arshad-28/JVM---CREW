@@ -580,6 +580,12 @@ public class StandupService {
         // Store new audio file in team-isolated directory (verified in cloud storage before proceeding)
         AudioStorageService.StoredAudioMetadata stored = audioStorageService.storeAudioFile(audioFile, team.getId(), userId, standupDate);
 
+        byte[] audioBytes = null;
+        try {
+            audioBytes = audioFile.getBytes();
+        } catch (Exception ignored) {}
+
+        standup.setAudioData(audioBytes);
         standup.setSubmissionType("VOICE");
         standup.setPrimaryInputMethod("voice");
         standup.setIsCompleted(true);
@@ -652,7 +658,7 @@ public class StandupService {
                 .map(s -> mapToResponse(s, false));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public VoiceRecordingData getVoiceRecording(Long standupId, Long requesterId) {
         Standup standup = standupRepository.findById(standupId)
                 .orElseThrow(() -> new IllegalArgumentException("Standup not found: " + standupId));
@@ -672,14 +678,25 @@ public class StandupService {
             }
         }
 
+        // 1. Direct database binary retrieval (fastest & indestructible across restarts)
+        if (standup.getAudioData() != null && standup.getAudioData().length > 0) {
+            String contentType = standup.getAudioContentType() != null ? standup.getAudioContentType() : "audio/webm";
+            String filename = standup.getAudioFileName() != null ? standup.getAudioFileName() : ("standup_voice_" + standupId + ".webm");
+            return new VoiceRecordingData(
+                    new org.springframework.core.io.ByteArrayResource(standup.getAudioData(), "PostgreSQL: " + standupId),
+                    contentType,
+                    filename,
+                    (long) standup.getAudioData().length
+            );
+        }
+
+        // 2. Storage providers (Local disk & Supabase cloud storage)
         String storagePath = standup.getAudioStoragePath();
         if (!StringUtils.hasText(storagePath)) {
-            // Check if submission is voice and attempt auto-discovery
             boolean isVoiceSubmission = "VOICE".equalsIgnoreCase(standup.getSubmissionType())
                     || "voice".equalsIgnoreCase(standup.getPrimaryInputMethod())
                     || (standup.getAudioFileName() != null && !standup.getAudioFileName().isBlank());
             if (isVoiceSubmission) {
-                // Try to find matching file in team directory: standups/{teamId}/{year}/{month}/{day}/
                 Long teamId = standup.getTeam() != null ? standup.getTeam().getId() : 0L;
                 LocalDate d = standup.getDate();
                 String folder = String.format("standups/%d/%d/%02d/%02d", teamId, d.getYear(), d.getMonthValue(), d.getDayOfMonth());
@@ -689,15 +706,29 @@ public class StandupService {
             }
         }
 
-        if (!StringUtils.hasText(storagePath)) {
-            throw new com.jvmcrew.exception.StorageFileNotFoundException("No voice recording attached to standup #" + standupId);
+        if (StringUtils.hasText(storagePath)) {
+            try {
+                org.springframework.core.io.Resource resource = audioStorageService.loadAudioAsResource(storagePath);
+                String contentType = standup.getAudioContentType() != null ? standup.getAudioContentType() : "audio/webm";
+                String filename = standup.getAudioFileName() != null ? standup.getAudioFileName() : ("standup_voice_" + standupId + ".webm");
+
+                // Self-heal: Cache loaded audio into PostgreSQL for future zero-latency indestructible streaming
+                try {
+                    byte[] loadedBytes = resource.getInputStream().readAllBytes();
+                    if (loadedBytes.length > 0) {
+                        standup.setAudioData(loadedBytes);
+                        standup.setAudioFileSize((long) loadedBytes.length);
+                        standupRepository.save(standup);
+                    }
+                } catch (Exception ignored) {}
+
+                return new VoiceRecordingData(resource, contentType, filename, standup.getAudioFileSize());
+            } catch (Exception ex) {
+                log.warn("Storage load failed for standup #{}: {}", standupId, ex.getMessage());
+            }
         }
 
-        org.springframework.core.io.Resource resource = audioStorageService.loadAudioAsResource(storagePath);
-        String contentType = standup.getAudioContentType() != null ? standup.getAudioContentType() : "audio/webm";
-        String filename = standup.getAudioFileName() != null ? standup.getAudioFileName() : ("standup_voice_" + standupId + ".webm");
-
-        return new VoiceRecordingData(resource, contentType, filename, standup.getAudioFileSize());
+        throw new com.jvmcrew.exception.StorageFileNotFoundException("No voice recording attached to standup #" + standupId);
     }
 
     @lombok.Value

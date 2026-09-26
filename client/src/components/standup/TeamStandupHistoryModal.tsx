@@ -71,7 +71,7 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [dateFilter, setDateFilter] = useState<DateFilterType>('ALL');
+  const [dateFilter, setDateFilter] = useState<DateFilterType>('LAST_7_DAYS');
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const [appliedCustomStart, setAppliedCustomStart] = useState<string>('');
@@ -499,11 +499,11 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
 
                       <div className="space-y-1 font-mono text-xs">
                         {[
-                          { key: 'ALL', label: 'All dates' },
+                          { key: 'LAST_7_DAYS', label: 'Last 7 days (Past Week)' },
                           { key: 'TODAY', label: 'Today' },
                           { key: 'YESTERDAY', label: 'Yesterday' },
-                          { key: 'LAST_7_DAYS', label: 'Last 7 days' },
                           { key: 'LAST_30_DAYS', label: 'Last 30 days' },
+                          { key: 'ALL', label: 'All dates' },
                           { key: 'CUSTOM', label: 'Custom range' },
                         ].map((opt) => (
                           <button

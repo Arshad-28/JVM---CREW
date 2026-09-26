@@ -66,7 +66,7 @@ public class SupabaseStorageService implements StorageService {
     }
 
     public boolean isConfigured() {
-        return StringUtils.hasText(getCleanUrl()) && StringUtils.hasText(getCleanKey());
+        return StringUtils.hasText(getCleanUrl());
     }
 
     public String getEffectiveBucket() {
@@ -77,7 +77,7 @@ public class SupabaseStorageService implements StorageService {
     @Override
     public void store(String storagePath, byte[] data, String contentType) {
         if (!isConfigured()) {
-            throw new IllegalStateException("Supabase storage is not configured (missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY).");
+            throw new IllegalStateException("Supabase storage is not configured (missing SUPABASE_URL).");
         }
         if (!StringUtils.hasText(storagePath)) {
             throw new IllegalArgumentException("Storage path cannot be empty.");
@@ -93,17 +93,19 @@ public class SupabaseStorageService implements StorageService {
             String effectiveMime = StringUtils.hasText(contentType) ? contentType : "application/octet-stream";
             String cleanKey = getCleanKey();
 
-            HttpRequest request = HttpRequest.newBuilder()
+            var reqBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(targetUrl))
-                    .header("Authorization", "Bearer " + cleanKey)
-                    .header("apikey", cleanKey)
                     .header("Content-Type", effectiveMime)
                     .header("x-upsert", "true")
                     .POST(HttpRequest.BodyPublishers.ofByteArray(data))
-                    .timeout(Duration.ofSeconds(30))
-                    .build();
+                    .timeout(Duration.ofSeconds(30));
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (StringUtils.hasText(cleanKey)) {
+                reqBuilder.header("Authorization", "Bearer " + cleanKey);
+                reqBuilder.header("apikey", cleanKey);
+            }
+
+            HttpResponse<String> response = httpClient.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
             String responseBody = response.body();
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
@@ -163,14 +165,16 @@ public class SupabaseStorageService implements StorageService {
         // If direct full URL was supplied, attempt fetching directly first
         if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
             try {
-                HttpRequest directRequest = HttpRequest.newBuilder()
+                var directBuilder = HttpRequest.newBuilder()
                         .uri(URI.create(storagePath))
-                        .header("Authorization", "Bearer " + getCleanKey())
-                        .header("apikey", getCleanKey())
                         .GET()
-                        .timeout(Duration.ofSeconds(15))
-                        .build();
-                HttpResponse<byte[]> directResponse = httpClient.send(directRequest, HttpResponse.BodyHandlers.ofByteArray());
+                        .timeout(Duration.ofSeconds(15));
+                String cleanKey = getCleanKey();
+                if (StringUtils.hasText(cleanKey)) {
+                    directBuilder.header("Authorization", "Bearer " + cleanKey);
+                    directBuilder.header("apikey", cleanKey);
+                }
+                HttpResponse<byte[]> directResponse = httpClient.send(directBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
                 if (directResponse.statusCode() >= 200 && directResponse.statusCode() < 300) {
                     return new ByteArrayResource(directResponse.body(), "Direct URL: " + storagePath);
                 }
@@ -185,50 +189,56 @@ public class SupabaseStorageService implements StorageService {
             String cleanKey = getCleanKey();
             String relativeKey = extractRelativePath(storagePath);
 
-            // 1. Try standard Supabase object endpoint with auth headers
-            String standardUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + relativeKey;
-            HttpRequest stdRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(standardUrl))
-                    .header("Authorization", "Bearer " + cleanKey)
-                    .header("apikey", cleanKey)
-                    .GET()
-                    .timeout(Duration.ofSeconds(20))
-                    .build();
+            // 1. Try standard Supabase object endpoint with auth headers if key present
+            if (StringUtils.hasText(cleanKey)) {
+                String standardUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + relativeKey;
+                HttpRequest stdRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(standardUrl))
+                        .header("Authorization", "Bearer " + cleanKey)
+                        .header("apikey", cleanKey)
+                        .GET()
+                        .timeout(Duration.ofSeconds(20))
+                        .build();
 
-            HttpResponse<byte[]> stdResponse = httpClient.send(stdRequest, HttpResponse.BodyHandlers.ofByteArray());
-            if (stdResponse.statusCode() >= 200 && stdResponse.statusCode() < 300) {
-                return new ByteArrayResource(stdResponse.body(), "Supabase: " + relativeKey);
+                HttpResponse<byte[]> stdResponse = httpClient.send(stdRequest, HttpResponse.BodyHandlers.ofByteArray());
+                if (stdResponse.statusCode() >= 200 && stdResponse.statusCode() < 300) {
+                    return new ByteArrayResource(stdResponse.body(), "Supabase: " + relativeKey);
+                }
+
+                // 2. Try authenticated endpoint
+                String authUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + relativeKey;
+                HttpRequest authRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(authUrl))
+                        .header("Authorization", "Bearer " + cleanKey)
+                        .header("apikey", cleanKey)
+                        .GET()
+                        .timeout(Duration.ofSeconds(15))
+                        .build();
+
+                HttpResponse<byte[]> authResponse = httpClient.send(authRequest, HttpResponse.BodyHandlers.ofByteArray());
+                if (authResponse.statusCode() >= 200 && authResponse.statusCode() < 300) {
+                    return new ByteArrayResource(authResponse.body(), "Supabase Authenticated: " + relativeKey);
+                }
             }
 
-            // 2. Try authenticated endpoint
-            String authUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + relativeKey;
-            HttpRequest authRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(authUrl))
-                    .header("Authorization", "Bearer " + cleanKey)
-                    .header("apikey", cleanKey)
-                    .GET()
-                    .timeout(Duration.ofSeconds(15))
-                    .build();
+            // 3. Try public endpoints across candidate buckets
+            String[] candidateBuckets = new String[] { cleanBucket, "jvmcrew-files", "standups", "audio" };
+            for (String b : candidateBuckets) {
+                try {
+                    String publicUrl = cleanUrl + "/storage/v1/object/public/" + b + "/" + relativeKey;
+                    HttpRequest pubRequest = HttpRequest.newBuilder()
+                            .uri(URI.create(publicUrl))
+                            .GET()
+                            .timeout(Duration.ofSeconds(10))
+                            .build();
 
-            HttpResponse<byte[]> authResponse = httpClient.send(authRequest, HttpResponse.BodyHandlers.ofByteArray());
-            if (authResponse.statusCode() >= 200 && authResponse.statusCode() < 300) {
-                return new ByteArrayResource(authResponse.body(), "Supabase Authenticated: " + relativeKey);
+                    HttpResponse<byte[]> pubResponse = httpClient.send(pubRequest, HttpResponse.BodyHandlers.ofByteArray());
+                    if (pubResponse.statusCode() >= 200 && pubResponse.statusCode() < 300) {
+                        return new ByteArrayResource(pubResponse.body(), "Supabase Public: " + relativeKey);
+                    }
+                } catch (Exception ignored) {}
             }
 
-            // 3. Try public endpoint as fallback
-            String publicUrl = cleanUrl + "/storage/v1/object/public/" + cleanBucket + "/" + relativeKey;
-            HttpRequest pubRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(publicUrl))
-                    .GET()
-                    .timeout(Duration.ofSeconds(15))
-                    .build();
-
-            HttpResponse<byte[]> pubResponse = httpClient.send(pubRequest, HttpResponse.BodyHandlers.ofByteArray());
-            if (pubResponse.statusCode() >= 200 && pubResponse.statusCode() < 300) {
-                return new ByteArrayResource(pubResponse.body(), "Supabase Public: " + relativeKey);
-            }
-
-            log.warn("Supabase Storage fetch returned HTTP {} for path: {}", stdResponse.statusCode(), storagePath);
             throw new com.jvmcrew.exception.StorageFileNotFoundException("Voice recording not found in Supabase storage: " + storagePath);
         } catch (com.jvmcrew.exception.StorageFileNotFoundException ex) {
             throw ex;
