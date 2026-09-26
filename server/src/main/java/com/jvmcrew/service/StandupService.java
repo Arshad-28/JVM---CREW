@@ -43,7 +43,6 @@ public class StandupService {
     private final AudioStorageService audioStorageService;
     private final LeadershipService leadershipService;
     private final NotificationService notificationService;
-    private final VoiceAudioGenerator voiceAudioGenerator;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -731,40 +730,7 @@ public class StandupService {
             }
         }
 
-        // 3. Fallback: If historical recording was submitted prior to database binary storage and disk was recycled,
-        // synthesize a valid, audible WAV audio recording, save to PostgreSQL, and stream cleanly!
-        boolean isVoice = "VOICE".equalsIgnoreCase(standup.getSubmissionType())
-                || "voice".equalsIgnoreCase(standup.getPrimaryInputMethod())
-                || (standup.getAudioFileName() != null && !standup.getAudioFileName().isBlank())
-                || (standup.getAudioDurationSeconds() != null && standup.getAudioDurationSeconds() > 0);
-
-        if (isVoice) {
-            String memberName = standup.getUser() != null ? standup.getUser().getName() : "Team Member";
-            byte[] generatedWav = voiceAudioGenerator.generateStandupVoiceAudio(
-                    memberName,
-                    standup.getDate(),
-                    standup.getAudioDurationSeconds()
-            );
-
-            try {
-                standup.setAudioData(generatedWav);
-                standup.setAudioContentType("audio/wav");
-                standup.setAudioFileSize((long) generatedWav.length);
-                if (standup.getAudioDurationSeconds() == null || standup.getAudioDurationSeconds() <= 0) {
-                    standup.setAudioDurationSeconds(Math.max(6, generatedWav.length / (22050 * 2)));
-                }
-                standupRepository.save(standup);
-            } catch (Exception ignored) {}
-
-            return new VoiceRecordingData(
-                    new org.springframework.core.io.ByteArrayResource(generatedWav, "Synthesized: " + standupId),
-                    "audio/wav",
-                    "voice_standup_" + standupId + ".wav",
-                    (long) generatedWav.length
-            );
-        }
-
-        throw new com.jvmcrew.exception.StorageFileNotFoundException("No voice recording attached to standup #" + standupId);
+        throw new com.jvmcrew.exception.StorageFileNotFoundException("Voice recording audio file is not available for standup #" + standupId);
     }
 
     @lombok.Value

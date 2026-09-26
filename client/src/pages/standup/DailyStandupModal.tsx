@@ -880,6 +880,10 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
                       standupId={existingStandup.id}
                       initialDurationSeconds={existingStandup.audioDurationSeconds || undefined}
                       title={modalTitle || `Standup Voice • ${existingStandup.userName || 'Member'}`}
+                      onRerecord={!viewOnly && !initialStandup ? () => {
+                        cleanupVoice();
+                        setActiveTab('VOICE');
+                      } : undefined}
                     />
                   </div>
                 )}
@@ -984,14 +988,29 @@ export const DailyStandupModal: React.FC<DailyStandupModalProps> = ({
 
                   <div className="flex space-x-2">
                     {!viewOnly && !initialStandup && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('WRITE')}
-                        className="px-3 py-1.5 bg-paper-dark hover:bg-line border border-line text-ink rounded-sm font-mono text-xs font-semibold transition-colors flex items-center space-x-1"
-                      >
-                        <PenTool className="w-3.5 h-3.5" />
-                        <span>Edit Standup</span>
-                      </button>
+                      <>
+                        {(existingStandup.hasVoiceRecording || existingStandup.submissionType === 'VOICE') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              cleanupVoice();
+                              setActiveTab('VOICE');
+                            }}
+                            className="px-3 py-1.5 bg-accent/10 hover:bg-accent/20 border border-accent/40 text-accent rounded-sm font-mono text-xs font-semibold transition-colors flex items-center space-x-1"
+                          >
+                            <Mic className="w-3.5 h-3.5" />
+                            <span>Re-record Voice</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('WRITE')}
+                          className="px-3 py-1.5 bg-paper-dark hover:bg-line border border-line text-ink rounded-sm font-mono text-xs font-semibold transition-colors flex items-center space-x-1"
+                        >
+                          <PenTool className="w-3.5 h-3.5" />
+                          <span>Edit Standup</span>
+                        </button>
+                      </>
                     )}
                     <button
                       type="button"
