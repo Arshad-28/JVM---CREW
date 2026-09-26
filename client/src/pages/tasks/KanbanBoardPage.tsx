@@ -268,8 +268,12 @@ export const KanbanBoardPage: React.FC = () => {
     }
   };
 
-  const openCreateForColumn = (colId: TaskStatus) => {
-    setCreateModalStatus(colId);
+  const openCreateForColumn = (colId: TaskStatus | 'BLOCKED') => {
+    if (colId === 'BLOCKED') {
+      setCreateModalStatus('IN_PROGRESS');
+    } else {
+      setCreateModalStatus(colId);
+    }
     setCreateModalAssigneeId(undefined);
     setIsCreatingTask(true);
   };
@@ -284,7 +288,7 @@ export const KanbanBoardPage: React.FC = () => {
   const reviewTasks = tasks.filter((t) => t.status === 'REVIEW');
   const reviewCount = reviewTasks.length;
   const completedCount = tasks.filter((t) => t.status === 'DONE').length;
-  const blockedTasks = tasks.filter((t) => t.labels?.includes('BLOCKED'));
+  const blockedTasks = tasks.filter((t) => t.labels?.some((l) => l.toUpperCase() === 'BLOCKED') || (t.status as any) === 'BLOCKED');
   const blockedCount = blockedTasks.length;
 
   const overdueTasks = tasks.filter(
@@ -302,7 +306,10 @@ export const KanbanBoardPage: React.FC = () => {
       if (!isOverdue) return false;
     }
     if (attentionFilter === 'REVIEW' && task.status !== 'REVIEW') return false;
-    if (attentionFilter === 'BLOCKED' && !task.labels?.includes('BLOCKED')) return false;
+    if (attentionFilter === 'BLOCKED') {
+      const isBlocked = task.labels?.some((l) => l.toUpperCase() === 'BLOCKED') || (task.status as any) === 'BLOCKED';
+      if (!isBlocked) return false;
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -413,10 +420,11 @@ export const KanbanBoardPage: React.FC = () => {
               onClick={() => {
                 setAttentionFilter(null);
                 setPriorityFilter('ALL');
+                setMobileColumnTab('ALL');
               }}
               className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
-                !attentionFilter && priorityFilter === 'ALL'
-                  ? 'bg-paper-light border-primary/50 ring-1 ring-primary/20 shadow-xs'
+                !attentionFilter && mobileColumnTab === 'ALL' && priorityFilter === 'ALL'
+                  ? 'bg-blue-50/60 border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
                   : 'bg-paper-light/90 border-line hover:border-line-dark'
               }`}
             >
@@ -432,9 +440,17 @@ export const KanbanBoardPage: React.FC = () => {
 
             {/* In Review */}
             <button
-              onClick={() => setAttentionFilter(attentionFilter === 'REVIEW' ? null : 'REVIEW')}
+              onClick={() => {
+                if (attentionFilter === 'REVIEW' || mobileColumnTab === 'REVIEW') {
+                  setAttentionFilter(null);
+                  setMobileColumnTab('ALL');
+                } else {
+                  setAttentionFilter('REVIEW');
+                  setMobileColumnTab('REVIEW');
+                }
+              }}
               className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
-                attentionFilter === 'REVIEW'
+                attentionFilter === 'REVIEW' || mobileColumnTab === 'REVIEW'
                   ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
                   : 'bg-paper-light/90 border-line hover:border-line-dark'
               }`}
@@ -451,9 +467,17 @@ export const KanbanBoardPage: React.FC = () => {
 
             {/* Blocked */}
             <button
-              onClick={() => setAttentionFilter(attentionFilter === 'BLOCKED' ? null : 'BLOCKED')}
+              onClick={() => {
+                if (attentionFilter === 'BLOCKED' || mobileColumnTab === 'BLOCKED') {
+                  setAttentionFilter(null);
+                  setMobileColumnTab('ALL');
+                } else {
+                  setAttentionFilter('BLOCKED');
+                  setMobileColumnTab('BLOCKED');
+                }
+              }}
               className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
-                attentionFilter === 'BLOCKED'
+                attentionFilter === 'BLOCKED' || mobileColumnTab === 'BLOCKED'
                   ? 'bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-xs'
                   : 'bg-paper-light/90 border-line hover:border-line-dark'
               }`}
@@ -470,7 +494,15 @@ export const KanbanBoardPage: React.FC = () => {
 
             {/* Overdue */}
             <button
-              onClick={() => setAttentionFilter(attentionFilter === 'OVERDUE' ? null : 'OVERDUE')}
+              onClick={() => {
+                if (attentionFilter === 'OVERDUE') {
+                  setAttentionFilter(null);
+                  setMobileColumnTab('ALL');
+                } else {
+                  setAttentionFilter('OVERDUE');
+                  setMobileColumnTab('ALL');
+                }
+              }}
               className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
                 attentionFilter === 'OVERDUE'
                   ? 'bg-red-50 border-red-500 ring-2 ring-red-500/20 shadow-xs'
@@ -490,11 +522,20 @@ export const KanbanBoardPage: React.FC = () => {
             {/* Completed */}
             <button
               onClick={() => {
-                setAttentionFilter(null);
-                setPriorityFilter('ALL');
-                setMobileColumnTab('DONE');
+                if (mobileColumnTab === 'DONE') {
+                  setMobileColumnTab('ALL');
+                  setAttentionFilter(null);
+                } else {
+                  setAttentionFilter(null);
+                  setPriorityFilter('ALL');
+                  setMobileColumnTab('DONE');
+                }
               }}
-              className="p-3.5 rounded-2xl border bg-paper-light/90 border-line hover:border-line-dark text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group"
+              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+                mobileColumnTab === 'DONE'
+                  ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-600/20 shadow-xs'
+                  : 'bg-paper-light/90 border-line hover:border-line-dark'
+              }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Completed</span>
@@ -515,7 +556,11 @@ export const KanbanBoardPage: React.FC = () => {
                 setMobileColumnTab('ALL');
                 setSearchQuery('');
               }}
-              className="p-3.5 rounded-2xl border bg-paper-light/90 border-line hover:border-line-dark text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group"
+              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group ${
+                !attentionFilter && mobileColumnTab === 'ALL' && assigneeFilter === 'ALL' && priorityFilter === 'ALL' && !searchQuery
+                  ? 'bg-purple-50/60 border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
+                  : 'bg-paper-light/90 border-line hover:border-line-dark'
+              }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Total</span>
@@ -731,9 +776,12 @@ export const KanbanBoardPage: React.FC = () => {
           {/* 6. MOBILE COLUMN TAB SWITCHER (< 2xl screens) */}
           <div className="2xl:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
             <button
-              onClick={() => setMobileColumnTab('ALL')}
+              onClick={() => {
+                setMobileColumnTab('ALL');
+                setAttentionFilter(null);
+              }}
               className={`px-3 py-1.5 rounded-xl border text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                mobileColumnTab === 'ALL'
+                mobileColumnTab === 'ALL' && !attentionFilter
                   ? 'bg-ink text-paper border-ink shadow-xs'
                   : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
               }`}
@@ -741,16 +789,34 @@ export const KanbanBoardPage: React.FC = () => {
               All Columns ({filteredTasks.length})
             </button>
             {COLUMNS.map((c) => {
-              const count = filteredTasks.filter((t) => {
-                if (c.id === 'BLOCKED') return t.status === 'IN_PROGRESS' && t.labels?.includes('BLOCKED');
+              const count = tasks.filter((t) => {
+                if (assigneeFilter !== 'ALL' && t.assigneeId !== Number(assigneeFilter)) return false;
+                if (priorityFilter !== 'ALL' && t.priority !== priorityFilter) return false;
+                if (c.id === 'BLOCKED') return t.labels?.some((l) => l.toUpperCase() === 'BLOCKED') || (t.status as any) === 'BLOCKED';
                 return t.status === c.id;
               }).length;
+              const isSelected = mobileColumnTab === c.id;
+
               return (
                 <button
                   key={c.id}
-                  onClick={() => setMobileColumnTab(c.id)}
+                  onClick={() => {
+                    if (mobileColumnTab === c.id) {
+                      setMobileColumnTab('ALL');
+                      setAttentionFilter(null);
+                    } else {
+                      setMobileColumnTab(c.id);
+                      if (c.id === 'BLOCKED') {
+                        setAttentionFilter('BLOCKED');
+                      } else if (c.id === 'REVIEW') {
+                        setAttentionFilter('REVIEW');
+                      } else {
+                        setAttentionFilter(null);
+                      }
+                    }
+                  }}
                   className={`px-3 py-1.5 rounded-xl border text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
-                    mobileColumnTab === c.id
+                    isSelected
                       ? 'bg-ink text-paper border-ink shadow-xs'
                       : 'bg-paper text-muted border-line hover:border-line-dark hover:text-ink'
                   }`}
@@ -767,7 +833,7 @@ export const KanbanBoardPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3.5 items-start">
             {COLUMNS.filter((col) => mobileColumnTab === 'ALL' || col.id === mobileColumnTab).map((col) => {
               const colTasks = filteredTasks.filter((t) => {
-                if (col.id === 'BLOCKED') return t.status === 'IN_PROGRESS' && t.labels?.includes('BLOCKED');
+                if (col.id === 'BLOCKED') return t.labels?.some((l) => l.toUpperCase() === 'BLOCKED') || (t.status as any) === 'BLOCKED';
                 return t.status === col.id;
               });
 
