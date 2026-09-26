@@ -214,9 +214,9 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
       } else if (dateFilter === 'YESTERDAY') {
         if (item.date !== yesterdayStr) return false;
       } else if (dateFilter === 'LAST_7_DAYS') {
-        if (!item.date || item.date < sevenDaysAgoStr || item.date > todayStr) return false;
+        if (!item.date || item.date < sevenDaysAgoStr) return false;
       } else if (dateFilter === 'LAST_30_DAYS') {
-        if (!item.date || item.date < thirtyDaysAgoStr || item.date > todayStr) return false;
+        if (!item.date || item.date < thirtyDaysAgoStr) return false;
       } else if (dateFilter === 'CUSTOM') {
         if (appliedCustomStart && item.date && item.date < appliedCustomStart) return false;
         if (appliedCustomEnd && item.date && item.date > appliedCustomEnd) return false;
@@ -426,8 +426,10 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
                 <h3 className="font-display text-base sm:text-lg font-bold text-ink">
                   Team Standup History
                 </h3>
-                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-paper-dark border border-line text-muted">
-                  {historyList.length} Total
+                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs bg-paper-dark border border-line text-muted">
+                  {filteredList.length === historyList.length
+                    ? `${historyList.length} Total`
+                    : `${filteredList.length} of ${historyList.length}`}
                 </span>
               </div>
               <p className="font-mono text-[11px] sm:text-xs text-muted">
@@ -1300,7 +1302,9 @@ export const TeamStandupHistoryModal: React.FC<TeamStandupHistoryModalProps> = (
           <span className="text-muted text-[11px] hidden sm:inline-block">
             {selectedDetailStandup
               ? `Viewing details for ${selectedDetailStandup.userName}`
-              : `Showing ${filteredList.length} of ${historyList.length} submissions`}
+              : filteredList.length === historyList.length
+              ? `Showing all ${historyList.length} standup submissions`
+              : `Showing ${filteredList.length} matching submissions (${historyList.length} total in history)`}
           </span>
 
           <div className="flex items-center space-x-2 ml-auto">

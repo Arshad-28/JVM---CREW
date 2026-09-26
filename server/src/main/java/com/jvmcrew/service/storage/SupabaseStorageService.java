@@ -131,6 +131,26 @@ public class SupabaseStorageService implements StorageService {
         }
     }
 
+    private String extractRelativePath(String storagePath) {
+        if (!StringUtils.hasText(storagePath)) return "";
+        String cleaned = storagePath.trim().replace('\\', '/');
+        while (cleaned.startsWith("/")) {
+            cleaned = cleaned.substring(1);
+        }
+        String bucket = getEffectiveBucket();
+        if (cleaned.startsWith(bucket + "/")) {
+            cleaned = cleaned.substring((bucket + "/").length());
+        }
+        if (cleaned.contains("/storage/v1/object/public/" + bucket + "/")) {
+            cleaned = cleaned.substring(cleaned.indexOf("/storage/v1/object/public/" + bucket + "/") + ("/storage/v1/object/public/" + bucket + "/").length());
+        } else if (cleaned.contains("/storage/v1/object/authenticated/" + bucket + "/")) {
+            cleaned = cleaned.substring(cleaned.indexOf("/storage/v1/object/authenticated/" + bucket + "/") + ("/storage/v1/object/authenticated/" + bucket + "/").length());
+        } else if (cleaned.contains("/storage/v1/object/" + bucket + "/")) {
+            cleaned = cleaned.substring(cleaned.indexOf("/storage/v1/object/" + bucket + "/") + ("/storage/v1/object/" + bucket + "/").length());
+        }
+        return cleaned;
+    }
+
     @Override
     public Resource loadAsResource(String storagePath) {
         if (!isConfigured()) {
@@ -140,13 +160,33 @@ public class SupabaseStorageService implements StorageService {
             throw new IllegalArgumentException("Storage path is missing.");
         }
 
+        // If direct full URL was supplied, attempt fetching directly first
+        if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+            try {
+                HttpRequest directRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(storagePath))
+                        .header("Authorization", "Bearer " + getCleanKey())
+                        .header("apikey", getCleanKey())
+                        .GET()
+                        .timeout(Duration.ofSeconds(15))
+                        .build();
+                HttpResponse<byte[]> directResponse = httpClient.send(directRequest, HttpResponse.BodyHandlers.ofByteArray());
+                if (directResponse.statusCode() >= 200 && directResponse.statusCode() < 300) {
+                    return new ByteArrayResource(directResponse.body(), "Direct URL: " + storagePath);
+                }
+            } catch (Exception ex) {
+                log.warn("Direct URL fetch failed for '{}': {}", storagePath, ex.getMessage());
+            }
+        }
+
         try {
             String cleanUrl = getCleanUrl();
             String cleanBucket = getEffectiveBucket();
             String cleanKey = getCleanKey();
+            String relativeKey = extractRelativePath(storagePath);
 
             // 1. Try standard Supabase object endpoint with auth headers
-            String standardUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + storagePath;
+            String standardUrl = cleanUrl + "/storage/v1/object/" + cleanBucket + "/" + relativeKey;
             HttpRequest stdRequest = HttpRequest.newBuilder()
                     .uri(URI.create(standardUrl))
                     .header("Authorization", "Bearer " + cleanKey)
@@ -157,11 +197,11 @@ public class SupabaseStorageService implements StorageService {
 
             HttpResponse<byte[]> stdResponse = httpClient.send(stdRequest, HttpResponse.BodyHandlers.ofByteArray());
             if (stdResponse.statusCode() >= 200 && stdResponse.statusCode() < 300) {
-                return new ByteArrayResource(stdResponse.body(), "Supabase: " + storagePath);
+                return new ByteArrayResource(stdResponse.body(), "Supabase: " + relativeKey);
             }
 
             // 2. Try authenticated endpoint
-            String authUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + storagePath;
+            String authUrl = cleanUrl + "/storage/v1/object/authenticated/" + cleanBucket + "/" + relativeKey;
             HttpRequest authRequest = HttpRequest.newBuilder()
                     .uri(URI.create(authUrl))
                     .header("Authorization", "Bearer " + cleanKey)
@@ -172,11 +212,11 @@ public class SupabaseStorageService implements StorageService {
 
             HttpResponse<byte[]> authResponse = httpClient.send(authRequest, HttpResponse.BodyHandlers.ofByteArray());
             if (authResponse.statusCode() >= 200 && authResponse.statusCode() < 300) {
-                return new ByteArrayResource(authResponse.body(), "Supabase Authenticated: " + storagePath);
+                return new ByteArrayResource(authResponse.body(), "Supabase Authenticated: " + relativeKey);
             }
 
             // 3. Try public endpoint as fallback
-            String publicUrl = cleanUrl + "/storage/v1/object/public/" + cleanBucket + "/" + storagePath;
+            String publicUrl = cleanUrl + "/storage/v1/object/public/" + cleanBucket + "/" + relativeKey;
             HttpRequest pubRequest = HttpRequest.newBuilder()
                     .uri(URI.create(publicUrl))
                     .GET()
@@ -185,7 +225,7 @@ public class SupabaseStorageService implements StorageService {
 
             HttpResponse<byte[]> pubResponse = httpClient.send(pubRequest, HttpResponse.BodyHandlers.ofByteArray());
             if (pubResponse.statusCode() >= 200 && pubResponse.statusCode() < 300) {
-                return new ByteArrayResource(pubResponse.body(), "Supabase Public: " + storagePath);
+                return new ByteArrayResource(pubResponse.body(), "Supabase Public: " + relativeKey);
             }
 
             log.warn("Supabase Storage fetch returned HTTP {} for path: {}", stdResponse.statusCode(), storagePath);

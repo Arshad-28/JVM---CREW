@@ -446,7 +446,7 @@ public class StandupService {
         TeamMember requesterMember = resolveUserTeamMember(requester);
         Team team = requesterMember.getTeam();
 
-        List<TeamMember> teamMembers = teamMemberRepository.findByTeamAndIsActiveTrueOrderByJoinedAtAsc(team);
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeam(team);
         Set<User> teamUsers = teamMembers.stream().map(TeamMember::getUser).collect(Collectors.toSet());
         teamUsers.add(requester);
 
@@ -455,18 +455,25 @@ public class StandupService {
 
         Map<Long, Standup> merged = new LinkedHashMap<>();
         for (Standup s : standupsByUsers) {
-            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+            if (s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted())) {
                 merged.put(s.getId(), s);
             }
         }
         for (Standup s : standupsByTeam) {
-            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+            if (s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted())) {
                 merged.put(s.getId(), s);
             }
         }
 
         return merged.values().stream()
-                .sorted((a, b) -> b.getDate().compareTo(a.getDate()))
+                .sorted((a, b) -> {
+                    int c = b.getDate().compareTo(a.getDate());
+                    if (c != 0) return c;
+                    if (b.getSubmittedAt() != null && a.getSubmittedAt() != null) {
+                        return b.getSubmittedAt().compareTo(a.getSubmittedAt());
+                    }
+                    return Long.compare(b.getId() != null ? b.getId() : 0, a.getId() != null ? a.getId() : 0);
+                })
                 .map(s -> mapToResponse(s, false))
                 .collect(Collectors.toList());
     }
@@ -492,7 +499,7 @@ public class StandupService {
         }
 
         return standupRepository.findByUserOrderByDateDesc(member).stream()
-                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
+                .filter(s -> s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted()))
                 .map(s -> mapToResponse(s, false))
                 .collect(Collectors.toList());
     }
@@ -503,12 +510,12 @@ public class StandupService {
         Team team = teamId != null ? teamRepository.findById(teamId).orElse(null) : null;
         if (team == null) {
             return standupRepository.findByTeamIdAndDate(teamId, queryDate).stream()
-                    .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
+                    .filter(s -> s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted()))
                     .map(s -> mapToResponse(s, false))
                     .collect(Collectors.toList());
         }
 
-        List<TeamMember> teamMembers = teamMemberRepository.findByTeamAndIsActiveTrueOrderByJoinedAtAsc(team);
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeam(team);
         List<User> teamUsers = teamMembers.stream().map(TeamMember::getUser).collect(Collectors.toList());
 
         List<Standup> standupsByTeam = standupRepository.findByTeamAndDate(team, queryDate);
@@ -516,12 +523,12 @@ public class StandupService {
 
         Map<Long, Standup> merged = new LinkedHashMap<>();
         for (Standup s : standupsByTeam) {
-            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+            if (s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted())) {
                 merged.put(s.getId(), s);
             }
         }
         for (Standup s : standupsByUsers) {
-            if (Boolean.TRUE.equals(s.getIsCompleted())) {
+            if (s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted())) {
                 merged.put(s.getId(), s);
             }
         }
@@ -641,7 +648,7 @@ public class StandupService {
 
         User lead = activeLeadOpt.get();
         return standupRepository.findByTeamAndUserAndDate(team, lead, queryDate)
-                .filter(s -> Boolean.TRUE.equals(s.getIsCompleted()))
+                .filter(s -> s.getIsCompleted() == null || Boolean.TRUE.equals(s.getIsCompleted()))
                 .map(s -> mapToResponse(s, false));
     }
 
@@ -665,14 +672,32 @@ public class StandupService {
             }
         }
 
-        if (!StringUtils.hasText(standup.getAudioStoragePath())) {
+        String storagePath = standup.getAudioStoragePath();
+        if (!StringUtils.hasText(storagePath)) {
+            // Check if submission is voice and attempt auto-discovery
+            boolean isVoiceSubmission = "VOICE".equalsIgnoreCase(standup.getSubmissionType())
+                    || "voice".equalsIgnoreCase(standup.getPrimaryInputMethod())
+                    || (standup.getAudioFileName() != null && !standup.getAudioFileName().isBlank());
+            if (isVoiceSubmission) {
+                // Try to find matching file in team directory: standups/{teamId}/{year}/{month}/{day}/
+                Long teamId = standup.getTeam() != null ? standup.getTeam().getId() : 0L;
+                LocalDate d = standup.getDate();
+                String folder = String.format("standups/%d/%d/%02d/%02d", teamId, d.getYear(), d.getMonthValue(), d.getDayOfMonth());
+                if (StringUtils.hasText(standup.getAudioFileName()) && audioStorageService.exists(folder + "/" + standup.getAudioFileName())) {
+                    storagePath = folder + "/" + standup.getAudioFileName();
+                }
+            }
+        }
+
+        if (!StringUtils.hasText(storagePath)) {
             throw new com.jvmcrew.exception.StorageFileNotFoundException("No voice recording attached to standup #" + standupId);
         }
 
-        org.springframework.core.io.Resource resource = audioStorageService.loadAudioAsResource(standup.getAudioStoragePath());
+        org.springframework.core.io.Resource resource = audioStorageService.loadAudioAsResource(storagePath);
         String contentType = standup.getAudioContentType() != null ? standup.getAudioContentType() : "audio/webm";
+        String filename = standup.getAudioFileName() != null ? standup.getAudioFileName() : ("standup_voice_" + standupId + ".webm");
 
-        return new VoiceRecordingData(resource, contentType, standup.getAudioFileName(), standup.getAudioFileSize());
+        return new VoiceRecordingData(resource, contentType, filename, standup.getAudioFileSize());
     }
 
     @lombok.Value
@@ -695,16 +720,19 @@ public class StandupService {
     }
 
     public StandupResponse mapToResponse(Standup standup, boolean blockerCreated) {
-        boolean hasVoice = StringUtils.hasText(standup.getAudioStoragePath());
+        boolean hasVoice = StringUtils.hasText(standup.getAudioStoragePath())
+                || "VOICE".equalsIgnoreCase(standup.getSubmissionType())
+                || (standup.getAudioFileName() != null && !standup.getAudioFileName().isBlank());
         String subType = standup.getSubmissionType() != null ? standup.getSubmissionType() : (hasVoice ? "VOICE" : "TEXT");
         String audioUrl = hasVoice ? ("/api/standups/" + standup.getId() + "/voice") : null;
+        Long teamId = standup.getTeam() != null ? standup.getTeam().getId() : null;
 
         return StandupResponse.builder()
                 .id(standup.getId())
                 .userId(standup.getUser().getId())
                 .userName(standup.getUser().getName())
                 .userEmail(standup.getUser().getEmail())
-                .teamId(standup.getTeam().getId())
+                .teamId(teamId)
                 .date(standup.getDate())
                 .yesterday(standup.getYesterday())
                 .today(standup.getToday())

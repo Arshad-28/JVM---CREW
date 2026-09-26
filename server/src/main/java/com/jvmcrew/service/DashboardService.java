@@ -414,7 +414,10 @@ public class DashboardService {
             Standup s = standupByUserMap.get(u.getId());
 
             boolean isSubmitted = s != null;
-            boolean hasVoice = isSubmitted && StringUtils.hasText(s.getAudioStoragePath());
+            boolean hasVoice = isSubmitted && (StringUtils.hasText(s.getAudioStoragePath())
+                    || "VOICE".equalsIgnoreCase(s.getSubmissionType())
+                    || "voice".equalsIgnoreCase(s.getPrimaryInputMethod())
+                    || (s.getAudioFileName() != null && !s.getAudioFileName().isBlank()));
             boolean hasBlocker = isSubmitted && Boolean.TRUE.equals(s.getHasBlockers()) && StringUtils.hasText(s.getBlockers());
             boolean needsHelp = isSubmitted && Boolean.TRUE.equals(s.getNeedsHelp());
             boolean questionWaiting = isSubmitted && StringUtils.hasText(s.getQuestionForLead()) && !StringUtils.hasText(s.getLeadAnswer());
@@ -424,7 +427,7 @@ public class DashboardService {
             String learningSignalText = isSubmitted ? (StringUtils.hasText(s.getLearned()) ? s.getLearned() : (hasVoice ? "Voice Standup" : "—")) : "—";
             String blockerText = hasBlocker ? s.getBlockers() : "None";
 
-            String primaryMethod = isSubmitted && s.getPrimaryInputMethod() != null ? s.getPrimaryInputMethod() : "text";
+            String primaryMethod = isSubmitted && s.getPrimaryInputMethod() != null ? s.getPrimaryInputMethod() : (hasVoice ? "voice" : "text");
             String subType = isSubmitted ? (s.getSubmissionType() != null ? s.getSubmissionType() : (hasVoice ? "VOICE" : "TEXT")) : "TEXT";
             String audioUrl = hasVoice ? ("/api/standups/" + s.getId() + "/voice") : null;
 
@@ -1128,7 +1131,10 @@ public class DashboardService {
         List<MemberActivityPointDto> activityPoints = new ArrayList<>();
         for (Standup s : allStandups) {
             if (s.getSubmittedAt() != null) {
-                boolean hasVoice = StringUtils.hasText(s.getAudioStoragePath());
+                boolean hasVoice = StringUtils.hasText(s.getAudioStoragePath())
+                        || "VOICE".equalsIgnoreCase(s.getSubmissionType())
+                        || "voice".equalsIgnoreCase(s.getPrimaryInputMethod())
+                        || (s.getAudioFileName() != null && !s.getAudioFileName().isBlank());
                 String subType = s.getSubmissionType() != null ? s.getSubmissionType() : (hasVoice ? "VOICE" : "TEXT");
                 Integer dur = s.getAudioDurationSeconds();
                 String desc = hasVoice

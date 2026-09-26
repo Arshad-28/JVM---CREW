@@ -33,6 +33,61 @@ public class LocalStorageService implements StorageService {
         }
     }
 
+    private String cleanPath(String path) {
+        if (!StringUtils.hasText(path)) return "";
+        String cleaned = path.trim().replace('\\', '/');
+        // Remove leading slashes
+        while (cleaned.startsWith("/")) {
+            cleaned = cleaned.substring(1);
+        }
+        // Strip duplicate upload directory prefixes if present
+        if (cleaned.startsWith("server/uploads/audio/")) {
+            cleaned = cleaned.substring("server/uploads/audio/".length());
+        } else if (cleaned.startsWith("uploads/audio/")) {
+            cleaned = cleaned.substring("uploads/audio/".length());
+        }
+        return cleaned;
+    }
+
+    private Path resolveCandidatePath(String storagePath) {
+        String clean = cleanPath(storagePath);
+        if (!StringUtils.hasText(clean)) return null;
+
+        // 1. Check primary root storage path
+        if (this.rootStoragePath != null) {
+            Path p1 = this.rootStoragePath.resolve(clean).normalize();
+            if (Files.exists(p1)) return p1;
+        }
+
+        // 2. Check candidate alternative roots
+        Path[] candidateRoots = new Path[] {
+                Paths.get("server/uploads/audio").toAbsolutePath().normalize(),
+                Paths.get("uploads/audio").toAbsolutePath().normalize(),
+                Paths.get("../server/uploads/audio").toAbsolutePath().normalize(),
+                Paths.get(uploadDirProperty).toAbsolutePath().normalize()
+        };
+
+        for (Path root : candidateRoots) {
+            try {
+                Path candidate = root.resolve(clean).normalize();
+                if (Files.exists(candidate)) {
+                    return candidate;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Check if clean path itself is already an absolute path
+        try {
+            Path directPath = Paths.get(storagePath).normalize();
+            if (Files.exists(directPath)) {
+                return directPath;
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback to primary root location
+        return this.rootStoragePath != null ? this.rootStoragePath.resolve(clean).normalize() : Paths.get(clean).toAbsolutePath().normalize();
+    }
+
     @Override
     public void store(String storagePath, byte[] data, String contentType) {
         if (!StringUtils.hasText(storagePath)) {
@@ -43,7 +98,8 @@ public class LocalStorageService implements StorageService {
         }
 
         try {
-            Path targetLocation = this.rootStoragePath.resolve(storagePath).normalize();
+            String clean = cleanPath(storagePath);
+            Path targetLocation = this.rootStoragePath.resolve(clean).normalize();
             if (!targetLocation.startsWith(this.rootStoragePath)) {
                 throw new SecurityException("Cannot store file outside target directory: " + storagePath);
             }
@@ -67,13 +123,9 @@ public class LocalStorageService implements StorageService {
             throw new IllegalArgumentException("Storage path is missing.");
         }
         try {
-            Path filePath = this.rootStoragePath.resolve(storagePath).normalize();
-            if (!filePath.startsWith(this.rootStoragePath)) {
-                throw new SecurityException("Access denied: Invalid storage path " + storagePath);
-            }
-            Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
+            Path filePath = resolveCandidatePath(storagePath);
+            if (filePath != null && Files.exists(filePath) && Files.isReadable(filePath)) {
+                return new UrlResource(filePath.toUri());
             } else {
                 throw new com.jvmcrew.exception.StorageFileNotFoundException("File not found or not readable: " + storagePath);
             }
@@ -88,14 +140,10 @@ public class LocalStorageService implements StorageService {
             return false;
         }
         try {
-            Path filePath = this.rootStoragePath.resolve(storagePath).normalize();
-            if (!filePath.startsWith(this.rootStoragePath)) {
-                log.warn("Security rejection: Attempted to delete outside root: {}", storagePath);
-                return false;
-            }
-            if (Files.exists(filePath)) {
+            Path filePath = resolveCandidatePath(storagePath);
+            if (filePath != null && Files.exists(filePath)) {
                 Files.delete(filePath);
-                log.info("Deleted local file: {}", storagePath);
+                log.info("Deleted local file: {}", filePath);
                 return true;
             }
         } catch (Exception e) {
@@ -110,8 +158,8 @@ public class LocalStorageService implements StorageService {
             return false;
         }
         try {
-            Path filePath = this.rootStoragePath.resolve(storagePath).normalize();
-            return filePath.startsWith(this.rootStoragePath) && Files.exists(filePath);
+            Path filePath = resolveCandidatePath(storagePath);
+            return filePath != null && Files.exists(filePath);
         } catch (Exception e) {
             return false;
         }
