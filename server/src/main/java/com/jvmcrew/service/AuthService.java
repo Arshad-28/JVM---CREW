@@ -50,17 +50,17 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         String email = request.getEmail().toLowerCase().trim();
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email address is already registered: " + email);
+            throw new IllegalArgumentException("An account with this email already exists.");
         }
 
         if (!StringUtils.hasText(request.getName())) {
-            throw new IllegalArgumentException("Full name is required");
+            throw new IllegalArgumentException("Full name is required.");
         }
         if (!StringUtils.hasText(request.getPassword()) || request.getPassword().length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+            throw new IllegalArgumentException("Password must be at least 6 characters.");
         }
         if (!StringUtils.hasText(request.getTeamName())) {
-            throw new IllegalArgumentException("Team name is required to register a new team");
+            throw new IllegalArgumentException("Team name is required to register a new team.");
         }
 
         String rawTeamName = request.getTeamName().trim();

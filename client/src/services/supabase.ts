@@ -15,18 +15,27 @@ const supabaseAnonKey = (
   ''
 ).trim();
 
-if (!supabaseAnonKey && typeof window !== 'undefined') {
-  console.warn(
-    '[EngineerSpace] Notice: VITE_SUPABASE_ANON_KEY is not defined in frontend environment. Supabase Auth requests will require VITE_SUPABASE_ANON_KEY on Netlify / local .env.'
+/**
+ * Returns true only if a valid public anon key is explicitly configured in frontend env.
+ */
+export const isSupabaseConfigured = (): boolean => {
+  return Boolean(
+    supabaseAnonKey &&
+    supabaseAnonKey !== 'placeholder-anon-key' &&
+    supabaseAnonKey.length > 20
   );
-}
+};
 
-// Initialize official Supabase client
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey || 'placeholder-anon-key', {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'engineerspace_supabase_session',
-  },
-});
+// Initialize Supabase client (only uses placeholder fallback to prevent instantiation errors if unconfigured)
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl,
+  supabaseAnonKey || 'placeholder-anon-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'engineerspace_supabase_session',
+    },
+  }
+);
