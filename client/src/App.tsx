@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/common/Header';
 import { LoginPage } from './pages/auth/LoginPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { cleanTeamDisplayName } from './utils/greetingEngine';
 
 import { HomeDashboardPage } from './pages/home/HomeDashboardPage';
@@ -85,9 +86,17 @@ const getTabFromPath = (): string => {
   return 'home';
 };
 
+const getIsResetPasswordRoute = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.toLowerCase();
+  const search = window.location.search.toLowerCase();
+  return path.includes('reset-password') || search.includes('token=');
+};
+
 const MainLayout: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(getTabFromPath);
+  const [isResetPassword, setIsResetPassword] = useState<boolean>(getIsResetPasswordRoute);
   const [isNavigating, setIsNavigating] = useState(false);
   const [labInitialTopic, setLabInitialTopic] = useState<string>('');
   const [globalStandupOpen, setGlobalStandupOpen] = useState(false);
@@ -113,6 +122,7 @@ const MainLayout: React.FC = () => {
     const handleFreshLogin = () => {
       setIsNavigating(true);
       setActiveTab('home');
+      setIsResetPassword(false);
       if (window.location.pathname !== '/my-day') {
         window.history.replaceState({ tab: 'home' }, '', '/my-day');
       }
@@ -125,6 +135,7 @@ const MainLayout: React.FC = () => {
   useEffect(() => {
     if (user && (window.location.pathname === '/' || window.location.pathname === '/login' || window.location.pathname === '')) {
       setActiveTab('home');
+      setIsResetPassword(false);
       window.history.replaceState({ tab: 'home' }, '', '/my-day');
     }
   }, [user]);
@@ -163,6 +174,7 @@ const MainLayout: React.FC = () => {
     const onPopState = () => {
       setIsNavigating(true);
       setActiveTab(getTabFromPath());
+      setIsResetPassword(getIsResetPasswordRoute());
       setTimeout(() => setIsNavigating(false), 450);
     };
     window.addEventListener('popstate', onPopState);
@@ -174,7 +186,24 @@ const MainLayout: React.FC = () => {
   }
 
   if (!user) {
-    return <LoginPage />;
+    if (isResetPassword) {
+      return (
+        <ResetPasswordPage
+          onBackToLogin={() => {
+            window.history.replaceState({}, '', '/');
+            setIsResetPassword(false);
+          }}
+        />
+      );
+    }
+    return (
+      <LoginPage
+        onNavigateToReset={(token: string) => {
+          window.history.pushState({}, '', `/reset-password?token=${encodeURIComponent(token)}`);
+          setIsResetPassword(true);
+        }}
+      />
+    );
   }
 
   const isLead = Boolean(user.isCurrentLead || user.role === 'LEAD' || user.role === 'ADMIN');

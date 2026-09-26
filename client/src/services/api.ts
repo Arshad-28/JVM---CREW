@@ -446,6 +446,44 @@ export const api = {
     return handleResponse<{ message: string }>(res);
   },
 
+  async forgotPassword(email: string): Promise<{ message: string; emailSent: boolean; resetLink?: string; note?: string }> {
+    const res = await fetchWithAdaptiveTimeout(
+      `${BASE_URL}/auth/forgot-password`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      },
+      30000
+    );
+    return handleResponse<{ message: string; emailSent: boolean; resetLink?: string; note?: string }>(res);
+  },
+
+  async validateResetToken(token: string): Promise<{ valid: boolean; message: string }> {
+    const res = await fetchWithAdaptiveTimeout(
+      `${BASE_URL}/auth/validate-reset-token?token=${encodeURIComponent(token)}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      },
+      20000
+    );
+    return handleResponse<{ valid: boolean; message: string }>(res);
+  },
+
+  async resetPassword(data: { token: string; newPassword: string }): Promise<{ message: string }> {
+    const res = await fetchWithAdaptiveTimeout(
+      `${BASE_URL}/auth/reset-password`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      30000
+    );
+    return handleResponse<{ message: string }>(res);
+  },
+
   // Dashboards & Daily Briefs
   async getMemberDashboard(date?: string): Promise<MemberDashboard> {
     const queryDate = date || getLocalTodayDateString();

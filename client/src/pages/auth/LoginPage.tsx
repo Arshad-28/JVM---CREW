@@ -11,25 +11,41 @@ import {
   User,
   Users,
   Loader2,
+  KeyRound,
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 
-export const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  onNavigateToReset?: (token: string) => void;
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToReset }) => {
   const { login, register } = useAuth();
-  const [isRegister, setIsRegister] = useState(false);
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [teamName, setTeamName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Forgot password specific states
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+  const [forgotResetLink, setForgotResetLink] = useState<string | null>(null);
+  const [forgotEmailSent, setForgotEmailSent] = useState<boolean>(false);
 
   useEffect(() => {
     api.warmup();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoginOrRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
 
@@ -38,7 +54,7 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    if (isRegister) {
+    if (mode === 'register') {
       if (!name.trim()) {
         setError('Please enter your full name.');
         return;
@@ -55,7 +71,7 @@ export const LoginPage: React.FC = () => {
 
     setError(null);
     setLoading(true);
-    setStatusMessage(isRegister ? 'Creating Account...' : 'Signing in...');
+    setStatusMessage(mode === 'register' ? 'Creating Account...' : 'Signing in...');
 
     const handleStatusUpdate = (msg: string) => {
       setStatusMessage(msg);
@@ -63,7 +79,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const cleanEmail = email.trim().toLowerCase();
-      if (isRegister) {
+      if (mode === 'register') {
         await register(
           {
             name: name.trim(),
@@ -86,6 +102,51 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+
+    if (!forgotEmail.trim()) {
+      setError('Please enter your registered email address.');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+    setStatusMessage('Processing request...');
+
+    try {
+      const cleanEmail = forgotEmail.trim().toLowerCase();
+      const res = await api.forgotPassword(cleanEmail);
+      setForgotSuccess(res.message || 'If an account exists for this email, a password reset link will be provided.');
+      setForgotEmailSent(Boolean(res.emailSent));
+      if (res.resetLink) {
+        setForgotResetLink(res.resetLink);
+      } else {
+        setForgotResetLink(null);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to process request. Please try again.');
+    } finally {
+      setLoading(false);
+      setStatusMessage(null);
+    }
+  };
+
+  const handleResetLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, link: string) => {
+    try {
+      const url = new URL(link, window.location.origin);
+      const token = url.searchParams.get('token');
+      if (token && onNavigateToReset) {
+        e.preventDefault();
+        onNavigateToReset(token);
+        return;
+      }
+    } catch (err) {
+      // Fallback to normal navigation
+    }
+  };
+
   return (
     <div className="min-h-screen bg-paper flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 font-sans selection:bg-accent-subtle selection:text-accent relative overflow-hidden bg-grid-pattern">
       {/* Top minimal bar */}
@@ -104,18 +165,25 @@ export const LoginPage: React.FC = () => {
       {/* Centered Modern Card */}
       <div className="w-full max-w-[440px] my-auto animate-fade-in">
         <div className="bg-paper border border-line p-5 sm:p-10 rounded-sm shadow-sm space-y-6">
+          
           {/* Card Brand & Heading */}
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-ink text-paper mx-auto flex items-center justify-center rounded-sm shadow-sm transition-transform hover:scale-105">
-              <Terminal className="w-6 h-6 text-paper" />
+              {mode === 'forgot' ? (
+                <KeyRound className="w-6 h-6 text-paper" />
+              ) : (
+                <Terminal className="w-6 h-6 text-paper" />
+              )}
             </div>
             <h1 className="font-display text-xl font-bold text-ink tracking-tight">
-              {isRegister ? 'Register Team & Lead Account' : 'Sign In to Workspace'}
+              {mode === 'register' && 'Register Team & Lead Account'}
+              {mode === 'login' && 'Sign In to Workspace'}
+              {mode === 'forgot' && 'Forgot Password'}
             </h1>
             <p className="text-xs text-muted">
-              {isRegister
-                ? 'Create a new team and register as Team Lead'
-                : 'Enter your credentials to access your workspace'}
+              {mode === 'register' && 'Create a new team and register as Team Lead'}
+              {mode === 'login' && 'Enter your credentials to access your workspace'}
+              {mode === 'forgot' && 'Enter your registered email to reset your password'}
             </p>
           </div>
 
@@ -127,157 +195,314 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isRegister && (
-              <>
-                <div>
-                  <label className="block text-xs font-medium text-ink mb-1.5">
-                    Full Name (Team Lead) *
-                  </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-muted absolute left-3 top-3" />
-                    <input
-                      type="text"
-                      required
-                      disabled={loading}
-                      value={name}
-                      onFocus={api.warmup}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Rahul Kumar"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
-                    />
+          {/* FORGOT PASSWORD VIEW */}
+          {mode === 'forgot' ? (
+            <div className="space-y-4">
+              {forgotSuccess ? (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="p-3.5 bg-success-soft border border-success/30 rounded-sm space-y-2">
+                    <div className="flex items-start space-x-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-xs text-ink font-medium leading-relaxed">
+                          {forgotSuccess}
+                        </p>
+                        {forgotEmailSent && (
+                          <p className="text-[11px] text-muted">
+                            Please check your inbox (and spam folder) for the password reset link.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-ink mb-1.5">
-                    Team Name *
-                  </label>
-                  <div className="relative">
-                    <Users className="w-4 h-4 text-muted absolute left-3 top-3" />
-                    <input
-                      type="text"
-                      required
-                      disabled={loading}
-                      value={teamName}
-                      onFocus={api.warmup}
-                      onChange={(e) => setTeamName(e.target.value)}
-                      placeholder="e.g. STACK, PHOENIX, NOVA"
-                      className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
-                    />
-                  </div>
-                  <p className="text-[10px] font-mono text-muted mt-1">
-                    Your team identity will be <span className="font-bold text-ink">{teamName.trim() || '[Team Name]'}</span>
-                  </p>
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="block text-xs font-medium text-ink mb-1.5">
-                {isRegister ? 'Email / Gmail *' : 'Email Address'}
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
-                <input
-                  type="email"
-                  required
-                  disabled={loading}
-                  value={email}
-                  autoComplete={isRegister ? 'email' : 'username'}
-                  onFocus={api.warmup}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (e.target.value.length === 1) api.warmup();
-                  }}
-                  placeholder="name@gmail.com"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
-                  autoFocus={!isRegister}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium text-ink">
-                  Password *
-                </label>
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  disabled={loading}
-                  value={password}
-                  autoComplete={isRegister ? 'new-password' : 'current-password'}
-                  onFocus={api.warmup}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (e.target.value.length === 1) api.warmup();
-                  }}
-                  placeholder={isRegister ? 'Create secure password (min 6 chars)' : 'Enter your password'}
-                  className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
-                />
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted hover:text-ink p-0.5 disabled:opacity-50"
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-3.5 h-3.5" />
-                  ) : (
-                    <Eye className="w-3.5 h-3.5" />
+                  {/* Dev / Local Fallback Link if SMTP is unconfigured */}
+                  {forgotResetLink && (
+                    <div className="p-3 bg-surface-soft border border-line rounded-sm space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] text-muted uppercase tracking-wider font-semibold">
+                          Direct Reset Link
+                        </span>
+                        <span className="text-[10px] bg-accent-subtle text-accent px-1.5 py-0.5 rounded font-mono">
+                          Ready
+                        </span>
+                      </div>
+                      <a
+                        href={forgotResetLink}
+                        onClick={(e) => handleResetLinkClick(e, forgotResetLink)}
+                        className="text-accent hover:underline flex items-center space-x-1.5 font-medium break-all"
+                      >
+                        <span>Click here to reset your password</span>
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                      </a>
+                    </div>
                   )}
-                </button>
-              </div>
-            </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm disabled:opacity-60 font-mono cursor-pointer disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-                    <span>{statusMessage || (isRegister ? 'Creating Account...' : 'Signing in...')}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{isRegister ? 'Create Team & Lead Account' : 'Continue'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-              {loading && statusMessage && (statusMessage.includes('Waking') || statusMessage.includes('database') || statusMessage.includes('Connecting')) && (
-                <p className="text-[11px] font-mono text-muted text-center pt-2 animate-pulse">
-                  ⚡ Pre-warming secure cluster... Your session will authenticate automatically.
-                </p>
+                  <div className="pt-2 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotSuccess(null);
+                        setForgotResetLink(null);
+                        setForgotEmail('');
+                      }}
+                      className="w-full py-2 px-3 bg-paper border border-line hover:border-ink text-ink text-xs font-semibold rounded-sm transition-all text-center font-mono"
+                    >
+                      Send Another Link
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('login');
+                        setError(null);
+                        setForgotSuccess(null);
+                        setForgotResetLink(null);
+                      }}
+                      className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 font-mono"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Back to Sign In</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-ink mb-1.5">
+                      Registered Email Address *
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
+                      <input
+                        type="email"
+                        required
+                        disabled={loading}
+                        value={forgotEmail}
+                        onFocus={api.warmup}
+                        onChange={(e) => {
+                          setForgotEmail(e.target.value);
+                          if (e.target.value.length === 1) api.warmup();
+                        }}
+                        placeholder="e.g. yourname@gmail.com"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        autoFocus
+                        className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading || !forgotEmail.trim()}
+                      className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm disabled:opacity-60 font-mono cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                          <span>Sending Link...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Send Reset Link</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="pt-3 border-t border-line flex items-center justify-center text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('login');
+                        setError(null);
+                      }}
+                      className="text-accent hover:underline font-medium flex items-center space-x-1"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Back to Sign In</span>
+                    </button>
+                  </div>
+                </form>
               )}
             </div>
-          </form>
+          ) : (
+            /* LOGIN / REGISTER FORM */
+            <form onSubmit={handleLoginOrRegister} className="space-y-4">
+              {mode === 'register' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-ink mb-1.5">
+                      Full Name (Team Lead) *
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-muted absolute left-3 top-3" />
+                      <input
+                        type="text"
+                        required
+                        disabled={loading}
+                        value={name}
+                        onFocus={api.warmup}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Rahul Kumar"
+                        className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                      />
+                    </div>
+                  </div>
 
-          {/* Footer toggle */}
-          <div className="pt-4 border-t border-line flex items-center justify-center text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError(null);
-              }}
-              className="text-accent hover:underline font-medium"
-            >
-              {isRegister ? 'Already registered? Sign in' : 'Register New Team & Lead Account'}
-            </button>
-          </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink mb-1.5">
+                      Team Name *
+                    </label>
+                    <div className="relative">
+                      <Users className="w-4 h-4 text-muted absolute left-3 top-3" />
+                      <input
+                        type="text"
+                        required
+                        disabled={loading}
+                        value={teamName}
+                        onFocus={api.warmup}
+                        onChange={(e) => setTeamName(e.target.value)}
+                        placeholder="e.g. STACK, PHOENIX, NOVA"
+                        className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-sans outline-none transition-colors text-ink disabled:opacity-60"
+                      />
+                    </div>
+                    <p className="text-[10px] font-mono text-muted mt-1">
+                      Your team identity will be <span className="font-bold text-ink">{teamName.trim() || '[Team Name]'}</span>
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-ink mb-1.5">
+                  {mode === 'register' ? 'Email / Gmail *' : 'Email Address'}
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <input
+                    type="email"
+                    required
+                    disabled={loading}
+                    value={email}
+                    autoComplete={mode === 'register' ? 'email' : 'username'}
+                    onFocus={api.warmup}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (e.target.value.length === 1) api.warmup();
+                    }}
+                    placeholder="name@gmail.com"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className="w-full pl-9 pr-3 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                    autoFocus={mode === 'login'}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-medium text-ink">
+                    Password *
+                  </label>
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    disabled={loading}
+                    value={password}
+                    autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                    onFocus={api.warmup}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (e.target.value.length === 1) api.warmup();
+                    }}
+                    placeholder={mode === 'register' ? 'Create secure password (min 6 chars)' : 'Enter your password'}
+                    className="w-full pl-9 pr-9 py-2.5 bg-paper border border-line focus:border-ink rounded-sm text-base sm:text-xs font-mono outline-none transition-colors text-ink disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-muted hover:text-ink p-0.5 disabled:opacity-50"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Forgot Password link under password input in Login mode */}
+              {mode === 'login' && (
+                <div className="flex items-center justify-end -mt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('forgot');
+                      setError(null);
+                      setForgotEmail(email); // Pre-fill with entered email if any
+                      setForgotSuccess(null);
+                      setForgotResetLink(null);
+                    }}
+                    className="text-xs text-accent hover:underline font-mono transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 px-4 bg-ink hover:bg-ink-light text-paper text-xs font-semibold rounded-sm transition-all flex items-center justify-center space-x-2 shadow-sm disabled:opacity-60 font-mono cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                      <span>{statusMessage || (mode === 'register' ? 'Creating Account...' : 'Signing in...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{mode === 'register' ? 'Create Team & Lead Account' : 'Continue'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+                {loading && statusMessage && (statusMessage.includes('Waking') || statusMessage.includes('database') || statusMessage.includes('Connecting')) && (
+                  <p className="text-[11px] font-mono text-muted text-center pt-2 animate-pulse">
+                    ⚡ Pre-warming secure cluster... Your session will authenticate automatically.
+                  </p>
+                )}
+              </div>
+
+              {/* Footer toggle */}
+              <div className="pt-4 border-t border-line flex items-center justify-center text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode(mode === 'register' ? 'login' : 'register');
+                    setError(null);
+                  }}
+                  className="text-accent hover:underline font-medium"
+                >
+                  {mode === 'register' ? 'Already registered? Sign in' : 'Register New Team & Lead Account'}
+                </button>
+              </div>
+            </form>
+          )}
+
         </div>
       </div>
 
