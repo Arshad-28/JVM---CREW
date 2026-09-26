@@ -20,6 +20,7 @@ import {
   Video,
   Shield,
   BarChart3,
+  Building2,
 } from 'lucide-react';
 import { TeamIdentityReveal } from './TeamIdentityReveal';
 import { NotificationBell } from '../notifications/NotificationBell';
@@ -263,6 +264,22 @@ export const Header: React.FC<HeaderProps> = ({
                           <BarChart3 className="w-4 h-4 text-primary shrink-0" />
                           <span>Performance Reports</span>
                           <span className="font-mono text-[9px] bg-primary-soft text-primary border border-primary/20 px-1.5 py-0.5 rounded-md ml-auto font-semibold">Intelligence</span>
+                        </button>
+
+                        <div className="h-px bg-line my-1" />
+
+                        <button
+                          onClick={() => {
+                            setActiveTab('organization');
+                            setShowTeamMenu(false);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 text-xs rounded-lg flex items-center space-x-2.5 transition-all cursor-pointer active:scale-[0.98] ${
+                            activeTab === 'organization' ? 'bg-primary-soft text-primary font-bold' : 'text-ink hover:bg-paper'
+                          }`}
+                        >
+                          <Building2 className="w-4 h-4 text-primary shrink-0" />
+                          <span>Organization Identity</span>
+                          <span className="font-mono text-[9px] bg-primary-soft text-primary border border-primary/20 px-1.5 py-0.5 rounded-md ml-auto font-semibold">Unit</span>
                         </button>
                       </div>
                     </>
@@ -628,6 +645,22 @@ export const Header: React.FC<HeaderProps> = ({
                 <BarChart3 className={`w-4 h-4 shrink-0 ${activeTab === 'reports' ? 'text-primary' : 'text-muted'}`} />
                 <span>Performance Reports</span>
                 <span className="font-mono text-[9px] bg-primary text-white px-1.5 py-0.2 rounded-xs ml-auto">Intelligence</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveTab('organization');
+                  setMobileDrawerOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] ${
+                  activeTab === 'organization'
+                    ? 'bg-primary-soft text-primary font-bold border border-primary/20 shadow-2xs'
+                    : 'text-ink hover:bg-paper'
+                }`}
+              >
+                <Building2 className={`w-4 h-4 shrink-0 ${activeTab === 'organization' ? 'text-primary' : 'text-muted'}`} />
+                <span>Organization Identity</span>
+                <span className="font-mono text-[9px] bg-primary-soft text-primary border border-primary/20 px-1.5 py-0.2 rounded-xs ml-auto">Unit</span>
               </button>
 
               {isLead && (

@@ -38,10 +38,12 @@ const MyProfilePage = lazy(() => import('./pages/profile/MyProfilePage').then(m 
 const AccountSettingsPage = lazy(() => import('./pages/settings/AccountSettingsPage').then(m => ({ default: m.AccountSettingsPage })));
 const InterviewLabPage = lazy(() => import('./pages/interview/InterviewLabPage').then(m => ({ default: m.InterviewLabPage })));
 const TeamPerformanceReportPage = lazy(() => import('./pages/reports/TeamPerformanceReportPage').then(m => ({ default: m.TeamPerformanceReportPage })));
+const OrganizationIdentityPage = lazy(() => import('./pages/organization/OrganizationIdentityPage').then(m => ({ default: m.OrganizationIdentityPage })));
 
 // Prefetch route chunks on browser idle
 const prefetchRoutes = () => {
   try {
+    import('./pages/organization/OrganizationIdentityPage');
     import('./pages/tasks/KanbanBoardPage');
     import('./pages/team/TeamDashboardPage');
     import('./pages/homework/HomeworkPage');
@@ -73,6 +75,7 @@ const PageFallback: React.FC = () => (
 
 const getTabFromPath = (): string => {
   const path = window.location.pathname.toLowerCase().replace(/^\/+/, '');
+  if (path === 'organization' || path === 'org' || path === 'identity') return 'organization';
   if (path === 'my-day' || path === 'myday' || path === 'home' || path === '') return 'home';
   if (path === 'settings' || path === 'account-settings') return 'settings';
   if (path === 'tasks' || path === 'my-tasks') return 'tasks';
@@ -109,7 +112,7 @@ const MainLayout: React.FC = () => {
     if (tab !== activeTab) {
       setIsNavigating(true);
       setActiveTab(tab);
-      const targetPath = tab === 'home' ? '/my-day' : `/${tab}`;
+      const targetPath = tab === 'home' ? '/my-day' : (tab === 'organization' ? '/organization' : `/${tab}`);
       if (window.location.pathname !== targetPath) {
         window.history.pushState({ tab }, '', targetPath);
       }
@@ -117,14 +120,14 @@ const MainLayout: React.FC = () => {
     }
   };
 
-  // Fresh login navigation to /my-day
+  // Fresh login navigation to /organization (Post-login Organization Identity Landing Page)
   useEffect(() => {
     const handleFreshLogin = () => {
       setIsNavigating(true);
-      setActiveTab('home');
+      setActiveTab('organization');
       setIsResetPassword(false);
-      if (window.location.pathname !== '/my-day') {
-        window.history.replaceState({ tab: 'home' }, '', '/my-day');
+      if (window.location.pathname !== '/organization') {
+        window.history.replaceState({ tab: 'organization' }, '', '/organization');
       }
       setTimeout(() => setIsNavigating(false), 450);
     };
@@ -134,9 +137,9 @@ const MainLayout: React.FC = () => {
 
   useEffect(() => {
     if (user && (window.location.pathname === '/' || window.location.pathname === '/login' || window.location.pathname === '')) {
-      setActiveTab('home');
+      setActiveTab('organization');
       setIsResetPassword(false);
-      window.history.replaceState({ tab: 'home' }, '', '/my-day');
+      window.history.replaceState({ tab: 'organization' }, '', '/organization');
     }
   }, [user]);
 
@@ -207,6 +210,14 @@ const MainLayout: React.FC = () => {
   }
 
   const isLead = Boolean(user.isCurrentLead || user.role === 'LEAD' || user.role === 'ADMIN');
+
+  if (activeTab === 'organization') {
+    return (
+      <Suspense fallback={<WorkspaceLoadingScreen />}>
+        <OrganizationIdentityPage onReturnToWorkspace={() => handleNavigateTab('home')} />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-paper flex flex-col font-sans relative selection:bg-primary/20 selection:text-ink">
