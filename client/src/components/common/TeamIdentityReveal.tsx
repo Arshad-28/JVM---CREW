@@ -50,10 +50,10 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
       const tDivider = setTimeout(() => setStep(3), 220);
       const tBadge = setTimeout(() => setStep(4), 300);
       const tTeam = setTimeout(() => setStep(5), 380);
-      const tOrg = setTimeout(() => setStep(6), 460);
-      const tDesc = setTimeout(() => setStep(7), 540);
-      const tPhoto = setTimeout(() => setStep(8), 620);
-      const tBtn = setTimeout(() => setStep(9), 700);
+      const tOrg = setTimeout(() => setStep(6), 560);
+      const tDesc = setTimeout(() => setStep(7), 640);
+      const tPhoto = setTimeout(() => setStep(8), 720);
+      const tBtn = setTimeout(() => setStep(9), 800);
 
       return () => {
         cancelAnimationFrame(frameId);
@@ -111,6 +111,7 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
     teamInitial && teamInitial.trim().length > 0
       ? teamInitial.trim().toUpperCase()
       : displayTeam.charAt(0).toUpperCase();
+  const teamWords = displayTeam.split(/\s+/).filter(Boolean);
 
   const isJvmCrewTeam = /jvm\s*crew/i.test(displayTeam);
   const teamPhotoUrl = isJvmCrewTeam ? '/brand/jvmcrew-group.jpg' : null;
@@ -252,16 +253,23 @@ export const TeamIdentityReveal: React.FC<TeamIdentityRevealProps> = ({
             </div>
           </div>
 
-          {/* Team Name Hero */}
-          <div
-            className={`mt-3 sm:mt-4 transition-all duration-500 ease-out ${
-              step >= 5 && !isClosing
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-3'
-            }`}
-          >
-            <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-slate-900 tracking-tight uppercase leading-none">
-              {displayTeam}
+          {/* Team Name Hero - Word-by-Word Sequential Reveal */}
+          <div className="mt-3 sm:mt-4">
+            <h1 className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-slate-900 tracking-tight uppercase leading-none inline-flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 md:gap-x-5">
+              {teamWords.map((word, idx) => (
+                <span
+                  key={`${word}-${idx}`}
+                  className="inline-block transition-all duration-600 ease-out transform will-change-transform"
+                  style={{
+                    transitionDelay: prefersReducedMotion ? '0ms' : (step >= 5 && !isClosing ? `${idx * 160}ms` : '0ms'),
+                    opacity: step >= 5 && !isClosing ? 1 : 0,
+                    transform: step >= 5 && !isClosing ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.95)',
+                    filter: prefersReducedMotion ? 'none' : (step >= 5 && !isClosing ? 'blur(0px)' : 'blur(4px)'),
+                  }}
+                >
+                  {word}
+                </span>
+              ))}
             </h1>
           </div>
 
