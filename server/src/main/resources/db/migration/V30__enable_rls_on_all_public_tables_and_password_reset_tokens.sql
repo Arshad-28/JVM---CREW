@@ -5,7 +5,7 @@
 -- 1. Fix Supabase Security Advisor critical alert: rls_disabled_in_public.
 -- 2. Enable RLS on password_reset_tokens and restrict direct anon/authenticated PostgREST access.
 -- 3. Ensure full backend access for Spring Boot (postgres, service_role).
--- 4. Dynamically enforce RLS on all existing public tables.
+-- 4. Dynamically enforce RLS on all existing public application tables.
 -- =========================================================================
 
 -- 1. Secure password_reset_tokens
@@ -23,27 +23,8 @@ FOR ALL TO postgres, service_role
 USING (true) 
 WITH CHECK (true);
 
--- 2. Secure flyway_schema_history if located in public schema
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'public' AND table_name = 'flyway_schema_history'
-    ) THEN
-        ALTER TABLE public.flyway_schema_history ENABLE ROW LEVEL SECURITY;
-        REVOKE ALL ON TABLE public.flyway_schema_history FROM anon;
-        REVOKE ALL ON TABLE public.flyway_schema_history FROM authenticated;
-        
-        DROP POLICY IF EXISTS "flyway_schema_history_service_postgres_full_access" ON public.flyway_schema_history;
-        CREATE POLICY "flyway_schema_history_service_postgres_full_access" 
-        ON public.flyway_schema_history 
-        FOR ALL TO postgres, service_role 
-        USING (true) 
-        WITH CHECK (true);
-    END IF;
-END $$;
-
--- 3. Automatically enable RLS on ANY other table in the public schema missing RLS
+-- 2. Automatically enable RLS on ANY other application table in the public schema missing RLS
+-- (Excluding flyway_schema_history to prevent self-locking during active Flyway migration transactions)
 DO $$
 DECLARE
     r RECORD;
@@ -53,6 +34,7 @@ BEGIN
         FROM pg_tables 
         WHERE schemaname = 'public' 
           AND rowsecurity = false
+          AND tablename != 'flyway_schema_history'
     ) LOOP
         EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', r.tablename);
         
